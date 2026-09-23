@@ -40,6 +40,7 @@
   --partner: oklch(0.76 0.16 65);
   --partner-foreground: oklch(0.25 0.05 60);
   --partner-soft: oklch(0.96 0.045 75);
+  --partner-strong: oklch(0.52 0.13 60);
 
   --like: oklch(0.66 0.25 350);
   --like-foreground: oklch(0.99 0 0);
@@ -106,6 +107,7 @@
   --partner: oklch(0.8 0.14 70);
   --partner-foreground: oklch(0.2 0.04 60);
   --partner-soft: oklch(0.32 0.06 70);
+  --partner-strong: oklch(0.86 0.13 78);
 
   --like: oklch(0.72 0.21 350);
   --like-foreground: oklch(0.15 0.02 260);
@@ -171,6 +173,7 @@
   --color-partner: var(--partner);
   --color-partner-foreground: var(--partner-foreground);
   --color-partner-soft: var(--partner-soft);
+  --color-partner-strong: var(--partner-strong);
   --color-like: var(--like);
   --color-like-foreground: var(--like-foreground);
   --color-like-soft: var(--like-soft);

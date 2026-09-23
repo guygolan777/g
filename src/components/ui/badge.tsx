@@ -8,7 +8,7 @@ const badgeVariants = cva("inline-flex items-center gap-1 rounded-full px-2.5 py
       default: "bg-primary text-primary-foreground",
       soft: "bg-primary-soft text-primary",
       event: "bg-event-soft text-event",
-      partner: "bg-partner-soft text-partner-foreground",
+      partner: "bg-partner-soft text-partner-strong",
       like: "bg-like-soft text-like",
       teal: "bg-teal-soft text-teal",
       violet: "bg-violet-soft text-violet",

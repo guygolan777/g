@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { SafeImg } from "@/components/safe-img";
 import { MapPin, Video } from "lucide-react";
 import { AvatarStack } from "@/components/avatar";
 import { JoinButton } from "@/components/join-button";
@@ -47,7 +48,7 @@ export function EventCard({
     <article className={cn("flex h-full flex-col overflow-hidden rounded-2xl bg-card shadow-soft", layout === "list" && "sm:flex-row")}>
       <Link to="/e/$id" params={{ id: event.id }} className="block">
         <div className={cn("relative bg-muted", layout === "carousel" ? "aspect-[4/3]" : "aspect-[16/9]")}>
-          {event.image_url && <img src={event.image_url} alt="" loading="lazy" className="size-full object-cover" />}
+          {event.image_url && <SafeImg src={event.image_url} alt="" loading="lazy" className="size-full object-cover" />}
           <span className="absolute top-2 right-2 rounded-full bg-surface/90 px-2.5 py-1 text-xs font-semibold backdrop-blur">
             {hobbyLabel(event.subcategory ?? event.category)}
           </span>

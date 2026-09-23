@@ -6,9 +6,12 @@
 -- Guests: rows are readable, but column grants limit them to id, name, avatar_url.
 create policy "profiles: guests read basic" on public.profiles
   for select to anon using (banned_at is null);
+-- Blocked pairs cannot see each other, except the blocker's own "blocked users" list.
 create policy "profiles: members read unblocked" on public.profiles
   for select to authenticated
-  using (id = auth.uid() or not app_private.blocked_between(auth.uid(), id));
+  using (id = auth.uid()
+         or not app_private.blocked_between(auth.uid(), id)
+         or exists (select 1 from public.blocks b where b.blocker_id = auth.uid() and b.blocked_id = profiles.id));
 create policy "profiles: update own" on public.profiles
   for update to authenticated
   using (id = auth.uid()) with check (id = auth.uid());

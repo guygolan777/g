@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
+import { channelName } from "@/lib/realtime";
 import { hapticTap, listenDeepLinks, registerPush } from "@/lib/native";
 import type { Notification } from "@/lib/types";
 
@@ -24,7 +25,7 @@ export function NotificationToaster() {
     if (!user) return;
     void registerPush((link) => void navigate({ to: link }));
     const ch = supabase
-      .channel(`notifications-${user.id}`)
+      .channel(channelName(`notifications-${user.id}`))
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notifications", filter: `recipient_id=eq.${user.id}` },

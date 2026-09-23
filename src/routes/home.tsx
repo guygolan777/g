@@ -1,0 +1,77 @@
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { Bell, Heart, Search } from "lucide-react";
+import { Page } from "@/components/app-shell";
+import { StoryRail } from "@/components/story-rail";
+import { CountBadge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { EventsFeed } from "@/components/events-feed";
+import { CommunitiesBrowser } from "@/components/communities-browser";
+import { PeopleTab } from "@/components/people-tab";
+import { PendingReminder } from "@/components/pending-reminder";
+import { useAuth } from "@/hooks/use-auth";
+import { useUnreadCounts } from "@/lib/queries";
+import { seo } from "@/lib/seo";
+
+type HomeSearch = { tab?: "events" | "communities" | "people" };
+
+export const Route = createFileRoute("/home")({
+  validateSearch: (s: Record<string, unknown>): HomeSearch => ({
+    tab: s.tab === "communities" || s.tab === "people" ? s.tab : undefined,
+  }),
+  head: () => seo({ title: "בית", description: "אירועים מומלצים בשבילך, קהילות ואנשים עם תחביבים דומים — הכל במקום אחד." }),
+  component: Home,
+});
+
+function Home() {
+  const { user, profile, isGuest } = useAuth();
+  const unread = useUnreadCounts();
+  const { tab = "events" } = Route.useSearch();
+  const navigate = Route.useNavigate();
+
+  return (
+    <Page>
+      <header className="flex items-center justify-between py-3">
+        <div>
+          <p className="font-display text-2xl font-bold text-gradient-brand">mibale</p>
+          {profile?.name && <p className="text-sm text-muted-foreground">היי {profile.name.split(" ")[0]}, מי בא היום?</p>}
+        </div>
+        <div className="flex items-center gap-1">
+          <Link to="/search" className="grid size-10 place-items-center rounded-full bg-surface shadow-soft" aria-label="חיפוש">
+            <Search className="size-5" />
+          </Link>
+          {!isGuest && (
+            <Link to="/likes" className="grid size-10 place-items-center rounded-full bg-surface text-like shadow-soft" aria-label="היכרויות">
+              <Heart className="size-5" />
+            </Link>
+          )}
+          {!isGuest && (
+            <Link to="/notifications" className="relative grid size-10 place-items-center rounded-full bg-surface shadow-soft" aria-label="התראות">
+              <Bell className="size-5" />
+              <CountBadge count={unread.notifications} />
+            </Link>
+          )}
+        </div>
+      </header>
+
+      {user && <PendingReminder />}
+      <StoryRail />
+
+      <Tabs value={tab} onValueChange={(v) => void navigate({ search: { tab: v === "events" ? undefined : (v as HomeSearch["tab"]) }, replace: true })} className="mt-3">
+        <TabsList>
+          <TabsTrigger value="events">אירועים</TabsTrigger>
+          <TabsTrigger value="communities">קהילות</TabsTrigger>
+          <TabsTrigger value="people">אנשים</TabsTrigger>
+        </TabsList>
+        <TabsContent value="events">
+          <EventsFeed />
+        </TabsContent>
+        <TabsContent value="communities">
+          <CommunitiesBrowser />
+        </TabsContent>
+        <TabsContent value="people">
+          <PeopleTab />
+        </TabsContent>
+      </Tabs>
+    </Page>
+  );
+}

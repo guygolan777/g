@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
 import { supabase } from "./supabase";
+import { channelName } from "./realtime";
 import { EVENT_COLUMNS, EVENT_GUEST_COLUMNS, PROFILE_COLUMNS, PROFILE_MINI } from "./constants";
 import { fetchBlockedIds, withoutBlocked } from "./blocks";
 import { useAuth } from "@/hooks/use-auth";
@@ -206,7 +207,7 @@ export function useUnreadCounts() {
   React.useEffect(() => {
     if (!user) return;
     const ch = supabase
-      .channel(`unread-${user.id}`)
+      .channel(channelName(`unread-${user.id}`))
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "direct_messages", filter: `recipient_id=eq.${user.id}` },

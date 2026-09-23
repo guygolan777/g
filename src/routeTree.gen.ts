@@ -10,14 +10,81 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as BlockedRouteImport } from './routes/blocked'
+import { Route as CalendarRouteImport } from './routes/calendar'
+import { Route as CommunitiesRouteImport } from './routes/communities'
+import { Route as ContactsRouteImport } from './routes/contacts'
+import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as HomeRouteImport } from './routes/home'
+import { Route as LikesRouteImport } from './routes/likes'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MeRouteImport } from './routes/me'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SearchRouteImport } from './routes/search'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as TicketsRouteImport } from './routes/tickets'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminCommunitiesRouteImport } from './routes/admin.communities'
+import { Route as AdminEventsRouteImport } from './routes/admin.events'
+import { Route as AdminReportsRouteImport } from './routes/admin.reports'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as ApiPushRouteImport } from './routes/api.push'
+import { Route as ChatIndexRouteImport } from './routes/chat.index'
+import { Route as ChatIdRouteImport } from './routes/chat.$id'
+import { Route as CommunityIdRouteImport } from './routes/community.$id'
+import { Route as CommunityNewRouteImport } from './routes/community.new'
+import { Route as EIdRouteImport } from './routes/e.$id'
+import { Route as EventNewRouteImport } from './routes/event.new'
+import { Route as MeIndexRouteImport } from './routes/me.index'
+import { Route as MeActivityRouteImport } from './routes/me.activity'
+import { Route as MeEditRouteImport } from './routes/me.edit'
+import { Route as OnboardingAboutRouteImport } from './routes/onboarding.about'
+import { Route as OnboardingLocationRouteImport } from './routes/onboarding.location'
+import { Route as OnboardingProfileRouteImport } from './routes/onboarding.profile'
+import { Route as ProfileIdRouteImport } from './routes/profile.$id'
+import { Route as ScanIdRouteImport } from './routes/scan.$id'
+import { Route as StoryIdRouteImport } from './routes/story.$id'
+import { Route as StoryNewRouteImport } from './routes/story.new'
+import { Route as TicketIdRouteImport } from './routes/ticket.$id'
+import { Route as EIdEditRouteImport } from './routes/e.$id.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlockedRoute = BlockedRouteImport.update({
+  id: '/blocked',
+  path: '/blocked',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarRoute = CalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunitiesRoute = CommunitiesRouteImport.update({
+  id: '/communities',
+  path: '/communities',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactsRoute = ContactsRouteImport.update({
+  id: '/contacts',
+  path: '/contacts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiscoverRoute = DiscoverRouteImport.update({
+  id: '/discover',
+  path: '/discover',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -25,9 +92,29 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HomeRoute = HomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LikesRoute = LikesRouteImport.update({
+  id: '/likes',
+  path: '/likes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeRoute = MeRouteImport.update({
+  id: '/me',
+  path: '/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -35,54 +122,445 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
   path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TicketsRoute = TicketsRouteImport.update({
+  id: '/tickets',
+  path: '/tickets',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCommunitiesRoute = AdminCommunitiesRouteImport.update({
+  id: '/communities',
+  path: '/communities',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEventsRoute = AdminEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const ApiPushRoute = ApiPushRouteImport.update({
+  id: '/api/push',
+  path: '/api/push',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatIndexRoute = ChatIndexRouteImport.update({
+  id: '/chat/',
+  path: '/chat/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatIdRoute = ChatIdRouteImport.update({
+  id: '/chat/$id',
+  path: '/chat/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityIdRoute = CommunityIdRouteImport.update({
+  id: '/community/$id',
+  path: '/community/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityNewRoute = CommunityNewRouteImport.update({
+  id: '/community/new',
+  path: '/community/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EIdRoute = EIdRouteImport.update({
+  id: '/e/$id',
+  path: '/e/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventNewRoute = EventNewRouteImport.update({
+  id: '/event/new',
+  path: '/event/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeIndexRoute = MeIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MeRoute,
+} as any)
+const MeActivityRoute = MeActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => MeRoute,
+} as any)
+const MeEditRoute = MeEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => MeRoute,
+} as any)
+const OnboardingAboutRoute = OnboardingAboutRouteImport.update({
+  id: '/onboarding/about',
+  path: '/onboarding/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingLocationRoute = OnboardingLocationRouteImport.update({
+  id: '/onboarding/location',
+  path: '/onboarding/location',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OnboardingProfileRoute = OnboardingProfileRouteImport.update({
+  id: '/onboarding/profile',
+  path: '/onboarding/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileIdRoute = ProfileIdRouteImport.update({
+  id: '/profile/$id',
+  path: '/profile/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScanIdRoute = ScanIdRouteImport.update({
+  id: '/scan/$id',
+  path: '/scan/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoryIdRoute = StoryIdRouteImport.update({
+  id: '/story/$id',
+  path: '/story/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoryNewRoute = StoryNewRouteImport.update({
+  id: '/story/new',
+  path: '/story/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TicketIdRoute = TicketIdRouteImport.update({
+  id: '/ticket/$id',
+  path: '/ticket/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EIdEditRoute = EIdEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => EIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/blocked': typeof BlockedRoute
+  '/calendar': typeof CalendarRoute
+  '/communities': typeof CommunitiesRoute
+  '/contacts': typeof ContactsRoute
+  '/discover': typeof DiscoverRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/home': typeof HomeRoute
+  '/likes': typeof LikesRoute
   '/login': typeof LoginRoute
+  '/me': typeof MeRouteWithChildren
+  '/notifications': typeof NotificationsRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/search': typeof SearchRoute
+  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/tickets': typeof TicketsRoute
+  '/admin/communities': typeof AdminCommunitiesRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/api/push': typeof ApiPushRoute
+  '/chat/$id': typeof ChatIdRoute
+  '/community/$id': typeof CommunityIdRoute
+  '/community/new': typeof CommunityNewRoute
+  '/e/$id': typeof EIdRouteWithChildren
+  '/event/new': typeof EventNewRoute
+  '/me/activity': typeof MeActivityRoute
+  '/me/edit': typeof MeEditRoute
+  '/onboarding/about': typeof OnboardingAboutRoute
+  '/onboarding/location': typeof OnboardingLocationRoute
+  '/onboarding/profile': typeof OnboardingProfileRoute
+  '/profile/$id': typeof ProfileIdRoute
+  '/scan/$id': typeof ScanIdRoute
+  '/story/$id': typeof StoryIdRoute
+  '/story/new': typeof StoryNewRoute
+  '/ticket/$id': typeof TicketIdRoute
+  '/admin/': typeof AdminIndexRoute
+  '/chat/': typeof ChatIndexRoute
+  '/me/': typeof MeIndexRoute
+  '/e/$id/edit': typeof EIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/blocked': typeof BlockedRoute
+  '/calendar': typeof CalendarRoute
+  '/communities': typeof CommunitiesRoute
+  '/contacts': typeof ContactsRoute
+  '/discover': typeof DiscoverRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/home': typeof HomeRoute
+  '/likes': typeof LikesRoute
   '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/search': typeof SearchRoute
+  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/tickets': typeof TicketsRoute
+  '/admin/communities': typeof AdminCommunitiesRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/api/push': typeof ApiPushRoute
+  '/chat/$id': typeof ChatIdRoute
+  '/community/$id': typeof CommunityIdRoute
+  '/community/new': typeof CommunityNewRoute
+  '/e/$id': typeof EIdRouteWithChildren
+  '/event/new': typeof EventNewRoute
+  '/me/activity': typeof MeActivityRoute
+  '/me/edit': typeof MeEditRoute
+  '/onboarding/about': typeof OnboardingAboutRoute
+  '/onboarding/location': typeof OnboardingLocationRoute
+  '/onboarding/profile': typeof OnboardingProfileRoute
+  '/profile/$id': typeof ProfileIdRoute
+  '/scan/$id': typeof ScanIdRoute
+  '/story/$id': typeof StoryIdRoute
+  '/story/new': typeof StoryNewRoute
+  '/ticket/$id': typeof TicketIdRoute
+  '/admin': typeof AdminIndexRoute
+  '/chat': typeof ChatIndexRoute
+  '/me': typeof MeIndexRoute
+  '/e/$id/edit': typeof EIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/blocked': typeof BlockedRoute
+  '/calendar': typeof CalendarRoute
+  '/communities': typeof CommunitiesRoute
+  '/contacts': typeof ContactsRoute
+  '/discover': typeof DiscoverRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/home': typeof HomeRoute
+  '/likes': typeof LikesRoute
   '/login': typeof LoginRoute
+  '/me': typeof MeRouteWithChildren
+  '/notifications': typeof NotificationsRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/search': typeof SearchRoute
+  '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/tickets': typeof TicketsRoute
+  '/admin/communities': typeof AdminCommunitiesRoute
+  '/admin/events': typeof AdminEventsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/api/push': typeof ApiPushRoute
+  '/chat/$id': typeof ChatIdRoute
+  '/community/$id': typeof CommunityIdRoute
+  '/community/new': typeof CommunityNewRoute
+  '/e/$id': typeof EIdRouteWithChildren
+  '/event/new': typeof EventNewRoute
+  '/me/activity': typeof MeActivityRoute
+  '/me/edit': typeof MeEditRoute
+  '/onboarding/about': typeof OnboardingAboutRoute
+  '/onboarding/location': typeof OnboardingLocationRoute
+  '/onboarding/profile': typeof OnboardingProfileRoute
+  '/profile/$id': typeof ProfileIdRoute
+  '/scan/$id': typeof ScanIdRoute
+  '/story/$id': typeof StoryIdRoute
+  '/story/new': typeof StoryNewRoute
+  '/ticket/$id': typeof TicketIdRoute
+  '/admin/': typeof AdminIndexRoute
+  '/chat/': typeof ChatIndexRoute
+  '/me/': typeof MeIndexRoute
+  '/e/$id/edit': typeof EIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/forgot-password' | '/login' | '/reset-password' | '/signup'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/blocked'
+    | '/calendar'
+    | '/communities'
+    | '/contacts'
+    | '/discover'
+    | '/forgot-password'
+    | '/home'
+    | '/likes'
+    | '/login'
+    | '/me'
+    | '/notifications'
+    | '/reset-password'
+    | '/search'
+    | '/settings'
+    | '/signup'
+    | '/tickets'
+    | '/admin/communities'
+    | '/admin/events'
+    | '/admin/reports'
+    | '/admin/users'
+    | '/api/push'
+    | '/chat/$id'
+    | '/community/$id'
+    | '/community/new'
+    | '/e/$id'
+    | '/event/new'
+    | '/me/activity'
+    | '/me/edit'
+    | '/onboarding/about'
+    | '/onboarding/location'
+    | '/onboarding/profile'
+    | '/profile/$id'
+    | '/scan/$id'
+    | '/story/$id'
+    | '/story/new'
+    | '/ticket/$id'
+    | '/admin/'
+    | '/chat/'
+    | '/me/'
+    | '/e/$id/edit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/forgot-password' | '/login' | '/reset-password' | '/signup'
+  to:
+    | '/'
+    | '/blocked'
+    | '/calendar'
+    | '/communities'
+    | '/contacts'
+    | '/discover'
+    | '/forgot-password'
+    | '/home'
+    | '/likes'
+    | '/login'
+    | '/notifications'
+    | '/reset-password'
+    | '/search'
+    | '/settings'
+    | '/signup'
+    | '/tickets'
+    | '/admin/communities'
+    | '/admin/events'
+    | '/admin/reports'
+    | '/admin/users'
+    | '/api/push'
+    | '/chat/$id'
+    | '/community/$id'
+    | '/community/new'
+    | '/e/$id'
+    | '/event/new'
+    | '/me/activity'
+    | '/me/edit'
+    | '/onboarding/about'
+    | '/onboarding/location'
+    | '/onboarding/profile'
+    | '/profile/$id'
+    | '/scan/$id'
+    | '/story/$id'
+    | '/story/new'
+    | '/ticket/$id'
+    | '/admin'
+    | '/chat'
+    | '/me'
+    | '/e/$id/edit'
   id:
     | '__root__'
     | '/'
+    | '/admin'
+    | '/blocked'
+    | '/calendar'
+    | '/communities'
+    | '/contacts'
+    | '/discover'
     | '/forgot-password'
+    | '/home'
+    | '/likes'
     | '/login'
+    | '/me'
+    | '/notifications'
     | '/reset-password'
+    | '/search'
+    | '/settings'
     | '/signup'
+    | '/tickets'
+    | '/admin/communities'
+    | '/admin/events'
+    | '/admin/reports'
+    | '/admin/users'
+    | '/api/push'
+    | '/chat/$id'
+    | '/community/$id'
+    | '/community/new'
+    | '/e/$id'
+    | '/event/new'
+    | '/me/activity'
+    | '/me/edit'
+    | '/onboarding/about'
+    | '/onboarding/location'
+    | '/onboarding/profile'
+    | '/profile/$id'
+    | '/scan/$id'
+    | '/story/$id'
+    | '/story/new'
+    | '/ticket/$id'
+    | '/admin/'
+    | '/chat/'
+    | '/me/'
+    | '/e/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  BlockedRoute: typeof BlockedRoute
+  CalendarRoute: typeof CalendarRoute
+  CommunitiesRoute: typeof CommunitiesRoute
+  ContactsRoute: typeof ContactsRoute
+  DiscoverRoute: typeof DiscoverRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  HomeRoute: typeof HomeRoute
+  LikesRoute: typeof LikesRoute
   LoginRoute: typeof LoginRoute
+  MeRoute: typeof MeRouteWithChildren
+  NotificationsRoute: typeof NotificationsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  SearchRoute: typeof SearchRoute
+  SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
+  TicketsRoute: typeof TicketsRoute
+  ApiPushRoute: typeof ApiPushRoute
+  ChatIdRoute: typeof ChatIdRoute
+  CommunityIdRoute: typeof CommunityIdRoute
+  CommunityNewRoute: typeof CommunityNewRoute
+  EIdRoute: typeof EIdRouteWithChildren
+  EventNewRoute: typeof EventNewRoute
+  OnboardingAboutRoute: typeof OnboardingAboutRoute
+  OnboardingLocationRoute: typeof OnboardingLocationRoute
+  OnboardingProfileRoute: typeof OnboardingProfileRoute
+  ProfileIdRoute: typeof ProfileIdRoute
+  ScanIdRoute: typeof ScanIdRoute
+  StoryIdRoute: typeof StoryIdRoute
+  StoryNewRoute: typeof StoryNewRoute
+  TicketIdRoute: typeof TicketIdRoute
+  ChatIndexRoute: typeof ChatIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -94,11 +572,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blocked': {
+      id: '/blocked'
+      path: '/blocked'
+      fullPath: '/blocked'
+      preLoaderRoute: typeof BlockedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendar': {
+      id: '/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof CalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/communities': {
+      id: '/communities'
+      path: '/communities'
+      fullPath: '/communities'
+      preLoaderRoute: typeof CommunitiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contacts': {
+      id: '/contacts'
+      path: '/contacts'
+      fullPath: '/contacts'
+      preLoaderRoute: typeof ContactsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/discover': {
+      id: '/discover'
+      path: '/discover'
+      fullPath: '/discover'
+      preLoaderRoute: typeof DiscoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/forgot-password': {
       id: '/forgot-password'
       path: '/forgot-password'
       fullPath: '/forgot-password'
       preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/home': {
+      id: '/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof HomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/likes': {
+      id: '/likes'
+      path: '/likes'
+      fullPath: '/likes'
+      preLoaderRoute: typeof LikesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -108,11 +642,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/me': {
+      id: '/me'
+      path: '/me'
+      fullPath: '/me'
+      preLoaderRoute: typeof MeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signup': {
@@ -122,15 +684,260 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tickets': {
+      id: '/tickets'
+      path: '/tickets'
+      fullPath: '/tickets'
+      preLoaderRoute: typeof TicketsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/communities': {
+      id: '/admin/communities'
+      path: '/communities'
+      fullPath: '/admin/communities'
+      preLoaderRoute: typeof AdminCommunitiesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/events': {
+      id: '/admin/events'
+      path: '/events'
+      fullPath: '/admin/events'
+      preLoaderRoute: typeof AdminEventsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/api/push': {
+      id: '/api/push'
+      path: '/api/push'
+      fullPath: '/api/push'
+      preLoaderRoute: typeof ApiPushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat/': {
+      id: '/chat/'
+      path: '/chat'
+      fullPath: '/chat/'
+      preLoaderRoute: typeof ChatIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat/$id': {
+      id: '/chat/$id'
+      path: '/chat/$id'
+      fullPath: '/chat/$id'
+      preLoaderRoute: typeof ChatIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community/$id': {
+      id: '/community/$id'
+      path: '/community/$id'
+      fullPath: '/community/$id'
+      preLoaderRoute: typeof CommunityIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community/new': {
+      id: '/community/new'
+      path: '/community/new'
+      fullPath: '/community/new'
+      preLoaderRoute: typeof CommunityNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/e/$id': {
+      id: '/e/$id'
+      path: '/e/$id'
+      fullPath: '/e/$id'
+      preLoaderRoute: typeof EIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/event/new': {
+      id: '/event/new'
+      path: '/event/new'
+      fullPath: '/event/new'
+      preLoaderRoute: typeof EventNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/me/': {
+      id: '/me/'
+      path: '/'
+      fullPath: '/me/'
+      preLoaderRoute: typeof MeIndexRouteImport
+      parentRoute: typeof MeRoute
+    }
+    '/me/activity': {
+      id: '/me/activity'
+      path: '/activity'
+      fullPath: '/me/activity'
+      preLoaderRoute: typeof MeActivityRouteImport
+      parentRoute: typeof MeRoute
+    }
+    '/me/edit': {
+      id: '/me/edit'
+      path: '/edit'
+      fullPath: '/me/edit'
+      preLoaderRoute: typeof MeEditRouteImport
+      parentRoute: typeof MeRoute
+    }
+    '/onboarding/about': {
+      id: '/onboarding/about'
+      path: '/onboarding/about'
+      fullPath: '/onboarding/about'
+      preLoaderRoute: typeof OnboardingAboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/location': {
+      id: '/onboarding/location'
+      path: '/onboarding/location'
+      fullPath: '/onboarding/location'
+      preLoaderRoute: typeof OnboardingLocationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/onboarding/profile': {
+      id: '/onboarding/profile'
+      path: '/onboarding/profile'
+      fullPath: '/onboarding/profile'
+      preLoaderRoute: typeof OnboardingProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/$id': {
+      id: '/profile/$id'
+      path: '/profile/$id'
+      fullPath: '/profile/$id'
+      preLoaderRoute: typeof ProfileIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scan/$id': {
+      id: '/scan/$id'
+      path: '/scan/$id'
+      fullPath: '/scan/$id'
+      preLoaderRoute: typeof ScanIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/story/$id': {
+      id: '/story/$id'
+      path: '/story/$id'
+      fullPath: '/story/$id'
+      preLoaderRoute: typeof StoryIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/story/new': {
+      id: '/story/new'
+      path: '/story/new'
+      fullPath: '/story/new'
+      preLoaderRoute: typeof StoryNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ticket/$id': {
+      id: '/ticket/$id'
+      path: '/ticket/$id'
+      fullPath: '/ticket/$id'
+      preLoaderRoute: typeof TicketIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/e/$id/edit': {
+      id: '/e/$id/edit'
+      path: '/edit'
+      fullPath: '/e/$id/edit'
+      preLoaderRoute: typeof EIdEditRouteImport
+      parentRoute: typeof EIdRoute
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminCommunitiesRoute: typeof AdminCommunitiesRoute
+  AdminEventsRoute: typeof AdminEventsRoute
+  AdminReportsRoute: typeof AdminReportsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminCommunitiesRoute: AdminCommunitiesRoute,
+  AdminEventsRoute: AdminEventsRoute,
+  AdminReportsRoute: AdminReportsRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface MeRouteChildren {
+  MeActivityRoute: typeof MeActivityRoute
+  MeEditRoute: typeof MeEditRoute
+  MeIndexRoute: typeof MeIndexRoute
+}
+
+const MeRouteChildren: MeRouteChildren = {
+  MeActivityRoute: MeActivityRoute,
+  MeEditRoute: MeEditRoute,
+  MeIndexRoute: MeIndexRoute,
+}
+
+const MeRouteWithChildren = MeRoute._addFileChildren(MeRouteChildren)
+
+interface EIdRouteChildren {
+  EIdEditRoute: typeof EIdEditRoute
+}
+
+const EIdRouteChildren: EIdRouteChildren = {
+  EIdEditRoute: EIdEditRoute,
+}
+
+const EIdRouteWithChildren = EIdRoute._addFileChildren(EIdRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
+  BlockedRoute: BlockedRoute,
+  CalendarRoute: CalendarRoute,
+  CommunitiesRoute: CommunitiesRoute,
+  ContactsRoute: ContactsRoute,
+  DiscoverRoute: DiscoverRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  HomeRoute: HomeRoute,
+  LikesRoute: LikesRoute,
   LoginRoute: LoginRoute,
+  MeRoute: MeRouteWithChildren,
+  NotificationsRoute: NotificationsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  SearchRoute: SearchRoute,
+  SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
+  TicketsRoute: TicketsRoute,
+  ApiPushRoute: ApiPushRoute,
+  ChatIdRoute: ChatIdRoute,
+  CommunityIdRoute: CommunityIdRoute,
+  CommunityNewRoute: CommunityNewRoute,
+  EIdRoute: EIdRouteWithChildren,
+  EventNewRoute: EventNewRoute,
+  OnboardingAboutRoute: OnboardingAboutRoute,
+  OnboardingLocationRoute: OnboardingLocationRoute,
+  OnboardingProfileRoute: OnboardingProfileRoute,
+  ProfileIdRoute: ProfileIdRoute,
+  ScanIdRoute: ScanIdRoute,
+  StoryIdRoute: StoryIdRoute,
+  StoryNewRoute: StoryNewRoute,
+  TicketIdRoute: TicketIdRoute,
+  ChatIndexRoute: ChatIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

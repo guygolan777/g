@@ -160,8 +160,8 @@ create index events_community_idx on public.events (community_id);
 create index events_category_idx on public.events (category, subcategory);
 
 revoke all on public.events from anon, authenticated;
--- Guests: only title, image, date/time (plus id and category for filtering).
-grant select (id, title, image_url, starts_at, ends_at, category, subcategory) on public.events to anon;
+-- Guests: only title, image, date/time (plus id, category and community for filtering and counts).
+grant select (id, community_id, title, image_url, starts_at, ends_at, category, subcategory) on public.events to anon;
 grant select (id, organizer_id, community_id, title, description, category, subcategory, image_url,
               starts_at, ends_at, is_online, location_name, city, lat, lng, seats, auto_approve,
               recurrence, recurrence_parent_id, min_age, max_age, gender_target, created_at, updated_at)

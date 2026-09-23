@@ -1,3 +1,4 @@
+import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export function Avatar({
@@ -14,8 +15,10 @@ export function Avatar({
   className?: string;
 }) {
   const initial = (name ?? "?").trim().charAt(0) || "?";
-  const inner = src ? (
-    <img src={src} alt={name ?? ""} loading="lazy" className="size-full rounded-full object-cover" />
+  const [failed, setFailed] = React.useState(false);
+  React.useEffect(() => setFailed(false), [src]);
+  const inner = src && !failed ? (
+    <img src={src} alt="" loading="lazy" onError={() => setFailed(true)} className="size-full rounded-full object-cover" />
   ) : (
     <div className="grid size-full place-items-center rounded-full bg-primary-soft font-bold text-primary">{initial}</div>
   );

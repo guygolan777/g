@@ -22,7 +22,7 @@ export function useActiveStories() {
       const [{ data: stories }, { data: views }] = await Promise.all([
         supabase
           .from("stories")
-          .select(`*, author:profiles(${PROFILE_MINI})`)
+          .select(`*, author:profiles!stories_author_id_fkey(${PROFILE_MINI})`)
           .gt("expires_at", new Date().toISOString())
           .order("created_at", { ascending: true }),
         supabase.from("story_views").select("story_id").eq("viewer_id", user!.id),

@@ -15,7 +15,7 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         soft: "bg-primary-soft text-primary hover:bg-primary-soft/80",
         success: "bg-success-soft text-success hover:bg-success-soft/80",
-        partner: "bg-partner-soft text-partner-foreground hover:bg-partner-soft/80",
+        partner: "bg-partner-soft text-partner-strong hover:bg-partner-soft/80",
         like: "bg-like text-like-foreground hover:bg-like/90",
         ghost: "text-muted-foreground hover:bg-muted hover:text-foreground",
         link: "text-primary underline-offset-4 hover:underline",

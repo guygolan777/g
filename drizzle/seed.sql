@@ -4,6 +4,13 @@
 -- Each profile belongs to communities, organizes 2 events and attends others.
 -- ============================================================
 
+-- Local (Israel) wall-clock time N days from today at HH:00.
+create or replace function pg_temp.at_il(_days integer, _hour integer)
+returns timestamptz language sql stable as $$
+  select (date_trunc('day', now() at time zone 'Asia/Jerusalem') + make_interval(days => _days, hours => _hour))
+         at time zone 'Asia/Jerusalem';
+$$;
+
 do $$
 declare
   _people jsonb := '[
@@ -29,12 +36,15 @@ begin
   for _p in select * from jsonb_array_elements(_people) loop
     _uid := ('00000000-0000-4000-a000-' || lpad((_p ->> 'n'), 12, '0'))::uuid;
     _ids := _ids || _uid;
+    -- Token columns must be '' (not NULL) or GoTrue fails to sign the user in.
     insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-                            raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+                            raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+                            confirmation_token, recovery_token, email_change_token_new, email_change)
     values ('00000000-0000-0000-0000-000000000000', _uid, 'authenticated', 'authenticated', _p ->> 'email',
             extensions.crypt('mibale1234', extensions.gen_salt('bf')), now(),
             '{"provider":"email","providers":["email"]}'::jsonb,
-            jsonb_build_object('name', _p ->> 'name'), now() - interval '20 days', now())
+            jsonb_build_object('name', _p ->> 'name'), now() - interval '20 days', now(),
+            '', '', '', '')
     on conflict (id) do nothing;
     insert into auth.identities (id, provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
     values (gen_random_uuid(), _uid::text, _uid,
@@ -91,26 +101,26 @@ begin
   insert into public.events (id, organizer_id, community_id, title, description, category, subcategory, image_url,
                              starts_at, is_online, location_name, city, lat, lng, meeting_url, seats, auto_approve)
   values
-    ('20000000-0000-4000-a000-000000000001', _ids[1], _c[1], 'ריצת בוקר בפארק הירקון', 'ריצה של 6 ק״מ בקצב נוח, נפגשים ליד המזרקה.', 'sport', 'sport.running', 'https://picsum.photos/seed/mibale-e1/800/600', now() + interval '1 day 7 hours', false, 'פארק הירקון, גני יהושע', 'תל אביב', 32.0977, 34.8108, null, 9999, true),
-    ('20000000-0000-4000-a000-000000000002', _ids[1], null, 'סדנת קרמיקה למתחילים', 'עובדים על האובניים, כל החומרים כלולים.', 'creative', 'creative.ceramics', 'https://picsum.photos/seed/mibale-e2/800/600', now() + interval '4 days 18 hours', false, 'סטודיו חומר, פלורנטין', 'תל אביב', 32.0566, 34.7698, null, 8, false),
-    ('20000000-0000-4000-a000-000000000003', _ids[2], _c[2], 'טיול זריחה בנחל כזיב', 'מסלול מעגלי של 8 ק״מ, מתאים לכל אחת.', 'outdoors', 'outdoors.hiking', 'https://picsum.photos/seed/mibale-e3/800/600', now() + interval '6 days 5 hours', false, 'חניון נחל כזיב', 'גליל מערבי', 33.0469, 35.1669, null, 20, false),
-    ('20000000-0000-4000-a000-000000000004', _ids[2], null, 'יוגה על הדשא', 'שיעור ויניאסה פתוח לכל הרמות. להביא מזרן.', 'sport', 'sport.yoga', 'https://picsum.photos/seed/mibale-e4/800/600', now() + interval '10 hours', false, 'פארק הלאומי רמת גן', 'רמת גן', 32.0503, 34.8256, null, 25, true),
-    ('20000000-0000-4000-a000-000000000005', _ids[3], null, 'הקרנת סרטי סטודנטים', 'ערב קצרים מבית הספר לקולנוע + שיחה עם היוצרים.', 'culture', 'culture.cinema', 'https://picsum.photos/seed/mibale-e5/800/600', now() + interval '3 days 20 hours', false, 'סינמטק תל אביב', 'תל אביב', 32.0773, 34.7839, null, 60, true),
-    ('20000000-0000-4000-a000-000000000006', _ids[3], _c[3], 'טורניר קטאן', 'טורניר ידידותי עם פרסים קטנים.', 'games', 'games.board', 'https://picsum.photos/seed/mibale-e6/800/600', now() + interval '8 days 19 hours', false, 'קפה משחקים, הרצליה', 'הרצליה', 32.1640, 34.8430, null, 16, true),
-    ('20000000-0000-4000-a000-000000000007', _ids[4], _c[5], 'ערב בישול איטלקי', 'פסטה טרייה מאפס, טירמיסו וקצת יין.', 'food', 'food.cooking', 'https://picsum.photos/seed/mibale-e7/800/600', now() + interval '2 days 19 hours', false, 'הבית של תמר', 'הרצליה', 32.1663, 34.8436, null, 10, false),
-    ('20000000-0000-4000-a000-000000000008', _ids[4], null, 'מועדון ספר — חודש ספטמבר', 'דנים ב"שמונה ימים בשבוע". אונליין.', 'learning', 'learning.books', 'https://picsum.photos/seed/mibale-e8/800/600', now() + interval '5 days 21 hours', true, null, null, null, null, 'https://meet.example.com/mibale-books', 9999, true),
-    ('20000000-0000-4000-a000-000000000009', _ids[5], _c[4], 'האקתון AI לטובת עמותות', '24 שעות של בנייה לטובת עמותות בעלי חיים.', 'tech', 'tech.hackathons', 'https://picsum.photos/seed/mibale-e9/800/600', now() + interval '12 days 9 hours', false, 'מתחם השוק, גבעתיים', 'גבעתיים', 32.0722, 34.8125, null, 40, false),
-    ('20000000-0000-4000-a000-000000000010', _ids[5], null, 'ערב סלסה למתחילים', 'שיעור של שעה ואז מסיבה. אין צורך בבן/בת זוג.', 'party', 'party.dancing', 'https://picsum.photos/seed/mibale-e10/800/600', now() + interval '1 day 21 hours', false, 'סטודיו לטינו', 'תל אביב', 32.0660, 34.7790, null, 30, true),
-    ('20000000-0000-4000-a000-000000000011', _ids[6], _c[4], 'מיטאפ: סוכני AI בפרודקשן', 'שתי הרצאות + פיצה + נטוורקינג.', 'tech', 'tech.meetups', 'https://picsum.photos/seed/mibale-e11/800/600', now() + interval '2 days 18 hours', false, 'WeWork שרונה', 'תל אביב', 32.0719, 34.7874, null, 120, true),
-    ('20000000-0000-4000-a000-000000000012', _ids[6], _c[1], 'אינטרוולים על המסלול', 'אימון מהירות קבוצתי, 45 דקות.', 'sport', 'sport.running', 'https://picsum.photos/seed/mibale-e12/800/600', now() + interval '5 days 6 hours', false, 'אצטדיון גבעת רם', 'תל אביב', 32.1101, 34.8047, null, 9999, true),
-    ('20000000-0000-4000-a000-000000000013', _ids[7], null, 'ג׳אם סשן פתוח', 'מביאים כלי ומנגנים ביחד. מתופף ובסיסט במקום.', 'music', 'music.jam', 'https://picsum.photos/seed/mibale-e13/800/600', now() + interval '3 days 21 hours', false, 'בר הבלוז, רמת גן', 'רמת גן', 32.0833, 34.8144, null, 25, true),
-    ('20000000-0000-4000-a000-000000000014', _ids[7], null, 'טעימות בירה ביתית', 'חמישה סגנונות, הסברים ונשנושים.', 'food', 'food.wine', 'https://picsum.photos/seed/mibale-e14/800/600', now() + interval '9 days 20 hours', false, 'מבשלת הגג', 'רמת גן', 32.0801, 34.8120, null, 15, false),
-    ('20000000-0000-4000-a000-000000000015', _ids[8], null, 'צילום זריחה ביפו', 'סדנת צילום שטח קצרה ואז קפה.', 'creative', 'creative.photography', 'https://picsum.photos/seed/mibale-e15/800/600', now() + interval '1 day 5 hours', false, 'גבעת השעון, יפו', 'תל אביב', 32.0546, 34.7521, null, 12, true),
-    ('20000000-0000-4000-a000-000000000016', _ids[8], null, 'קמפינג במכתש רמון', 'לילה תחת כוכבים, ארוחה על האש.', 'outdoors', 'outdoors.camping', 'https://picsum.photos/seed/mibale-e16/800/600', now() + interval '15 days 16 hours', false, 'חניון לילה בארות', 'מצפה רמון', 30.6100, 34.8010, null, 20, false),
-    ('20000000-0000-4000-a000-000000000017', _ids[9], _c[3], 'ערב קודנמס ודיקסיט', 'משחקים קלילים לקבוצות.', 'games', 'games.board', 'https://picsum.photos/seed/mibale-e17/800/600', now() + interval '4 days 20 hours', false, 'מתנ״ס הרצליה', 'הרצליה', 32.1650, 34.8400, null, 24, true),
-    ('20000000-0000-4000-a000-000000000018', _ids[9], null, 'כדורסל 3 על 3', 'משחק שכונתי, כל הרמות.', 'sport', 'sport.basketball', 'https://picsum.photos/seed/mibale-e18/800/600', now() + interval '7 days 18 hours', false, 'מגרש נוף ים', 'הרצליה', 32.1700, 34.8300, null, 12, true),
-    ('20000000-0000-4000-a000-000000000019', _ids[10], null, 'מדיטציה בשקיעה', 'תרגול מודרך של 40 דקות על החוף.', 'wellness', 'wellness.meditation', 'https://picsum.photos/seed/mibale-e19/800/600', now() + interval '20 hours', false, 'חוף גורדון', 'תל אביב', 32.0833, 34.7675, null, 9999, true),
-    ('20000000-0000-4000-a000-000000000020', _ids[10], null, 'ערב סטנדאפ פתוח', 'במה פתוחה לקומיקאים מתחילים.', 'culture', 'culture.standup', 'https://picsum.photos/seed/mibale-e20/800/600', now() + interval '6 days 21 hours', false, 'קומדי בר', 'תל אביב', 32.0700, 34.7800, null, 50, true)
+    ('20000000-0000-4000-a000-000000000001', _ids[1], _c[1], 'ריצת בוקר בפארק הירקון', 'ריצה של 6 ק״מ בקצב נוח, נפגשים ליד המזרקה.', 'sport', 'sport.running', 'https://picsum.photos/seed/mibale-e1/800/600', pg_temp.at_il(1, 7), false, 'פארק הירקון, גני יהושע', 'תל אביב', 32.0977, 34.8108, null, 9999, true),
+    ('20000000-0000-4000-a000-000000000002', _ids[1], null, 'סדנת קרמיקה למתחילים', 'עובדים על האובניים, כל החומרים כלולים.', 'creative', 'creative.ceramics', 'https://picsum.photos/seed/mibale-e2/800/600', pg_temp.at_il(4, 18), false, 'סטודיו חומר, פלורנטין', 'תל אביב', 32.0566, 34.7698, null, 8, false),
+    ('20000000-0000-4000-a000-000000000003', _ids[2], _c[2], 'טיול זריחה בנחל כזיב', 'מסלול מעגלי של 8 ק״מ, מתאים לכל אחת.', 'outdoors', 'outdoors.hiking', 'https://picsum.photos/seed/mibale-e3/800/600', pg_temp.at_il(6, 5), false, 'חניון נחל כזיב', 'גליל מערבי', 33.0469, 35.1669, null, 20, false),
+    ('20000000-0000-4000-a000-000000000004', _ids[2], null, 'יוגה על הדשא', 'שיעור ויניאסה פתוח לכל הרמות. להביא מזרן.', 'sport', 'sport.yoga', 'https://picsum.photos/seed/mibale-e4/800/600', date_trunc('hour', now()) + interval '3 hours', false, 'פארק הלאומי רמת גן', 'רמת גן', 32.0503, 34.8256, null, 25, true),
+    ('20000000-0000-4000-a000-000000000005', _ids[3], null, 'הקרנת סרטי סטודנטים', 'ערב קצרים מבית הספר לקולנוע + שיחה עם היוצרים.', 'culture', 'culture.cinema', 'https://picsum.photos/seed/mibale-e5/800/600', pg_temp.at_il(3, 20), false, 'סינמטק תל אביב', 'תל אביב', 32.0773, 34.7839, null, 60, true),
+    ('20000000-0000-4000-a000-000000000006', _ids[3], _c[3], 'טורניר קטאן', 'טורניר ידידותי עם פרסים קטנים.', 'games', 'games.board', 'https://picsum.photos/seed/mibale-e6/800/600', pg_temp.at_il(8, 19), false, 'קפה משחקים, הרצליה', 'הרצליה', 32.1640, 34.8430, null, 16, true),
+    ('20000000-0000-4000-a000-000000000007', _ids[4], _c[5], 'ערב בישול איטלקי', 'פסטה טרייה מאפס, טירמיסו וקצת יין.', 'food', 'food.cooking', 'https://picsum.photos/seed/mibale-e7/800/600', pg_temp.at_il(2, 19), false, 'הבית של תמר', 'הרצליה', 32.1663, 34.8436, null, 10, false),
+    ('20000000-0000-4000-a000-000000000008', _ids[4], null, 'מועדון ספר — חודש ספטמבר', 'דנים ב"שמונה ימים בשבוע". אונליין.', 'learning', 'learning.books', 'https://picsum.photos/seed/mibale-e8/800/600', pg_temp.at_il(5, 21), true, null, null, null, null, 'https://meet.example.com/mibale-books', 9999, true),
+    ('20000000-0000-4000-a000-000000000009', _ids[5], _c[4], 'האקתון AI לטובת עמותות', '24 שעות של בנייה לטובת עמותות בעלי חיים.', 'tech', 'tech.hackathons', 'https://picsum.photos/seed/mibale-e9/800/600', pg_temp.at_il(12, 9), false, 'מתחם השוק, גבעתיים', 'גבעתיים', 32.0722, 34.8125, null, 40, false),
+    ('20000000-0000-4000-a000-000000000010', _ids[5], null, 'ערב סלסה למתחילים', 'שיעור של שעה ואז מסיבה. אין צורך בבן/בת זוג.', 'party', 'party.dancing', 'https://picsum.photos/seed/mibale-e10/800/600', pg_temp.at_il(1, 21), false, 'סטודיו לטינו', 'תל אביב', 32.0660, 34.7790, null, 30, true),
+    ('20000000-0000-4000-a000-000000000011', _ids[6], _c[4], 'מיטאפ: סוכני AI בפרודקשן', 'שתי הרצאות + פיצה + נטוורקינג.', 'tech', 'tech.meetups', 'https://picsum.photos/seed/mibale-e11/800/600', pg_temp.at_il(2, 18), false, 'WeWork שרונה', 'תל אביב', 32.0719, 34.7874, null, 120, true),
+    ('20000000-0000-4000-a000-000000000012', _ids[6], _c[1], 'אינטרוולים על המסלול', 'אימון מהירות קבוצתי, 45 דקות.', 'sport', 'sport.running', 'https://picsum.photos/seed/mibale-e12/800/600', pg_temp.at_il(5, 6), false, 'אצטדיון גבעת רם', 'תל אביב', 32.1101, 34.8047, null, 9999, true),
+    ('20000000-0000-4000-a000-000000000013', _ids[7], null, 'ג׳אם סשן פתוח', 'מביאים כלי ומנגנים ביחד. מתופף ובסיסט במקום.', 'music', 'music.jam', 'https://picsum.photos/seed/mibale-e13/800/600', pg_temp.at_il(3, 21), false, 'בר הבלוז, רמת גן', 'רמת גן', 32.0833, 34.8144, null, 25, true),
+    ('20000000-0000-4000-a000-000000000014', _ids[7], null, 'טעימות בירה ביתית', 'חמישה סגנונות, הסברים ונשנושים.', 'food', 'food.wine', 'https://picsum.photos/seed/mibale-e14/800/600', pg_temp.at_il(9, 20), false, 'מבשלת הגג', 'רמת גן', 32.0801, 34.8120, null, 15, false),
+    ('20000000-0000-4000-a000-000000000015', _ids[8], null, 'צילום זריחה ביפו', 'סדנת צילום שטח קצרה ואז קפה.', 'creative', 'creative.photography', 'https://picsum.photos/seed/mibale-e15/800/600', pg_temp.at_il(1, 5), false, 'גבעת השעון, יפו', 'תל אביב', 32.0546, 34.7521, null, 12, true),
+    ('20000000-0000-4000-a000-000000000016', _ids[8], null, 'קמפינג במכתש רמון', 'לילה תחת כוכבים, ארוחה על האש.', 'outdoors', 'outdoors.camping', 'https://picsum.photos/seed/mibale-e16/800/600', pg_temp.at_il(15, 16), false, 'חניון לילה בארות', 'מצפה רמון', 30.6100, 34.8010, null, 20, false),
+    ('20000000-0000-4000-a000-000000000017', _ids[9], _c[3], 'ערב קודנמס ודיקסיט', 'משחקים קלילים לקבוצות.', 'games', 'games.board', 'https://picsum.photos/seed/mibale-e17/800/600', pg_temp.at_il(4, 20), false, 'מתנ״ס הרצליה', 'הרצליה', 32.1650, 34.8400, null, 24, true),
+    ('20000000-0000-4000-a000-000000000018', _ids[9], null, 'כדורסל 3 על 3', 'משחק שכונתי, כל הרמות.', 'sport', 'sport.basketball', 'https://picsum.photos/seed/mibale-e18/800/600', pg_temp.at_il(7, 18), false, 'מגרש נוף ים', 'הרצליה', 32.1700, 34.8300, null, 12, true),
+    ('20000000-0000-4000-a000-000000000019', _ids[10], null, 'מדיטציה בשקיעה', 'תרגול מודרך של 40 דקות על החוף.', 'wellness', 'wellness.meditation', 'https://picsum.photos/seed/mibale-e19/800/600', pg_temp.at_il(1, 19), false, 'חוף גורדון', 'תל אביב', 32.0833, 34.7675, null, 9999, true),
+    ('20000000-0000-4000-a000-000000000020', _ids[10], null, 'ערב סטנדאפ פתוח', 'במה פתוחה לקומיקאים מתחילים.', 'culture', 'culture.standup', 'https://picsum.photos/seed/mibale-e20/800/600', pg_temp.at_il(6, 21), false, 'קומדי בר', 'תל אביב', 32.0700, 34.7800, null, 50, true)
   on conflict (id) do nothing;
 
   -- ---------- participation ----------
