@@ -99,6 +99,22 @@ function MediaCard({ profile, isMe }: { profile: Profile; isMe: boolean }) {
   React.useEffect(() => setDating(!!profile.dating_enabled), [profile.dating_enabled]);
   const current = media[idx];
   const age = ageFromBirthYear(profile.birth_year);
+  // Finger swipe between items. RTL: "next" sits on the left, so dragging right brings the next one in.
+  const touch = React.useRef<{ x: number; y: number } | null>(null);
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touch.current = { x: t.clientX, y: t.clientY };
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = touch.current;
+    touch.current = null;
+    if (!start || media.length < 2) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+    go(dx > 0 ? 1 : -1);
+  };
   const go = (d: number) => {
     if (!media.length) return;
     setIdx((i) => (i + d + media.length) % media.length);
@@ -120,7 +136,11 @@ function MediaCard({ profile, isMe }: { profile: Profile; isMe: boolean }) {
   }
 
   return (
-    <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-surface-soft shadow-lift">
+    <div
+      className="relative aspect-[4/5] touch-pan-y overflow-hidden rounded-[2rem] bg-surface-soft shadow-lift select-none"
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
       {!current && <div className="grid size-full place-items-center text-7xl">🙂</div>}
       {current && isVideoUrl(current) ? (
         <video
