@@ -11,6 +11,7 @@ const PREF_BY_TYPE: Record<string, "notify_messages" | "notify_events" | "notify
   event_join_request: "notify_events",
   event_joined: "notify_events",
   event_approved: "notify_events",
+  event_invite: "notify_events",
   community_join_request: "notify_social",
   community_approved: "notify_social",
   follow: "notify_social",

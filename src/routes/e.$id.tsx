@@ -23,6 +23,7 @@ import { CenteredSpinner, EmptyState, Page, Section } from "@/components/app-she
 import { Avatar } from "@/components/avatar";
 import { JoinButton } from "@/components/join-button";
 import { ReportDialog } from "@/components/report-dialog";
+import { InviteSheet } from "@/components/invite-sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/input";
@@ -385,6 +386,9 @@ function MemberEvent({ event, viewerId }: { event: EventRow; viewerId: string })
               <Button variant="ghost" size="sm" onClick={() => void leave()}>
                 {myStatus === "pending" ? "ביטול בקשה" : "עזיבת האירוע"}
               </Button>
+            )}
+            {myStatus === "approved" && !ended && (
+              <InviteSheet eventId={event.id} participantIds={new Set((parts.data ?? []).map((p) => p.profile_id))} />
             )}
             {!isOrganizer && <ReportDialog targetType="event" targetId={event.id} />}
           </div>

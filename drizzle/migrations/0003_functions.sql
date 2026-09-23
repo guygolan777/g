@@ -599,6 +599,29 @@ create trigger story_likes_after_insert
   after insert on public.story_likes
   for each row execute function app_private.story_likes_after_insert();
 
+-- ---------- event invites ----------
+create or replace function app_private.event_invites_after_insert()
+returns trigger
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  _name text;
+  _title text;
+begin
+  select name into _name from public.profiles where id = new.inviter_id;
+  select title into _title from public.events where id = new.event_id;
+  perform app_private.create_notification(
+    new.invitee_id, new.inviter_id, 'event_invite',
+    coalesce(nullif(_name, ''), 'מישהו') || ' הזמין/ה אותך לאירוע',
+    'מי בא ל' || _title, '/e/' || new.event_id, jsonb_build_object('event_id', new.event_id));
+  return new;
+end;
+$$;
+
+create trigger event_invites_after_insert
+  after insert on public.event_invites
+  for each row execute function app_private.event_invites_after_insert();
+
 -- ---------- follows ----------
 create or replace function app_private.follows_after_insert()
 returns trigger

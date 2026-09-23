@@ -26,6 +26,7 @@ const ICONS: Record<string, { Icon: typeof Bell; cls: string }> = {
   event_join_request: { Icon: CalendarCheck, cls: "bg-partner-soft text-partner-strong" },
   event_joined: { Icon: CalendarCheck, cls: "bg-event-soft text-event" },
   event_approved: { Icon: CalendarCheck, cls: "bg-success-soft text-success" },
+  event_invite: { Icon: CalendarCheck, cls: "bg-violet-soft text-violet" },
   follow: { Icon: UserPlus, cls: "bg-primary-soft text-primary" },
   story_like: { Icon: Heart, cls: "bg-like-soft text-like" },
   match: { Icon: Heart, cls: "bg-like-soft text-like" },
