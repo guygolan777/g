@@ -61,6 +61,11 @@ function Landing() {
           <Link to="/home">להציץ כאורח/ת</Link>
         </Button>
       </div>
+      <footer className="mt-10 flex justify-center gap-4 text-xs text-muted-foreground">
+        <Link to="/terms">תנאי שימוש</Link>
+        <Link to="/privacy">פרטיות</Link>
+        <Link to="/delete-account">מחיקת חשבון</Link>
+      </footer>
     </main>
   );
 }

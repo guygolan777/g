@@ -29,6 +29,12 @@ npm run dev                       # http://localhost:3000
 | `0005_realtime_storage.sql` | Realtime (`event_participants`, `notifications`, הודעות) + bucket `media` |
 | `0006_enum_date_invite.sql` | סוג הודעה `date_invite` (מיגרציה נפרדת — ערך enum חדש לא נצרך באותה טרנזקציה) |
 | `0007_pricing_audience_dating.sql` | מחיר ומרחק מקסימלי לאירוע, נראות לפי קהל יעד (מגדר/גיל/מרחק), סטוריז רומנטיים, `date_invites` |
+| `0008_dating_mode.sql` | מצב היכרויות (לב פתוח/סגור) נאכף בשרת |
+| `0009_guest_mode.sql` | מצב אורח: אורחים לא רואים פרופילים; מונים מצרפיים בלבד |
+| `0010_account_deletion.sql` | `delete_my_account()` — מחיקת חשבון מתוך האפליקציה (דרישת החנויות) |
+
+**הדרך הקלה — GitHub Actions:** להוסיף secret בשם `SUPABASE_DB_URL` (Supabase → Connect → Session pooler)
+ולהריץ Actions → "Supabase database setup" (עם/בלי נתוני דמה). מיגרציות שכבר רצו מדולגות.
 
 הרצה על פרויקט Supabase:
 
@@ -74,8 +80,9 @@ PGUSER=postgres npm run db:test   # מריץ את כל המיגרציות + seed
 
 ## Auth
 
-- אימייל+סיסמה ו-Google (Supabase → Authentication → Providers → Google).
-- Redirect URLs: `https://<domain>/`, `https://<domain>/reset-password`, `https://<domain>/onboarding/profile`.
+- אימייל+סיסמה, Google ו-Sign in with Apple (Supabase → Authentication → Providers). Apple חובה ב-App Store כשיש התחברות חברתית אחרת.
+- Redirect URLs: `https://<domain>/`, `https://<domain>/reset-password`, `https://<domain>/onboarding/profile`, `mibale://auth-callback`.
+- באפליקציה (נייטיב) ההתחברות עם Google/Apple נפתחת בדפדפן המערכת (Google חוסמת WebView) וחוזרת דרך `mibale://auth-callback`.
 
 ## Push (FCM)
 
@@ -97,6 +104,16 @@ npm run cap:ios          # פתיחה ב-Xcode (דורש macOS + CocoaPods)
 - Deep links: `https://mibale.app/e/{id}` ו-`mibale://e/{id}` (מוגדרים ב-`AndroidManifest.xml` וב-`Info.plist`).
   ל-App Links מאומתים יש לפרסם `/.well-known/assetlinks.json` ו-`apple-app-site-association` בדומיין.
 - בנייה רגילה (`npm run build`) נשארת SSR כדי ש-`/e/{id}` יחזיר תגיות OG דינמיות.
+- אייקונים ומסכי פתיחה: מקור ב-`assets/`, יצירה מחדש עם `npx @capacitor/assets generate`.
+
+## הדגמה ופרסום לחנויות
+
+- **הדגמה בלי שרת:** `npm run build:demo` → `dist-demo/` (נתוני דוגמה מוקלטים ב-`demo/public/demo-fixtures.json`,
+  הקלטה מחדש: `scripts/record-demo.mjs`). ה-workflow "Android demo APK" בונה APK הדגמה לכל push.
+- **Google Play:** workflow "Android release (Google Play)" בונה AAB + APK חתומים מול Supabase האמיתי
+  (ה-secrets הנדרשים מפורטים בראש הקובץ). `versionCode` = מספר ההרצה.
+- **דרישות חנות שמכוסות באפליקציה:** מחיקת חשבון (הגדרות + `/delete-account`), `/privacy`, `/terms`,
+  דיווח וחסימה, Sign in with Apple, 18+.
 
 ---
 

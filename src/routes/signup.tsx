@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { AuthLayout, Divider, GoogleButton, authErrorMessage } from "@/components/auth-form";
+import { AuthLayout, Divider, SocialButtons, authErrorMessage } from "@/components/auth-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/label";
@@ -51,7 +51,7 @@ function Signup() {
         </>
       }
     >
-      <GoogleButton />
+      <SocialButtons />
       <Divider />
       <form onSubmit={submit} className="space-y-4">
         <Field label="שם">
@@ -66,7 +66,17 @@ function Signup() {
         <Button type="submit" variant="brand" size="lg" className="w-full" disabled={loading}>
           {loading ? "יוצרים חשבון…" : "הרשמה"}
         </Button>
-        <p className="text-center text-xs text-muted-foreground">בהרשמה את/ה מאשר/ת את תנאי השימוש ומדיניות הפרטיות.</p>
+        <p className="text-center text-xs text-muted-foreground">
+          בהרשמה את/ה מאשר/ת שמלאו לך 18 ואת{" "}
+          <Link to="/terms" className="underline">
+            תנאי השימוש
+          </Link>{" "}
+          ו
+          <Link to="/privacy" className="underline">
+            מדיניות הפרטיות
+          </Link>
+          .
+        </p>
       </form>
     </AuthLayout>
   );

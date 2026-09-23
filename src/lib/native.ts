@@ -75,6 +75,8 @@ export async function getCurrentPosition(): Promise<{ lat: number; lng: number }
 /** Register for FCM push on device and store the token in push_tokens. */
 export async function registerPush(onOpen: (link: string) => void): Promise<void> {
   if (!isNative()) return;
+  // Android crashes on register() when the build has no Firebase config (google-services.json).
+  if (Capacitor.getPlatform() === "android" && import.meta.env.VITE_PUSH_ENABLED !== "1") return;
   const { PushNotifications } = await import("@capacitor/push-notifications");
   const perm = await PushNotifications.requestPermissions();
   if (perm.receive !== "granted") return;
@@ -94,11 +96,53 @@ export async function listenDeepLinks(onOpen: (path: string) => void): Promise<v
   if (!isNative()) return;
   const { App } = await import("@capacitor/app");
   await App.addListener("appUrlOpen", ({ url }) => {
+    if (url.startsWith(NATIVE_AUTH_REDIRECT)) return; // handled by listenAuthCallback
     try {
       const u = new URL(url.replace(/^mibale:\/\//, "https://mibale.app/"));
       onOpen(u.pathname + u.search);
     } catch {
       /* ignore malformed links */
     }
+  });
+}
+
+/** OAuth on the phone runs in the system browser (Google refuses in-app WebViews) and returns here. */
+export const NATIVE_AUTH_REDIRECT = "mibale://auth-callback";
+
+export async function signInWithProvider(provider: "google" | "apple"): Promise<string | null> {
+  if (!isNative()) {
+    const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: `${window.location.origin}/` } });
+    return error?.message ?? null;
+  }
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: { redirectTo: NATIVE_AUTH_REDIRECT, skipBrowserRedirect: true },
+  });
+  if (error || !data.url) return error?.message ?? "no url";
+  const { Browser } = await import("@capacitor/browser");
+  await Browser.open({ url: data.url, presentationStyle: "popover" });
+  return null;
+}
+
+/** Completes a native OAuth sign-in from mibale://auth-callback (implicit tokens or PKCE code). */
+export async function listenAuthCallback(onSignedIn: () => void): Promise<void> {
+  if (!isNative()) return;
+  const { App } = await import("@capacitor/app");
+  await App.addListener("appUrlOpen", async ({ url }) => {
+    if (!url.startsWith(NATIVE_AUTH_REDIRECT)) return;
+    const { Browser } = await import("@capacitor/browser");
+    void Browser.close().catch(() => undefined);
+    const u = new URL(url.replace(/^mibale:\/\//, "https://mibale.app/"));
+    const hash = new URLSearchParams(u.hash.slice(1));
+    const code = u.searchParams.get("code");
+    const access_token = hash.get("access_token");
+    const refresh_token = hash.get("refresh_token");
+    const { error } = code
+      ? await supabase.auth.exchangeCodeForSession(code)
+      : access_token && refresh_token
+        ? await supabase.auth.setSession({ access_token, refresh_token })
+        : { error: new Error(hash.get("error_description") ?? "missing tokens") };
+    if (error) toast.error("ההתחברות נכשלה, נסו שוב");
+    else onSignedIn();
   });
 }

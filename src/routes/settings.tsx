@@ -1,12 +1,14 @@
 import * as React from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { ChevronLeft, LocateFixed, LogOut, Moon, Shield, ShieldBan, Sun, SunMoon } from "lucide-react";
+import { ChevronLeft, FileText, LocateFixed, LogOut, Moon, Shield, ShieldBan, Sun, SunMoon, Trash2 } from "lucide-react";
 import { Page, PageHeader, Section } from "@/components/app-shell";
 import { RequireAuth } from "@/components/gates";
 import { Chip } from "@/components/chip";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { deleteMyAccount } from "@/lib/account";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
 import { getCurrentPosition } from "@/lib/native";
@@ -141,7 +143,79 @@ function Settings() {
       >
         <LogOut /> התנתקות
       </Button>
+      <Section title="מידע">
+        <div className="divide-y divide-border rounded-2xl bg-surface shadow-soft">
+          <Link to="/privacy" className="flex items-center justify-between p-4">
+            <span className="flex items-center gap-2 font-semibold">
+              <FileText className="size-5" /> מדיניות פרטיות
+            </span>
+            <ChevronLeft className="size-5 text-muted-foreground" />
+          </Link>
+          <Link to="/terms" className="flex items-center justify-between p-4">
+            <span className="flex items-center gap-2 font-semibold">
+              <FileText className="size-5" /> תנאי שימוש
+            </span>
+            <ChevronLeft className="size-5 text-muted-foreground" />
+          </Link>
+        </div>
+      </Section>
+
+      <DeleteAccount />
       <p className="mt-6 text-center text-xs text-muted-foreground">mibale · גרסה 0.1</p>
     </Page>
+  );
+}
+
+const CONFIRM_WORD = "מחיקה";
+
+/** Permanent in-app account deletion (store requirement). Asks to type a word to confirm. */
+function DeleteAccount() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [open, setOpen] = React.useState(false);
+  const [typed, setTyped] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+  return (
+    <>
+      <Button variant="ghost" size="lg" className="mt-3 w-full text-destructive hover:text-destructive" onClick={() => setOpen(true)}>
+        <Trash2 /> מחיקת החשבון
+      </Button>
+      <Dialog
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o);
+          if (!o) setTyped("");
+        }}
+      >
+        <DialogContent title="מחיקת החשבון לצמיתות" description="הפרופיל, התמונות, הסטוריז, ההודעות, האירועים שפתחת וההתאמות יימחקו ולא ניתן יהיה לשחזר אותם.">
+          <label htmlFor="confirm-delete" className="text-sm">
+            כדי לאשר, הקלידו <b>{CONFIRM_WORD}</b>
+          </label>
+          <input
+            id="confirm-delete"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            className="mt-2 h-12 w-full rounded-2xl bg-surface-soft px-4 outline-none"
+            autoComplete="off"
+          />
+          <Button
+            variant="destructive"
+            size="lg"
+            className="mt-4 w-full"
+            disabled={typed.trim() !== CONFIRM_WORD || busy}
+            onClick={async () => {
+              setBusy(true);
+              const ok = await deleteMyAccount(user!.id);
+              setBusy(false);
+              if (!ok) return void toast.error("המחיקה נכשלה, נסו שוב");
+              toast.success("החשבון נמחק. להתראות 👋");
+              void navigate({ to: "/", replace: true });
+            }}
+          >
+            {busy ? "מוחק…" : "מחיקה לצמיתות"}
+          </Button>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

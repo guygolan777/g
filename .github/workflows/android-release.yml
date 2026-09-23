@@ -1,0 +1,76 @@
+name: Android release (Google Play)
+
+# Builds the store version against the real Supabase project:
+#   • mibale-release.aab — upload to Google Play Console
+#   • mibale-release.apk — signed APK for installing directly
+# Run it from Actions → "Android release (Google Play)" → Run workflow.
+#
+# Repository secrets (Settings → Secrets and variables → Actions):
+#   VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY   – Supabase project (public values)
+#   VITE_SITE_URL                               – optional, e.g. https://mibale.app
+#   ANDROID_KEYSTORE_BASE64                     – upload keystore (.jks), base64-encoded
+#   ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
+#   GOOGLE_SERVICES_JSON                        – optional, Firebase config for push notifications
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: "Version shown in the store (e.g. 1.0.0)"
+        required: true
+        default: "1.0.0"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      VITE_SITE_URL: ${{ secrets.VITE_SITE_URL }}
+      VITE_PUSH_ENABLED: ${{ secrets.GOOGLE_SERVICES_JSON != '' && '1' || '' }}
+      MIBALE_VERSION_CODE: ${{ github.run_number }}
+      MIBALE_VERSION_NAME: ${{ inputs.version_name }}
+    steps:
+      - name: Check required secrets
+        run: |
+          missing=""
+          for v in VITE_SUPABASE_URL VITE_SUPABASE_ANON_KEY; do [ -n "${!v}" ] || missing="$missing $v"; done
+          [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ] || missing="$missing ANDROID_KEYSTORE_BASE64"
+          if [ -n "$missing" ]; then echo "::error::Missing repository secrets:$missing"; exit 1; fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - name: Build web bundle (SPA for Capacitor)
+        run: CAP_BUILD=1 npx vite build
+      - run: npx cap sync android
+      - name: Firebase config for push (optional)
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json; fi
+      - name: Decode upload keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          echo "MIBALE_KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+      - name: Build signed AAB and APK
+        working-directory: android
+        env:
+          MIBALE_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          MIBALE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          MIBALE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease assembleRelease --no-daemon
+      - run: |
+          cp android/app/build/outputs/bundle/release/app-release.aab mibale-release.aab
+          cp android/app/build/outputs/apk/release/app-release.apk mibale-release.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mibale-release-${{ inputs.version_name }}-${{ github.run_number }}
+          path: |
+            mibale-release.aab
+            mibale-release.apk

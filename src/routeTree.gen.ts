@@ -15,6 +15,7 @@ import { Route as BlockedRouteImport } from './routes/blocked'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as CommunitiesRouteImport } from './routes/communities'
 import { Route as ContactsRouteImport } from './routes/contacts'
+import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as HomeRouteImport } from './routes/home'
@@ -22,10 +23,12 @@ import { Route as LikesRouteImport } from './routes/likes'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MeRouteImport } from './routes/me'
 import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TicketsRouteImport } from './routes/tickets'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminCommunitiesRouteImport } from './routes/admin.communities'
@@ -82,6 +85,11 @@ const ContactsRoute = ContactsRouteImport.update({
   path: '/contacts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DeleteAccountRoute = DeleteAccountRouteImport.update({
+  id: '/delete-account',
+  path: '/delete-account',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DiscoverRoute = DiscoverRouteImport.update({
   id: '/discover',
   path: '/discover',
@@ -117,6 +125,11 @@ const NotificationsRoute = NotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -135,6 +148,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TicketsRoute = TicketsRouteImport.update({
@@ -270,6 +288,7 @@ export interface FileRoutesByFullPath {
   '/calendar': typeof CalendarRoute
   '/communities': typeof CommunitiesRoute
   '/contacts': typeof ContactsRoute
+  '/delete-account': typeof DeleteAccountRoute
   '/discover': typeof DiscoverRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/home': typeof HomeRoute
@@ -277,10 +296,12 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/me': typeof MeRouteWithChildren
   '/notifications': typeof NotificationsRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/tickets': typeof TicketsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/events': typeof AdminEventsRoute
@@ -313,16 +334,19 @@ export interface FileRoutesByTo {
   '/calendar': typeof CalendarRoute
   '/communities': typeof CommunitiesRoute
   '/contacts': typeof ContactsRoute
+  '/delete-account': typeof DeleteAccountRoute
   '/discover': typeof DiscoverRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/home': typeof HomeRoute
   '/likes': typeof LikesRoute
   '/login': typeof LoginRoute
   '/notifications': typeof NotificationsRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/tickets': typeof TicketsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/events': typeof AdminEventsRoute
@@ -357,6 +381,7 @@ export interface FileRoutesById {
   '/calendar': typeof CalendarRoute
   '/communities': typeof CommunitiesRoute
   '/contacts': typeof ContactsRoute
+  '/delete-account': typeof DeleteAccountRoute
   '/discover': typeof DiscoverRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/home': typeof HomeRoute
@@ -364,10 +389,12 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/me': typeof MeRouteWithChildren
   '/notifications': typeof NotificationsRoute
+  '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/tickets': typeof TicketsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/events': typeof AdminEventsRoute
@@ -403,6 +430,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/communities'
     | '/contacts'
+    | '/delete-account'
     | '/discover'
     | '/forgot-password'
     | '/home'
@@ -410,10 +438,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/me'
     | '/notifications'
+    | '/privacy'
     | '/reset-password'
     | '/search'
     | '/settings'
     | '/signup'
+    | '/terms'
     | '/tickets'
     | '/admin/communities'
     | '/admin/events'
@@ -446,16 +476,19 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/communities'
     | '/contacts'
+    | '/delete-account'
     | '/discover'
     | '/forgot-password'
     | '/home'
     | '/likes'
     | '/login'
     | '/notifications'
+    | '/privacy'
     | '/reset-password'
     | '/search'
     | '/settings'
     | '/signup'
+    | '/terms'
     | '/tickets'
     | '/admin/communities'
     | '/admin/events'
@@ -489,6 +522,7 @@ export interface FileRouteTypes {
     | '/calendar'
     | '/communities'
     | '/contacts'
+    | '/delete-account'
     | '/discover'
     | '/forgot-password'
     | '/home'
@@ -496,10 +530,12 @@ export interface FileRouteTypes {
     | '/login'
     | '/me'
     | '/notifications'
+    | '/privacy'
     | '/reset-password'
     | '/search'
     | '/settings'
     | '/signup'
+    | '/terms'
     | '/tickets'
     | '/admin/communities'
     | '/admin/events'
@@ -534,6 +570,7 @@ export interface RootRouteChildren {
   CalendarRoute: typeof CalendarRoute
   CommunitiesRoute: typeof CommunitiesRoute
   ContactsRoute: typeof ContactsRoute
+  DeleteAccountRoute: typeof DeleteAccountRoute
   DiscoverRoute: typeof DiscoverRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HomeRoute: typeof HomeRoute
@@ -541,10 +578,12 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MeRoute: typeof MeRouteWithChildren
   NotificationsRoute: typeof NotificationsRoute
+  PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SearchRoute: typeof SearchRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
+  TermsRoute: typeof TermsRoute
   TicketsRoute: typeof TicketsRoute
   ApiPushRoute: typeof ApiPushRoute
   ChatIdRoute: typeof ChatIdRoute
@@ -607,6 +646,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/delete-account': {
+      id: '/delete-account'
+      path: '/delete-account'
+      fullPath: '/delete-account'
+      preLoaderRoute: typeof DeleteAccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/discover': {
       id: '/discover'
       path: '/discover'
@@ -656,6 +702,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -682,6 +735,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tickets': {
@@ -911,6 +971,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarRoute: CalendarRoute,
   CommunitiesRoute: CommunitiesRoute,
   ContactsRoute: ContactsRoute,
+  DeleteAccountRoute: DeleteAccountRoute,
   DiscoverRoute: DiscoverRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HomeRoute: HomeRoute,
@@ -918,10 +979,12 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MeRoute: MeRouteWithChildren,
   NotificationsRoute: NotificationsRoute,
+  PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SearchRoute: SearchRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
+  TermsRoute: TermsRoute,
   TicketsRoute: TicketsRoute,
   ApiPushRoute: ApiPushRoute,
   ChatIdRoute: ChatIdRoute,

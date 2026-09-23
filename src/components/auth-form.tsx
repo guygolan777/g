@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
+import { signInWithProvider } from "@/lib/native";
 import { toast } from "sonner";
 
 export function AuthLayout({ title, subtitle, children, footer }: { title: string; subtitle?: string; children: React.ReactNode; footer?: React.ReactNode }) {
@@ -18,7 +18,19 @@ export function AuthLayout({ title, subtitle, children, footer }: { title: strin
   );
 }
 
-export function GoogleButton() {
+const GOOGLE_ICON = (
+  <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
+    <path fill="currentColor" d="M21.35 11.1H12v2.98h5.35c-.23 1.4-1.66 4.1-5.35 4.1-3.22 0-5.85-2.67-5.85-5.96S8.78 6.26 12 6.26c1.83 0 3.06.78 3.76 1.45l2.57-2.47C16.68 3.7 14.55 2.8 12 2.8 6.93 2.8 2.83 6.9 2.83 12s4.1 9.2 9.17 9.2c5.3 0 8.8-3.72 8.8-8.96 0-.6-.07-1.06-.15-1.54z" />
+  </svg>
+);
+
+const APPLE_ICON = (
+  <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
+    <path fill="currentColor" d="M16.37 12.6c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.73-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.87-.76-1.47.02-2.83.86-3.59 2.17-1.54 2.66-.39 6.6 1.1 8.76.74 1.06 1.61 2.25 2.75 2.2 1.11-.04 1.52-.71 2.86-.71 1.33 0 1.71.71 2.87.69 1.19-.02 1.94-1.07 2.66-2.14.84-1.23 1.19-2.42 1.2-2.48-.03-.01-2.3-.88-2.33-3.49zM14.2 6.13c.6-.74 1.02-1.76.91-2.78-.87.04-1.94.59-2.56 1.32-.56.64-1.05 1.69-.92 2.68.98.08 1.97-.49 2.57-1.22z" />
+  </svg>
+);
+
+function ProviderButton({ provider, label, icon }: { provider: "google" | "apple"; label: string; icon: React.ReactNode }) {
   const [loading, setLoading] = React.useState(false);
   return (
     <Button
@@ -29,21 +41,25 @@ export function GoogleButton() {
       disabled={loading}
       onClick={async () => {
         setLoading(true);
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: { redirectTo: `${window.location.origin}/` },
-        });
-        if (error) {
-          toast.error("ההתחברות עם Google נכשלה");
-          setLoading(false);
-        }
+        const error = await signInWithProvider(provider);
+        if (error) toast.error(`ההתחברות עם ${provider === "google" ? "Google" : "Apple"} נכשלה`);
+        // Native: the browser opens and control returns via the auth callback.
+        setTimeout(() => setLoading(false), error ? 0 : 4000);
       }}
     >
-      <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
-        <path fill="currentColor" d="M21.35 11.1H12v2.98h5.35c-.23 1.4-1.66 4.1-5.35 4.1-3.22 0-5.85-2.67-5.85-5.96S8.78 6.26 12 6.26c1.83 0 3.06.78 3.76 1.45l2.57-2.47C16.68 3.7 14.55 2.8 12 2.8 6.93 2.8 2.83 6.9 2.83 12s4.1 9.2 9.17 9.2c5.3 0 8.8-3.72 8.8-8.96 0-.6-.07-1.06-.15-1.54z" />
-      </svg>
-      המשך עם Google
+      {icon}
+      {label}
     </Button>
+  );
+}
+
+/** Google + Sign in with Apple (the App Store requires Apple whenever another social login is offered). */
+export function SocialButtons() {
+  return (
+    <div className="grid gap-3">
+      <ProviderButton provider="apple" label="המשך עם Apple" icon={APPLE_ICON} />
+      <ProviderButton provider="google" label="המשך עם Google" icon={GOOGLE_ICON} />
+    </div>
   );
 }
 

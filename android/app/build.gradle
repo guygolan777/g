@@ -7,8 +7,9 @@ android {
         applicationId "app.mibale"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // CI passes the run number so every store upload gets a higher versionCode.
+        versionCode (System.getenv("MIBALE_VERSION_CODE") ?: "1").toInteger()
+        versionName System.getenv("MIBALE_VERSION_NAME") ?: "1.0.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +17,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Upload key for Google Play, provided by CI secrets (see .github/workflows/android-release.yml).
+    signingConfigs {
+        release {
+            def ks = System.getenv("MIBALE_KEYSTORE_PATH")
+            if (ks) {
+                storeFile file(ks)
+                storePassword System.getenv("MIBALE_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("MIBALE_KEY_ALIAS")
+                keyPassword System.getenv("MIBALE_KEY_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         release {
+            if (System.getenv("MIBALE_KEYSTORE_PATH")) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

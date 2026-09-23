@@ -175,4 +175,26 @@ do $$ begin
 end $$;
 rollback;
 
+-- Account deletion: only your own account, everything of yours goes with it; guests can't call it.
+begin;
+set local role anon;
+do $$ begin
+  begin
+    perform public.delete_my_account();
+    raise exception 'FAIL: anon deleted an account';
+  exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+set local role authenticated;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000003');
+select public.delete_my_account();
+reset role;
+do $$ begin
+  if exists (select 1 from auth.users where id = '00000000-0000-4000-a000-000000000003') then raise exception 'FAIL: auth user not deleted'; end if;
+  if exists (select 1 from public.profiles where id = '00000000-0000-4000-a000-000000000003') then raise exception 'FAIL: profile not deleted'; end if;
+  if exists (select 1 from public.events where organizer_id = '00000000-0000-4000-a000-000000000003') then raise exception 'FAIL: events not deleted'; end if;
+  if (select count(*) from auth.users) < 9 then raise exception 'FAIL: deleted other accounts'; end if;
+end $$;
+rollback;
+
 select 'RLS tests passed' as result;

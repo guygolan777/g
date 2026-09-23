@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import * as React from "react";
-import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
+import { HeadContent, Outlet, Scripts, createRootRouteWithContext, useRouter } from "@tanstack/react-router";
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import appCss from "@/styles.css?url";
@@ -12,6 +12,7 @@ import { NotificationToaster } from "@/components/notification-toaster";
 import { GuestSignupBar } from "@/components/guest";
 import { ThemeScript, useThemeSync } from "@/lib/theme";
 import { seo } from "@/lib/seo";
+import { listenAuthCallback } from "@/lib/native";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
@@ -38,6 +39,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useThemeSync();
+  const router = useRouter();
+  React.useEffect(() => {
+    void listenAuthCallback(() => void router.navigate({ to: "/home" }));
+  }, [router]);
   React.useEffect(() => {
     if ("serviceWorker" in navigator && import.meta.env.PROD && import.meta.env.VITE_DEMO !== "1") {
       void navigator.serviceWorker.register("/sw.js").catch(() => undefined);

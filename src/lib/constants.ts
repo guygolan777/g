@@ -16,3 +16,7 @@ export const EVENT_COLUMNS =
 /** Event columns for guests: name, image, date and time only. */
 export const EVENT_GUEST_COLUMNS: string =
   "id, community_id, title, description, image_url, starts_at, ends_at, category, subcategory, price, city, seats, is_online";
+
+/** Public contact for privacy / deletion requests (shown on /privacy, /terms, /delete-account). */
+export const CONTACT_EMAIL = (import.meta.env.VITE_CONTACT_EMAIL as string | undefined) ?? "support@mibale.app";
+export const LEGAL_UPDATED = "23 בספטמבר 2026";
