@@ -1,8 +1,9 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { DEMO_ANON_KEY, DEMO_URL, DemoSocket, demoFetch, isDemo, seedDemoSession } from "./demo";
 
-const url = isDemo ? DEMO_URL : ((import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "");
-const anonKey = isDemo ? DEMO_ANON_KEY : ((import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ?? "");
+// Values pasted into hosting dashboards often carry stray spaces/newlines or a trailing slash.
+const url = isDemo ? DEMO_URL : ((import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "").trim().replace(/\/+$/, "");
+const anonKey = isDemo ? DEMO_ANON_KEY : ((import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ?? "").trim();
 
 export const isSupabaseConfigured = Boolean(url && anonKey);
 
