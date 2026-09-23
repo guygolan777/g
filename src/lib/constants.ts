@@ -1,7 +1,7 @@
 export const UNLIMITED_SEATS = 9999;
 export const MAX_PROFILE_PHOTOS = 6;
 export const APP_NAME = "mibale";
-export const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined) ?? "https://mibale.app";
+export const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined) || "https://mibale.app";
 
 /** Columns other members may read (sensitive columns are not granted). */
 export const PROFILE_COLUMNS =
