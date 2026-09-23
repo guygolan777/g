@@ -1,0 +1,14 @@
+node_modules
+dist
+.output
+.nitro
+.tanstack
+.vinxi
+.env
+.env.local
+*.log
+.DS_Store
+android/app/build
+android/.gradle
+ios/App/Pods
+ios/App/build

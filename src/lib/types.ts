@@ -1,0 +1,140 @@
+export type Gender = "female" | "male" | "other";
+export type AudienceGender = "all" | "female" | "male";
+export type ParticipantStatus = "pending" | "approved" | "declined";
+export type MessageKind = "text" | "voice" | "image" | "story_reply" | "system";
+export type Recurrence = "none" | "daily" | "weekly" | "biweekly" | "monthly";
+
+export type Profile = {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+  photos?: string[];
+  bio?: string;
+  gender?: Gender | null;
+  birth_year?: number | null;
+  city?: string | null;
+  hobbies?: string[];
+  traits?: string[];
+  dating_enabled?: boolean;
+  onboarded?: boolean;
+  banned_at?: string | null;
+  created_at?: string;
+};
+
+export type ProfileSettings = {
+  birth_date: string | null;
+  show_online: boolean;
+  pref_min_age: number;
+  pref_max_age: number;
+  pref_gender: AudienceGender;
+  pref_distance_km: number;
+  notify_messages: boolean;
+  notify_events: boolean;
+  notify_social: boolean;
+  is_admin: boolean;
+  is_moderator: boolean;
+};
+
+export type EventRow = {
+  id: string;
+  organizer_id?: string;
+  community_id?: string | null;
+  title: string;
+  description?: string;
+  category: string;
+  subcategory: string | null;
+  image_url: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  is_online?: boolean;
+  location_name?: string | null;
+  city?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  seats?: number;
+  auto_approve?: boolean;
+  recurrence?: Recurrence;
+  recurrence_parent_id?: string | null;
+  min_age?: number | null;
+  max_age?: number | null;
+  gender_target?: AudienceGender;
+  created_at?: string;
+};
+
+export type Participant = {
+  event_id: string;
+  profile_id: string;
+  status: ParticipantStatus;
+  created_at?: string;
+};
+
+export type Community = {
+  id: string;
+  founder_id: string;
+  name: string;
+  description: string;
+  hobby: string;
+  city: string | null;
+  image_url: string | null;
+  audience_gender: AudienceGender;
+  min_age: number;
+  max_age: number;
+  auto_approve: boolean;
+  created_at: string;
+};
+
+export type Story = {
+  id: string;
+  author_id: string;
+  event_id: string | null;
+  media_url: string;
+  media_type: "image" | "video";
+  caption: string;
+  created_at: string;
+  expires_at: string;
+};
+
+export type DirectMessage = {
+  id: string;
+  sender_id: string;
+  recipient_id: string;
+  kind: MessageKind;
+  body: string;
+  media_url: string | null;
+  story_id: string | null;
+  read_at: string | null;
+  created_at: string;
+};
+
+export type GroupMessage = {
+  id: string;
+  sender_id: string;
+  kind: MessageKind;
+  body: string;
+  media_url: string | null;
+  created_at: string;
+};
+
+export type Notification = {
+  id: string;
+  recipient_id: string;
+  actor_id: string | null;
+  type: string;
+  title: string;
+  body: string;
+  link: string | null;
+  data: Record<string, unknown>;
+  read_at: string | null;
+  created_at: string;
+};
+
+export type Report = {
+  id: string;
+  reporter_id: string;
+  target_type: "profile" | "event" | "community" | "story" | "message" | "post";
+  target_id: string;
+  reason: string;
+  details: string;
+  status: "open" | "resolved" | "dismissed";
+  created_at: string;
+};

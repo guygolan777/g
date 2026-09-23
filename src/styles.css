@@ -1,0 +1,246 @@
+@import url("https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   mibale design system — semantic tokens only (oklch).
+   Components must never hardcode colors; use these tokens.
+   ============================================================ */
+:root {
+  --radius: 0.875rem;
+
+  --background: oklch(0.985 0.004 250);
+  --foreground: oklch(0.22 0.02 260);
+  --surface: oklch(1 0 0);
+  --surface-foreground: oklch(0.22 0.02 260);
+  --surface-soft: oklch(0.965 0.008 250);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.02 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.02 260);
+
+  --primary: oklch(0.66 0.19 250);
+  --primary-foreground: oklch(0.99 0 0);
+  --primary-soft: oklch(0.95 0.035 250);
+
+  --secondary: oklch(0.96 0.01 250);
+  --secondary-foreground: oklch(0.3 0.03 260);
+  --muted: oklch(0.96 0.008 250);
+  --muted-foreground: oklch(0.55 0.02 260);
+  --accent: oklch(0.95 0.03 250);
+  --accent-foreground: oklch(0.3 0.08 255);
+
+  --event: oklch(0.62 0.17 245);
+  --event-foreground: oklch(0.99 0 0);
+  --event-soft: oklch(0.95 0.035 245);
+
+  --partner: oklch(0.76 0.16 65);
+  --partner-foreground: oklch(0.25 0.05 60);
+  --partner-soft: oklch(0.96 0.045 75);
+
+  --like: oklch(0.66 0.25 350);
+  --like-foreground: oklch(0.99 0 0);
+  --like-soft: oklch(0.95 0.04 350);
+
+  --teal: oklch(0.7 0.13 185);
+  --teal-foreground: oklch(0.99 0 0);
+  --teal-soft: oklch(0.95 0.035 185);
+
+  --violet: oklch(0.6 0.21 295);
+  --violet-foreground: oklch(0.99 0 0);
+  --violet-soft: oklch(0.95 0.035 295);
+
+  --success: oklch(0.68 0.16 150);
+  --success-foreground: oklch(0.99 0 0);
+  --success-soft: oklch(0.95 0.04 150);
+
+  --destructive: oklch(0.62 0.22 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --destructive-soft: oklch(0.95 0.035 25);
+
+  --border: oklch(0.92 0.01 250);
+  --input: oklch(0.92 0.01 250);
+  --ring: oklch(0.66 0.19 250);
+
+  --overlay: oklch(0.15 0.02 260 / 0.55);
+  --scrim-foreground: oklch(0.99 0 0);
+
+  --gradient-brand: linear-gradient(120deg, oklch(0.66 0.19 250), oklch(0.6 0.21 295) 55%, oklch(0.66 0.25 350));
+  --gradient-ring: linear-gradient(45deg, oklch(0.84 0.16 85), oklch(0.72 0.2 30) 50%, oklch(0.66 0.25 350));
+  --gradient-scrim: linear-gradient(to top, oklch(0.12 0.02 260 / 0.85), oklch(0.12 0.02 260 / 0) 70%);
+
+  --shadow-soft: 0 1px 2px oklch(0.2 0.02 260 / 0.04), 0 6px 20px -6px oklch(0.2 0.02 260 / 0.12);
+  --shadow-lift: 0 2px 6px oklch(0.2 0.02 260 / 0.06), 0 16px 40px -12px oklch(0.2 0.02 260 / 0.2);
+}
+
+.dark {
+  --background: oklch(0.17 0.015 260);
+  --foreground: oklch(0.95 0.005 250);
+  --surface: oklch(0.22 0.018 260);
+  --surface-foreground: oklch(0.95 0.005 250);
+  --surface-soft: oklch(0.26 0.02 260);
+
+  --card: oklch(0.22 0.018 260);
+  --card-foreground: oklch(0.95 0.005 250);
+  --popover: oklch(0.24 0.02 260);
+  --popover-foreground: oklch(0.95 0.005 250);
+
+  --primary: oklch(0.7 0.17 250);
+  --primary-foreground: oklch(0.15 0.02 260);
+  --primary-soft: oklch(0.3 0.06 250);
+
+  --secondary: oklch(0.28 0.02 260);
+  --secondary-foreground: oklch(0.92 0.01 250);
+  --muted: oklch(0.27 0.018 260);
+  --muted-foreground: oklch(0.7 0.015 250);
+  --accent: oklch(0.3 0.04 255);
+  --accent-foreground: oklch(0.92 0.02 250);
+
+  --event: oklch(0.7 0.15 245);
+  --event-foreground: oklch(0.15 0.02 260);
+  --event-soft: oklch(0.3 0.06 245);
+
+  --partner: oklch(0.8 0.14 70);
+  --partner-foreground: oklch(0.2 0.04 60);
+  --partner-soft: oklch(0.32 0.06 70);
+
+  --like: oklch(0.72 0.21 350);
+  --like-foreground: oklch(0.15 0.02 260);
+  --like-soft: oklch(0.32 0.07 350);
+
+  --teal: oklch(0.75 0.12 185);
+  --teal-foreground: oklch(0.15 0.02 260);
+  --teal-soft: oklch(0.3 0.05 185);
+
+  --violet: oklch(0.7 0.18 295);
+  --violet-foreground: oklch(0.15 0.02 260);
+  --violet-soft: oklch(0.3 0.07 295);
+
+  --success: oklch(0.74 0.15 150);
+  --success-foreground: oklch(0.15 0.02 260);
+  --success-soft: oklch(0.3 0.06 150);
+
+  --destructive: oklch(0.68 0.2 25);
+  --destructive-foreground: oklch(0.15 0.02 260);
+  --destructive-soft: oklch(0.32 0.07 25);
+
+  --border: oklch(0.3 0.02 260);
+  --input: oklch(0.32 0.02 260);
+  --ring: oklch(0.7 0.17 250);
+
+  --overlay: oklch(0.05 0.01 260 / 0.7);
+
+  --shadow-soft: 0 1px 2px oklch(0 0 0 / 0.3), 0 6px 20px -6px oklch(0 0 0 / 0.5);
+  --shadow-lift: 0 2px 6px oklch(0 0 0 / 0.35), 0 16px 40px -12px oklch(0 0 0 / 0.6);
+}
+
+@theme inline {
+  --font-sans: "Heebo", "Poppins", system-ui, sans-serif;
+  --font-display: "Poppins", "Heebo", system-ui, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 3px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 6px);
+  --radius-2xl: calc(var(--radius) + 12px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-foreground: var(--surface-foreground);
+  --color-surface-soft: var(--surface-soft);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-event: var(--event);
+  --color-event-foreground: var(--event-foreground);
+  --color-event-soft: var(--event-soft);
+  --color-partner: var(--partner);
+  --color-partner-foreground: var(--partner-foreground);
+  --color-partner-soft: var(--partner-soft);
+  --color-like: var(--like);
+  --color-like-foreground: var(--like-foreground);
+  --color-like-soft: var(--like-soft);
+  --color-teal: var(--teal);
+  --color-teal-foreground: var(--teal-foreground);
+  --color-teal-soft: var(--teal-soft);
+  --color-violet: var(--violet);
+  --color-violet-foreground: var(--violet-foreground);
+  --color-violet-soft: var(--violet-soft);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-overlay: var(--overlay);
+  --color-scrim-foreground: var(--scrim-foreground);
+
+  --shadow-soft: var(--shadow-soft);
+  --shadow-lift: var(--shadow-lift);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    overscroll-behavior-y: none;
+  }
+  h1, h2, h3 {
+    @apply font-display;
+  }
+}
+
+@utility bg-gradient-brand {
+  background-image: var(--gradient-brand);
+}
+@utility bg-gradient-ring {
+  background-image: var(--gradient-ring);
+}
+@utility bg-gradient-scrim {
+  background-image: var(--gradient-scrim);
+}
+@utility text-gradient-brand {
+  background-image: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+@utility pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+}
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+@utility dashed-grid {
+  background-image: repeating-linear-gradient(90deg, var(--border) 0 6px, transparent 6px 12px);
+  background-size: 100% 1px;
+  background-repeat: no-repeat;
+}
