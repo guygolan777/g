@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
 import { ageFromBirthDate } from "@/lib/format";
 import { seo } from "@/lib/seo";
+import { firstImage } from "@/lib/utils";
 import type { Gender } from "@/lib/types";
 
 export const Route = createFileRoute("/onboarding/profile")({
@@ -49,7 +50,7 @@ function Step1() {
     setSaving(true);
     const { error } = await supabase
       .from("profiles")
-      .update({ name: name.trim(), birth_date: birth, gender, photos, avatar_url: photos[0] ?? null })
+      .update({ name: name.trim(), birth_date: birth, gender, photos, avatar_url: firstImage(photos) })
       .eq("id", user!.id);
     setSaving(false);
     if (error) return void toast.error("השמירה נכשלה");

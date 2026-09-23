@@ -72,12 +72,19 @@ export function PhotoGridPicker({ userId, value, onChange }: { userId: string; v
     setBusy(true);
     try {
       const room = MAX_PROFILE_PHOTOS - value.length;
-      const urls = await Promise.all([...files].slice(0, room).map((f) => uploadMedia(userId, f, "photos")));
+      const ok: File[] = [];
+      for (const f of [...files].slice(0, room)) {
+        const problem = f.type.startsWith("video/") ? await videoProblem(f) : null;
+        if (problem) toast.error(problem);
+        else ok.push(f);
+      }
+      const urls = await Promise.all(ok.map((f) => uploadMedia(userId, f, "photos")));
       onChange([...value, ...urls]);
     } catch {
-      toast.error("העלאת התמונה נכשלה");
+      toast.error("ההעלאה נכשלה");
     } finally {
       setBusy(false);
+      if (input.current) input.current.value = "";
     }
   }
   return (
@@ -98,7 +105,7 @@ export function PhotoGridPicker({ userId, value, onChange }: { userId: string; v
                   type="button"
                   className="absolute top-1.5 left-1.5 grid size-6 place-items-center rounded-full bg-surface/90"
                   onClick={() => onChange(value.filter((_, j) => j !== i))}
-                  aria-label="הסרת תמונה"
+                  aria-label="הסרה"
                 >
                   <X className="size-3.5" />
                 </button>
@@ -114,8 +121,34 @@ export function PhotoGridPicker({ userId, value, onChange }: { userId: string; v
         );
       })}
       <input ref={input} type="file" accept="image/*,video/*" multiple hidden onChange={(e) => void add(e.target.files)} />
+      <p className="col-span-3 text-xs text-muted-foreground">
+        אפשר להעלות תמונות וגם סרטון קצר (עד {MAX_PROFILE_VIDEO_SECONDS} שניות). התמונה הראשונה היא תמונת הפרופיל.
+      </p>
     </div>
   );
+}
+
+export const MAX_PROFILE_VIDEO_SECONDS = 15;
+const MAX_PROFILE_VIDEO_MB = 20;
+
+/** Reads the clip's duration in the browser; returns an error message or null when it's fine. */
+function videoProblem(file: File): Promise<string | null> {
+  if (file.size > MAX_PROFILE_VIDEO_MB * 1024 * 1024) return Promise.resolve(`הסרטון גדול מדי (עד ${MAX_PROFILE_VIDEO_MB}MB)`);
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const v = document.createElement("video");
+    v.preload = "metadata";
+    const done = (msg: string | null) => {
+      URL.revokeObjectURL(url);
+      resolve(msg);
+    };
+    // Some recorders (e.g. browser MediaRecorder webm) report Infinity/NaN — let those through; size is capped.
+    v.onloadedmetadata = () =>
+      done(Number.isFinite(v.duration) && v.duration > MAX_PROFILE_VIDEO_SECONDS + 0.5 ? `הסרטון ארוך מדי — עד ${MAX_PROFILE_VIDEO_SECONDS} שניות` : null);
+    // Formats the browser can't read (e.g. some iPhone HEVC clips) are allowed through; size is already capped.
+    v.onerror = () => done(null);
+    v.src = url;
+  });
 }
 
 /** Swipeable photo carousel (scroll-snap) with dots. */
@@ -135,7 +168,13 @@ export function PhotoCarousel({ photos, className, children }: { photos: string[
       >
         {list.map((p, i) => (
           <div key={i} className="size-full shrink-0 snap-center">
-            {p ? <SafeImg src={p} alt="" className="size-full object-cover" /> : <div className="grid size-full place-items-center text-5xl">🙂</div>}
+            {p && isVideoUrl(p) ? (
+              <video src={p} autoPlay={i === idx} muted loop playsInline preload="metadata" className="size-full object-cover" />
+            ) : p ? (
+              <SafeImg src={p} alt="" className="size-full object-cover" />
+            ) : (
+              <div className="grid size-full place-items-center text-5xl">🙂</div>
+            )}
           </div>
         ))}
       </div>
