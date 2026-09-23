@@ -143,4 +143,34 @@ do $$ begin
 end $$;
 rollback;
 
+-- Heart off: can't swipe, can't be swiped, romantic stories hidden both ways; likes & matches stay readable.
+begin;
+update public.profiles set dating_enabled = true where id in ('00000000-0000-4000-a000-000000000001', '00000000-0000-4000-a000-000000000006');
+insert into public.romantic_likes (liker_id, liked_id, action) values ('00000000-0000-4000-a000-000000000001', '00000000-0000-4000-a000-000000000006', 'like');
+update public.profiles set dating_enabled = false where id = '00000000-0000-4000-a000-000000000002'; -- Maya closes her heart
+set local role authenticated;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000006');
+do $$ begin
+  begin
+    insert into public.romantic_likes (liker_id, liked_id) values (auth.uid(), '00000000-0000-4000-a000-000000000002');
+    raise exception 'FAIL: liked someone whose heart is off';
+  exception when insufficient_privilege then null; end;
+  if exists (select 1 from public.stories where is_romantic) then raise exception 'FAIL: closed author''s romantic story visible'; end if;
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000002');
+do $$ begin
+  begin
+    insert into public.romantic_likes (liker_id, liked_id) values (auth.uid(), '00000000-0000-4000-a000-000000000006');
+    raise exception 'FAIL: swiped with heart off';
+  exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+update public.profiles set dating_enabled = false where id = '00000000-0000-4000-a000-000000000001';
+set local role authenticated;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000001');
+do $$ begin
+  if not exists (select 1 from public.romantic_likes where liker_id = auth.uid()) then raise exception 'FAIL: "liked" list lost with heart off'; end if;
+end $$;
+rollback;
+
 select 'RLS tests passed' as result;
