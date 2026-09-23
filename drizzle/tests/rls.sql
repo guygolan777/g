@@ -197,4 +197,64 @@ do $$ begin
 end $$;
 rollback;
 
+-- Phones & contacts: matching by hash only, notify on join, blocks respected, guests can't call.
+begin;
+update auth.users set phone = '972501110001', phone_confirmed_at = now() where id = '00000000-0000-4000-a000-000000000002';
+update auth.users set phone = '972501110002', phone_confirmed_at = now() where id = '00000000-0000-4000-a000-000000000003';
+do $$ begin
+  if not exists (select 1 from app_private.phone_hashes where profile_id = '00000000-0000-4000-a000-000000000002' and phone_hash = app_private.phone_hash('972501110001'))
+     or not exists (select 1 from app_private.phone_hashes where profile_id = '00000000-0000-4000-a000-000000000003' and phone_hash = app_private.phone_hash('972501110002')) then
+    raise exception 'FAIL: phone hashes not stored'; end if;
+  if (select count(*) from app_private.phone_hashes) <> 10 then raise exception 'FAIL: seed phones not hashed'; end if;
+  if exists (select 1 from app_private.phone_hashes where phone_hash like '9725%') then raise exception 'FAIL: raw phone stored'; end if;
+end $$;
+set local role anon;
+do $$ begin
+  begin
+    perform public.sync_contacts(array[app_private.phone_hash('972501110001')]);
+    raise exception 'FAIL: anon synced contacts';
+  exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+set local role authenticated;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000001');
+do $$
+declare _n integer;
+begin
+  select count(*) into _n from public.sync_contacts(array[
+    app_private.phone_hash('972501110001'), app_private.phone_hash('972501110002'),
+    app_private.phone_hash('972509999999'), 'not-a-hash']);
+  if _n <> 2 then raise exception 'FAIL: expected 2 contact matches, got %', _n; end if;
+  if public.my_contacts_count() <> 3 then raise exception 'FAIL: expected 3 stored hashes, got %', public.my_contacts_count(); end if;
+  begin
+    perform 1 from app_private.contact_hashes;
+    raise exception 'FAIL: contact_hashes readable by client';
+  exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+-- Someone Noa has saved (…9999999) signs up later → Noa is notified.
+update auth.users set phone = '972509999999', phone_confirmed_at = now() where id = '00000000-0000-4000-a000-000000000004';
+do $$ begin
+  if not exists (select 1 from public.notifications where recipient_id = '00000000-0000-4000-a000-000000000001'
+                 and type = 'contact_joined' and actor_id = '00000000-0000-4000-a000-000000000004') then
+    raise exception 'FAIL: no contact_joined notification'; end if;
+end $$;
+-- Blocked people are never matched.
+insert into public.blocks (blocker_id, blocked_id) values ('00000000-0000-4000-a000-000000000002', '00000000-0000-4000-a000-000000000001');
+set local role authenticated;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000001');
+do $$ begin
+  if exists (select 1 from public.sync_contacts(array[app_private.phone_hash('972501110001')])) then
+    raise exception 'FAIL: blocked contact matched'; end if;
+  if public.clear_my_contacts() < 3 then raise exception 'FAIL: clear contacts'; end if;
+  begin
+    perform public.sync_contacts(array_fill('a'::text, array[3001]));
+    raise exception 'FAIL: oversized sync accepted';
+  exception when invalid_parameter_value then null; end;
+end $$;
+do $$ begin
+  if public.my_contacts_count() <> 0 then raise exception 'FAIL: contacts left after clear'; end if;
+end $$;
+rollback;
+
 select 'RLS tests passed' as result;

@@ -29,6 +29,8 @@ jobs:
       VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       VITE_SITE_URL: ${{ secrets.VITE_SITE_URL }}
+      VITE_PHONE_VERIFICATION: ${{ secrets.VITE_PHONE_VERIFICATION }}
+      VITE_AUTH_PROVIDERS: ${{ secrets.VITE_AUTH_PROVIDERS }}
       VITE_PUSH_ENABLED: ${{ secrets.GOOGLE_SERVICES_JSON != '' && '1' || '' }}
       MIBALE_VERSION_CODE: ${{ github.run_number }}
       MIBALE_VERSION_NAME: ${{ inputs.version_name }}

@@ -15,6 +15,7 @@ const PREF_BY_TYPE: Record<string, "notify_messages" | "notify_events" | "notify
   community_join_request: "notify_social",
   community_approved: "notify_social",
   follow: "notify_social",
+  contact_joined: "notify_social",
   story_like: "notify_social",
   match: "notify_social",
   date_invite: "notify_messages",

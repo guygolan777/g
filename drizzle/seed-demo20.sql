@@ -243,3 +243,9 @@ from (values
   ('00000000-0000-4000-b000-000000000013', '00000000-0000-4000-b000-000000000002', 'איזה מסלול בכרמל את הכי אוהבת?', 45)
 ) as v(s, r, body, ago)
 where not exists (select 1 from public.direct_messages m where m.sender_id = v.s::uuid and m.body = v.body);
+
+-- Demo users can't receive SMS: give them fake, already-verified mobile numbers (050-000-00NN)
+-- so the phone-verification step doesn't block them. Real numbers are never overwritten.
+update auth.users
+set phone = '97250000' || lpad(split_part(id::text, '-', 5)::bigint::text, 4, '0'), phone_confirmed_at = now()
+where id::text like '00000000-0000-4000-b000-%' and (phone is null or phone = '');

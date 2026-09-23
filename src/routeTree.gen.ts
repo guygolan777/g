@@ -21,6 +21,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as LikesRouteImport } from './routes/likes'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LoginSmsRouteImport } from './routes/login-sms'
 import { Route as MeRouteImport } from './routes/me'
 import { Route as NearbyRouteImport } from './routes/nearby'
 import { Route as NotificationsRouteImport } from './routes/notifications'
@@ -48,6 +49,7 @@ import { Route as MeActivityRouteImport } from './routes/me.activity'
 import { Route as MeEditRouteImport } from './routes/me.edit'
 import { Route as OnboardingAboutRouteImport } from './routes/onboarding.about'
 import { Route as OnboardingLocationRouteImport } from './routes/onboarding.location'
+import { Route as OnboardingPhoneRouteImport } from './routes/onboarding.phone'
 import { Route as OnboardingProfileRouteImport } from './routes/onboarding.profile'
 import { Route as ProfileIdRouteImport } from './routes/profile.$id'
 import { Route as ScanIdRouteImport } from './routes/scan.$id'
@@ -114,6 +116,11 @@ const LikesRoute = LikesRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginSmsRoute = LoginSmsRouteImport.update({
+  id: '/login-sms',
+  path: '/login-sms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MeRoute = MeRouteImport.update({
@@ -251,6 +258,11 @@ const OnboardingLocationRoute = OnboardingLocationRouteImport.update({
   path: '/onboarding/location',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingPhoneRoute = OnboardingPhoneRouteImport.update({
+  id: '/onboarding/phone',
+  path: '/onboarding/phone',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardingProfileRoute = OnboardingProfileRouteImport.update({
   id: '/onboarding/profile',
   path: '/onboarding/profile',
@@ -300,6 +312,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof HomeRoute
   '/likes': typeof LikesRoute
   '/login': typeof LoginRoute
+  '/login-sms': typeof LoginSmsRoute
   '/me': typeof MeRouteWithChildren
   '/nearby': typeof NearbyRoute
   '/notifications': typeof NotificationsRoute
@@ -324,6 +337,7 @@ export interface FileRoutesByFullPath {
   '/me/edit': typeof MeEditRoute
   '/onboarding/about': typeof OnboardingAboutRoute
   '/onboarding/location': typeof OnboardingLocationRoute
+  '/onboarding/phone': typeof OnboardingPhoneRoute
   '/onboarding/profile': typeof OnboardingProfileRoute
   '/profile/$id': typeof ProfileIdRoute
   '/scan/$id': typeof ScanIdRoute
@@ -347,6 +361,7 @@ export interface FileRoutesByTo {
   '/home': typeof HomeRoute
   '/likes': typeof LikesRoute
   '/login': typeof LoginRoute
+  '/login-sms': typeof LoginSmsRoute
   '/nearby': typeof NearbyRoute
   '/notifications': typeof NotificationsRoute
   '/privacy': typeof PrivacyRoute
@@ -370,6 +385,7 @@ export interface FileRoutesByTo {
   '/me/edit': typeof MeEditRoute
   '/onboarding/about': typeof OnboardingAboutRoute
   '/onboarding/location': typeof OnboardingLocationRoute
+  '/onboarding/phone': typeof OnboardingPhoneRoute
   '/onboarding/profile': typeof OnboardingProfileRoute
   '/profile/$id': typeof ProfileIdRoute
   '/scan/$id': typeof ScanIdRoute
@@ -395,6 +411,7 @@ export interface FileRoutesById {
   '/home': typeof HomeRoute
   '/likes': typeof LikesRoute
   '/login': typeof LoginRoute
+  '/login-sms': typeof LoginSmsRoute
   '/me': typeof MeRouteWithChildren
   '/nearby': typeof NearbyRoute
   '/notifications': typeof NotificationsRoute
@@ -419,6 +436,7 @@ export interface FileRoutesById {
   '/me/edit': typeof MeEditRoute
   '/onboarding/about': typeof OnboardingAboutRoute
   '/onboarding/location': typeof OnboardingLocationRoute
+  '/onboarding/phone': typeof OnboardingPhoneRoute
   '/onboarding/profile': typeof OnboardingProfileRoute
   '/profile/$id': typeof ProfileIdRoute
   '/scan/$id': typeof ScanIdRoute
@@ -445,6 +463,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/likes'
     | '/login'
+    | '/login-sms'
     | '/me'
     | '/nearby'
     | '/notifications'
@@ -469,6 +488,7 @@ export interface FileRouteTypes {
     | '/me/edit'
     | '/onboarding/about'
     | '/onboarding/location'
+    | '/onboarding/phone'
     | '/onboarding/profile'
     | '/profile/$id'
     | '/scan/$id'
@@ -492,6 +512,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/likes'
     | '/login'
+    | '/login-sms'
     | '/nearby'
     | '/notifications'
     | '/privacy'
@@ -515,6 +536,7 @@ export interface FileRouteTypes {
     | '/me/edit'
     | '/onboarding/about'
     | '/onboarding/location'
+    | '/onboarding/phone'
     | '/onboarding/profile'
     | '/profile/$id'
     | '/scan/$id'
@@ -539,6 +561,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/likes'
     | '/login'
+    | '/login-sms'
     | '/me'
     | '/nearby'
     | '/notifications'
@@ -563,6 +586,7 @@ export interface FileRouteTypes {
     | '/me/edit'
     | '/onboarding/about'
     | '/onboarding/location'
+    | '/onboarding/phone'
     | '/onboarding/profile'
     | '/profile/$id'
     | '/scan/$id'
@@ -588,6 +612,7 @@ export interface RootRouteChildren {
   HomeRoute: typeof HomeRoute
   LikesRoute: typeof LikesRoute
   LoginRoute: typeof LoginRoute
+  LoginSmsRoute: typeof LoginSmsRoute
   MeRoute: typeof MeRouteWithChildren
   NearbyRoute: typeof NearbyRoute
   NotificationsRoute: typeof NotificationsRoute
@@ -606,6 +631,7 @@ export interface RootRouteChildren {
   EventNewRoute: typeof EventNewRoute
   OnboardingAboutRoute: typeof OnboardingAboutRoute
   OnboardingLocationRoute: typeof OnboardingLocationRoute
+  OnboardingPhoneRoute: typeof OnboardingPhoneRoute
   OnboardingProfileRoute: typeof OnboardingProfileRoute
   ProfileIdRoute: typeof ProfileIdRoute
   ScanIdRoute: typeof ScanIdRoute
@@ -699,6 +725,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login-sms': {
+      id: '/login-sms'
+      path: '/login-sms'
+      fullPath: '/login-sms'
+      preLoaderRoute: typeof LoginSmsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/me': {
@@ -890,6 +923,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingLocationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding/phone': {
+      id: '/onboarding/phone'
+      path: '/onboarding/phone'
+      fullPath: '/onboarding/phone'
+      preLoaderRoute: typeof OnboardingPhoneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/onboarding/profile': {
       id: '/onboarding/profile'
       path: '/onboarding/profile'
@@ -997,6 +1037,7 @@ const rootRouteChildren: RootRouteChildren = {
   HomeRoute: HomeRoute,
   LikesRoute: LikesRoute,
   LoginRoute: LoginRoute,
+  LoginSmsRoute: LoginSmsRoute,
   MeRoute: MeRouteWithChildren,
   NearbyRoute: NearbyRoute,
   NotificationsRoute: NotificationsRoute,
@@ -1015,6 +1056,7 @@ const rootRouteChildren: RootRouteChildren = {
   EventNewRoute: EventNewRoute,
   OnboardingAboutRoute: OnboardingAboutRoute,
   OnboardingLocationRoute: OnboardingLocationRoute,
+  OnboardingPhoneRoute: OnboardingPhoneRoute,
   OnboardingProfileRoute: OnboardingProfileRoute,
   ProfileIdRoute: ProfileIdRoute,
   ScanIdRoute: ScanIdRoute,

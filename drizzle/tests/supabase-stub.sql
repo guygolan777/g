@@ -8,7 +8,8 @@ create table auth.users (
   id uuid primary key, instance_id uuid, aud text, role text, email text, encrypted_password text,
   email_confirmed_at timestamptz, raw_app_meta_data jsonb default '{}', raw_user_meta_data jsonb default '{}',
   created_at timestamptz default now(), updated_at timestamptz default now(),
-  confirmation_token text, recovery_token text, email_change_token_new text, email_change text
+  confirmation_token text, recovery_token text, email_change_token_new text, email_change text,
+  phone text unique, phone_confirmed_at timestamptz
 );
 create table auth.identities (id uuid primary key, provider_id text, user_id uuid, identity_data jsonb, provider text,
   last_sign_in_at timestamptz, created_at timestamptz, updated_at timestamptz);

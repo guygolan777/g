@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { ChevronLeft, FileText, LocateFixed, LogOut, Moon, Shield, ShieldBan, Sun, SunMoon, Trash2 } from "lucide-react";
+import { BookUser, ChevronLeft, FileText, Smartphone, LocateFixed, LogOut, Moon, Shield, ShieldBan, Sun, SunMoon, Trash2 } from "lucide-react";
 import { Page, PageHeader, Section } from "@/components/app-shell";
 import { RequireAuth } from "@/components/gates";
 import { Chip } from "@/components/chip";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { deleteMyAccount } from "@/lib/account";
+import { PHONE_REQUIRED, formatPhone } from "@/lib/phone";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
 import { getCurrentPosition } from "@/lib/native";
@@ -112,6 +113,25 @@ function Settings() {
               <LocateFixed /> עדכון
             </Button>
           </Row>
+          {PHONE_REQUIRED && (
+            <Link to="/onboarding/phone" search={{ next: "/settings" }} className="flex items-center justify-between p-4">
+              <span>
+                <span className="flex items-center gap-2 font-semibold">
+                  <Smartphone className="size-5" /> מספר טלפון
+                </span>
+                <span className="text-xs text-muted-foreground" dir="ltr">
+                  {user?.phone ? formatPhone(user.phone) : "לא אומת"}
+                </span>
+              </span>
+              <span className="text-sm font-semibold text-primary">{user?.phone ? "שינוי" : "אימות"}</span>
+            </Link>
+          )}
+          <Link to="/contacts" search={{ tab: "phone" }} className="flex items-center justify-between p-4">
+            <span className="flex items-center gap-2 font-semibold">
+              <BookUser className="size-5" /> אנשי קשר מהטלפון
+            </span>
+            <ChevronLeft className="size-5 text-muted-foreground" />
+          </Link>
           <Link to="/blocked" className="flex items-center justify-between p-4">
             <span className="flex items-center gap-2 font-semibold">
               <ShieldBan className="size-5" /> משתמשים חסומים

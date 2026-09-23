@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { AuthLayout, SocialButtons, authErrorMessage } from "@/components/auth-form";
+import { PHONE_REQUIRED } from "@/lib/phone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/label";
@@ -52,6 +53,11 @@ function Login() {
         <Link to="/forgot-password" className="block text-sm font-semibold text-primary">
           שכחתי סיסמה
         </Link>
+        {PHONE_REQUIRED && (
+          <Link to="/login-sms" className="block text-sm font-semibold text-primary">
+            כניסה עם קוד SMS
+          </Link>
+        )}
         <Button type="submit" variant="brand" size="lg" className="w-full" disabled={loading}>
           {loading ? "מתחברים…" : "התחברות"}
         </Button>

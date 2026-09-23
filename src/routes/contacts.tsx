@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { EmptyState, Page, PageHeader } from "@/components/app-shell";
 import { RequireAuth } from "@/components/gates";
 import { PersonRow } from "@/components/person-row";
+import { ContactsSync } from "@/components/contacts-sync";
 import { useProfileGraph } from "@/components/profile-view";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
@@ -10,7 +11,10 @@ import { seo } from "@/lib/seo";
 import type { Profile } from "@/lib/types";
 
 export const Route = createFileRoute("/contacts")({
-  head: () => seo({ title: "אנשי קשר", description: "העוקבים שלך והאנשים שאת/ה עוקב/ת אחריהם ב-mibale." }),
+  validateSearch: (s: Record<string, unknown>): { tab?: "all" | "followers" | "following" | "phone" } => ({
+    tab: s.tab === "followers" || s.tab === "following" || s.tab === "phone" || s.tab === "all" ? s.tab : undefined,
+  }),
+  head: () => seo({ title: "אנשי קשר", description: "העוקבים שלך, האנשים שאת/ה עוקב/ת אחריהם, וחברים מאנשי הקשר בטלפון." }),
   component: () => (
     <RequireAuth>
       <Contacts />
@@ -20,6 +24,7 @@ export const Route = createFileRoute("/contacts")({
 
 function Contacts() {
   const { user } = useAuth();
+  const { tab } = Route.useSearch();
   const { followers, following } = useProfileGraph(user!.id);
   const all = React.useMemo(() => {
     const m = new Map<string, Profile>();
@@ -45,8 +50,9 @@ function Contacts() {
   return (
     <Page size="narrow">
       <PageHeader title="אנשי קשר" back />
-      <Tabs defaultValue="all">
+      <Tabs defaultValue={tab ?? "all"}>
         <TabsList>
+          <TabsTrigger value="phone">מהטלפון</TabsTrigger>
           <TabsTrigger value="all">הכל ({all.length})</TabsTrigger>
           <TabsTrigger value="followers">עוקבים ({followers.length})</TabsTrigger>
           <TabsTrigger value="following">נעקבים ({following.length})</TabsTrigger>
@@ -54,6 +60,9 @@ function Contacts() {
         <TabsContent value="all">{list(all)}</TabsContent>
         <TabsContent value="followers">{list(followers)}</TabsContent>
         <TabsContent value="following">{list(following)}</TabsContent>
+        <TabsContent value="phone">
+          <ContactsSync />
+        </TabsContent>
       </Tabs>
     </Page>
   );

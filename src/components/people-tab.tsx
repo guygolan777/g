@@ -2,7 +2,8 @@ import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Section, EmptyState } from "@/components/app-shell";
 import { PersonCard } from "@/components/person-row";
-import { Search } from "lucide-react";
+import { BookUser, Search } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
@@ -97,6 +98,15 @@ export function PeopleTab() {
           className="h-full w-full bg-transparent outline-none placeholder:text-muted-foreground"
         />
       </label>
+      <Link to="/contacts" search={{ tab: "phone" }} className="mt-4 flex items-center gap-3 rounded-3xl bg-primary-soft p-4">
+        <span className="grid size-11 shrink-0 place-items-center rounded-full bg-surface text-primary">
+          <BookUser className="size-5" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-bold">מצאו חברים מאנשי הקשר</span>
+          <span className="block text-sm text-muted-foreground">מי מהטלפון שלך כבר ב-mibale — ומי כדאי להזמין</span>
+        </span>
+      </Link>
       {block("אנשי הקשר שלך", sections.contacts)}
       {block("תחומי עניין דומים", sections.similar)}
       {block("קרובים אליך", sections.nearby)}

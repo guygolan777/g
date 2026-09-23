@@ -7,7 +7,7 @@ import appCss from "@/styles.css?url";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { BottomNav } from "@/components/bottom-nav";
 import { DesktopSidebar, useSidebarVisible } from "@/components/desktop-sidebar";
-import { BannedGate } from "@/components/gates";
+import { BannedGate, PhoneGate } from "@/components/gates";
 import { NotificationToaster } from "@/components/notification-toaster";
 import { GuestSignupBar } from "@/components/guest";
 import { ThemeScript, useThemeSync } from "@/lib/theme";
@@ -54,7 +54,9 @@ function RootComponent() {
       <AuthProvider>
         <BannedGate>
           <ContentFrame>
-            <Outlet />
+            <PhoneGate>
+              <Outlet />
+            </PhoneGate>
           </ContentFrame>
           <DesktopSidebar />
           <GuestSignupBar />

@@ -1,5 +1,6 @@
 import * as React from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { PHONE_REQUIRED } from "@/lib/phone";
 import { Lock, ShieldOff } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -76,5 +77,21 @@ export function RequireStaff({ children }: { children: React.ReactNode }) {
       </Page>
     );
   }
+  return <>{children}</>;
+}
+
+/** Screens reachable without a verified phone (auth, legal, settings for logout/delete). */
+const PHONE_EXEMPT = ["/onboarding/phone", "/login", "/login-sms", "/signup", "/forgot-password", "/reset-password", "/privacy", "/terms", "/delete-account", "/settings", "/"];
+
+/** When phone verification is required, signed-in users without a verified number are sent to add one. */
+export function PhoneGate({ children }: { children: React.ReactNode }) {
+  const { ready, user } = useAuth();
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+  const needs = PHONE_REQUIRED && ready && !!user && !user.phone_confirmed_at && !PHONE_EXEMPT.includes(path);
+  React.useEffect(() => {
+    if (needs) void navigate({ to: "/onboarding/phone", search: { next: path }, replace: true });
+  }, [needs, navigate, path]);
+  if (needs) return <CenteredSpinner />;
   return <>{children}</>;
 }

@@ -164,3 +164,8 @@ update public.events set price = 150 where id = '20000000-0000-4000-a000-0000000
 update public.events set max_distance_km = 30 where id = '20000000-0000-4000-a000-000000000018';
 insert into public.stories (author_id, media_url, media_type, caption, is_romantic)
 values ('00000000-0000-4000-a000-000000000002', 'https://picsum.photos/seed/mibale-s5/720/1280', 'image', 'מי מצטרף לקפה בשקיעה? ☕', true);
+
+-- Demo users can't receive SMS: fake, already-verified numbers (050-010-00NN) so phone verification doesn't block them.
+update auth.users
+set phone = '97250010' || lpad(split_part(id::text, '-', 5)::bigint::text, 4, '0'), phone_confirmed_at = now()
+where id::text like '00000000-0000-4000-a000-%' and (phone is null or phone = '');
