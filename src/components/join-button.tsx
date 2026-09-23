@@ -8,6 +8,7 @@ import { useInvalidateEvents } from "@/lib/queries";
 import { hapticTap } from "@/lib/native";
 import type { EventRow, ParticipantStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { rememberRedirect } from "@/lib/guest";
 
 const ERRORS: Record<string, string> = {
   "event full": "האירוע מלא",
@@ -101,7 +102,10 @@ export function JoinButton({
       onClick={async (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!user) return void navigate({ to: "/signup" });
+        if (!user) {
+          rememberRedirect(`/e/${event.id}`);
+          return void navigate({ to: "/signup" });
+        }
         const s = await join(event.id);
         if (s) setLocal(s);
       }}

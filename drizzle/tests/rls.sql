@@ -4,14 +4,16 @@ create or replace function pg_temp.as_user(_id text) returns void language sql a
   select set_config('request.jwt.claim.sub', _id, true);
 $$;
 
--- Guests: only id, name, avatar_url of profiles.
+-- Guests: no profiles at all; events without exact location or participants; counts only.
 begin; set local role anon;
 do $$ begin
-  perform id, name, avatar_url from public.profiles limit 1;
-  begin perform bio from public.profiles limit 1; raise exception 'FAIL: anon read bio';
+  begin perform name from public.profiles limit 1; raise exception 'FAIL: anon read profiles';
   exception when insufficient_privilege then null; end;
-  begin perform description from public.events limit 1; raise exception 'FAIL: anon read event description';
+  begin perform location_name from public.events limit 1; raise exception 'FAIL: anon read exact location';
   exception when insufficient_privilege then null; end;
+  perform id, title, city, description from public.events limit 1;
+  if (select count(*) from public.guest_event_counts(array(select id from public.events))) = 0 then raise exception 'FAIL: guest counts'; end if;
+  if (public.guest_stats() ->> 'members')::int < 10 then raise exception 'FAIL: guest stats'; end if;
   begin perform 1 from public.event_participants limit 1; raise exception 'FAIL: anon read participants';
   exception when insufficient_privilege then null; end;
 end $$;

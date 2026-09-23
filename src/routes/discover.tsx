@@ -67,7 +67,7 @@ function Discover() {
         ) : list.length === 0 ? (
           <EmptyState emoji="🔭" title="אין כאן אירועים כרגע" />
         ) : (
-          <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-3">
             {list.map((e) => (
               <EventCard key={e.id} data={feed.toCard(e)} viewerId={feed.viewerId} isGuest={feed.isGuest} onHide={feed.hide} />
             ))}

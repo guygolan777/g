@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
 import { getCurrentPosition } from "@/lib/native";
 import { seo } from "@/lib/seo";
+import { consumeRedirect } from "@/lib/guest";
 
 export const Route = createFileRoute("/onboarding/location")({
   head: () => seo({ title: "איפה את/ה גר/ה?", description: "הוסיפו עיר ומיקום כדי לגלות אירועים ואנשים קרובים אליכם." }),
@@ -54,7 +55,7 @@ function Step3() {
     if (loc.error || prof.error) return void toast.error("השמירה נכשלה");
     await refreshProfile();
     toast.success("ברוכים הבאים ל-mibale 🎉");
-    void navigate({ to: "/home", replace: true });
+    void navigate({ to: consumeRedirect("/home"), replace: true });
   }
 
   return (

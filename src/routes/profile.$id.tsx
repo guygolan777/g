@@ -9,11 +9,11 @@ import { ProfileUnavailable, ProfileView } from "@/components/profile-view";
 import { ReportDialog } from "@/components/report-dialog";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger, SheetContent } from "@/components/ui/dialog";
-import { Avatar } from "@/components/avatar";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
 import { BLOCKED_MESSAGE, fetchBlockedIds, invalidateBlocked } from "@/lib/blocks";
-import { PROFILE_COLUMNS, PROFILE_GUEST_COLUMNS } from "@/lib/constants";
+import { PROFILE_COLUMNS } from "@/lib/constants";
+import { GuestTeaser } from "@/components/guest";
 import { hapticTap } from "@/lib/native";
 import { seo } from "@/lib/seo";
 import type { Profile } from "@/lib/types";
@@ -35,35 +35,27 @@ function ProfilePage() {
 
   const q = useQuery({
     queryKey: ["profile", id, isGuest],
-    enabled: ready,
+    enabled: ready && !isGuest,
     queryFn: async () => {
       const [{ data }, blocked] = await Promise.all([
-        supabase.from("profiles").select(isGuest ? PROFILE_GUEST_COLUMNS : PROFILE_COLUMNS).eq("id", id).maybeSingle(),
-        isGuest ? Promise.resolve(new Set<string>()) : fetchBlockedIds(true),
+        supabase.from("profiles").select(PROFILE_COLUMNS).eq("id", id).maybeSingle(),
+        fetchBlockedIds(true),
       ]);
       return { profile: data as unknown as Profile | null, blocked: blocked.has(id) };
     },
   });
 
-  if (!ready || q.isLoading) return <CenteredSpinner />;
+  if (!ready || (!isGuest && q.isLoading)) return <CenteredSpinner />;
   const p = q.data?.profile;
 
   if (isGuest) {
     return (
-      <Page>
+      <Page size="narrow">
         <PageHeader title="" back />
-        <div className="flex flex-col items-center pt-10 text-center">
-          <Avatar src={p?.avatar_url} name={p?.name} size={120} />
-          <h1 className="mt-4 text-2xl font-bold">{p?.name}</h1>
-          <p className="mt-2 text-muted-foreground">הרשמו כדי לראות את הפרופיל המלא</p>
-          <Button asChild variant="brand" className="mt-4">
-            <Link to="/signup">הרשמה</Link>
-          </Button>
-        </div>
+        <GuestTeaser emoji="🙂" title="הפרופילים גלויים לחברים בלבד" text="כדי לשמור על פרטיות כולם, פרופילים, תמונות ושמות נחשפים רק לחברי mibale." />
       </Page>
     );
   }
-
   if (q.data?.blocked || !p) {
     return (
       <Page>

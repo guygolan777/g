@@ -4,6 +4,8 @@ import { CalendarHeart, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { seo } from "@/lib/seo";
+import { consumeRedirect } from "@/lib/guest";
+import { GuestStatsRow } from "@/components/guest";
 
 export const Route = createFileRoute("/")({
   head: () =>
@@ -19,7 +21,9 @@ function Landing() {
   const navigate = useNavigate();
   React.useEffect(() => {
     if (!ready || !user) return;
-    void navigate({ to: profile && !profile.onboarded ? "/onboarding/profile" : "/home", replace: true });
+    if (!profile) return;
+    // Guests who signed up from an event/community land back there.
+    void navigate({ to: !profile.onboarded ? "/onboarding/profile" : consumeRedirect("/home"), replace: true });
   }, [ready, user, profile, navigate]);
 
   return (
@@ -45,7 +49,8 @@ function Landing() {
           ))}
         </div>
       </div>
-      <div className="mt-10 grid gap-2">
+      <GuestStatsRow className="mt-8" />
+      <div className="mt-8 grid gap-2">
         <Button asChild variant="brand" size="lg">
           <Link to="/signup">בואו נתחיל</Link>
         </Button>

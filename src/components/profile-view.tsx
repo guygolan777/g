@@ -315,7 +315,8 @@ export function ProfileView({
   ) : undefined;
 
   return (
-    <div>
+    <div className="lg:grid lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)] lg:items-start lg:gap-8">
+      <div className="lg:sticky lg:top-4">
       <MediaCard profile={profile} isMe={isMe} />
 
       <div className="mt-4 flex">
@@ -325,7 +326,9 @@ export function ProfileView({
         {stat(graph.following.length, "עוקב/ת", () => followingRef.current?.scrollIntoView({ behavior: "smooth" }))}
       </div>
       {actions && <div className="mt-3">{actions}</div>}
+      </div>
 
+      <div className="min-w-0 lg:[&>section:first-child]:mt-0">
       {/* Upcoming events: filters and the calendar link on the same row */}
       <section className="mt-6">
         <div className="mb-3 flex items-center gap-2">
@@ -428,6 +431,7 @@ export function ProfileView({
           </div>
         </Section>
       )}
+      </div>
     </div>
   );
 }

@@ -54,7 +54,26 @@ export function useActiveStories(romantic = false) {
 export function StoryRail({ romantic = false }: { romantic?: boolean }) {
   const { user, profile } = useAuth();
   const { groups, viewed } = useActiveStories(romantic);
-  if (!user) return null;
+  if (!user) {
+    return (
+      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 py-2 scrollbar-none">
+        <Link to="/signup" className="flex w-20 shrink-0 flex-col items-center gap-1">
+          <span className="grid size-[76px] place-items-center rounded-full bg-gradient-ring p-[3px]">
+            <span className="grid size-full place-items-center rounded-full bg-surface text-2xl">✨</span>
+          </span>
+          <span className="w-full truncate text-center text-xs text-muted-foreground">הצטרפו</span>
+        </Link>
+        {["bg-event-soft", "bg-like-soft", "bg-partner-soft", "bg-teal-soft"].map((c) => (
+          <Link key={c} to="/signup" className="flex w-20 shrink-0 flex-col items-center gap-1" aria-label="סטוריז לחברים">
+            <span className="grid size-[76px] place-items-center rounded-full bg-gradient-ring p-[3px]">
+              <span className={`size-full rounded-full blur-[2px] ${c}`} />
+            </span>
+            <span className="text-xs text-muted-foreground">🔒</span>
+          </Link>
+        ))}
+      </div>
+    );
+  }
   const hasMine = groups.some((g) => g[0].author_id === user.id);
   return (
     <div className="-mx-4 flex gap-3 overflow-x-auto px-4 py-2 scrollbar-none">

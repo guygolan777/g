@@ -14,6 +14,8 @@ import { EVENT_COLUMNS, EVENT_GUEST_COLUMNS, PROFILE_MINI, SITE_URL } from "@/li
 import { hobbyLabel } from "@/lib/hobby-categories";
 import { formatDate, formatRelative, formatTime } from "@/lib/format";
 import { whoComesTitle } from "@/lib/event-title";
+import { rememberRedirect, useGuestCommunityCounts } from "@/lib/guest";
+import { GuestTeaser } from "@/components/guest";
 import { shareLink } from "@/lib/native";
 import { seo } from "@/lib/seo";
 import type { Community, EventRow, Profile } from "@/lib/types";
@@ -35,6 +37,7 @@ function CommunityPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
 
+  const guestCounts = useGuestCommunityCounts(isGuest);
   const q = useQuery({
     queryKey: ["community", id, isGuest],
     enabled: ready,
@@ -73,7 +76,7 @@ function CommunityPage() {
   const c = q.data?.community;
   if (!c) {
     return (
-      <Page>
+      <Page size="narrow">
         <div className="pt-20">
           <EmptyState emoji="🫥" title="הקהילה לא נמצאה" />
         </div>
@@ -90,7 +93,10 @@ function CommunityPage() {
   };
 
   async function join() {
-    if (!user) return void navigate({ to: "/signup" });
+    if (!user) {
+      rememberRedirect(`/community/${id}`);
+      return void navigate({ to: "/signup" });
+    }
     if (await joinCommunity(id)) refresh();
   }
 
@@ -124,7 +130,7 @@ function CommunityPage() {
 
   const upcoming = q.data!.events;
   return (
-    <Page>
+    <Page size="narrow">
       <PageHeader title="קהילה" back />
       <div className="rounded-3xl bg-card p-6 text-center shadow-soft">
         <CommunityThumb community={c} className="mx-auto size-32 rounded-3xl" />
@@ -132,14 +138,10 @@ function CommunityPage() {
         <p className="font-semibold text-primary">{hobbyLabel(c.hobby, false)}</p>
         {c.description && <p className="mt-2 whitespace-pre-line text-muted-foreground">{c.description}</p>}
         <p className="mt-2 flex items-center justify-center gap-1 text-sm text-muted-foreground">
-          {!isGuest && (
-            <>
-              <Users className="size-4" /> {members.length} חברים
-            </>
-          )}
+          <Users className="size-4" /> {isGuest ? (guestCounts.data?.get(id) ?? 0) : members.length} חברים
           {c.city && (
             <>
-              {!isGuest && " · "}
+              {" · "}
               <MapPin className="size-4" /> {c.city}
             </>
           )}
@@ -226,6 +228,9 @@ function CommunityPage() {
         </Section>
       )}
 
+      {isGuest && (
+        <GuestTeaser className="mt-6" title="מי בקהילה?" text="רשימת החברים והצ׳אט של הקהילה גלויים לחברי mibale בלבד." />
+      )}
       {!isGuest && (
         <Section title="חברי הקהילה">
           <div className="space-y-2">

@@ -36,7 +36,7 @@ function Blocked() {
   });
 
   return (
-    <Page>
+    <Page size="narrow">
       <PageHeader title="משתמשים חסומים" back />
       {q.data?.length === 0 && <EmptyState emoji="🕊️" title="לא חסמת אף אחד" />}
       <div className="space-y-2">

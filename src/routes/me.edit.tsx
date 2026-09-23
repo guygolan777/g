@@ -60,7 +60,7 @@ function EditProfile() {
   }
 
   return (
-    <Page>
+    <Page size="narrow">
       <PageHeader title="עריכת פרופיל" back />
       {user && <PhotoGridPicker userId={user.id} value={photos} onChange={setPhotos} />}
       <div className="mt-5 space-y-4">

@@ -23,6 +23,9 @@ import { CenteredSpinner, EmptyState, Page, Section } from "@/components/app-she
 import { Avatar } from "@/components/avatar";
 import { JoinButton } from "@/components/join-button";
 import { ReportDialog } from "@/components/report-dialog";
+import { DateBadge, EventMedia, priceLabel } from "@/components/event-card";
+import { GuestTeaser, SignupLink } from "@/components/guest";
+import { useGuestEventCounts } from "@/lib/guest";
 import { InviteSheet } from "@/components/invite-sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -92,7 +95,7 @@ function EventPage() {
   const event = eventQ.data;
   if (!event) {
     return (
-      <Page>
+      <Page size="narrow">
         <div className="pt-20">
           <EmptyState emoji="🫥" title="האירוע לא נמצא" text="ייתכן שהוא נמחק או שאין לך גישה אליו" />
         </div>
@@ -106,7 +109,7 @@ function EventPage() {
 function Hero({ event }: { event: EventRow }) {
   const navigate = useNavigate();
   return (
-    <div className="relative -mx-4 aspect-[4/3] bg-muted">
+    <div className="relative -mx-4 aspect-[4/3] overflow-hidden bg-muted md:mx-0 md:mt-2 md:aspect-[16/9] md:rounded-3xl">
       {event.image_url && <SafeImg src={event.image_url} alt="" className="size-full object-cover" />}
       <button
         onClick={() => (window.history.length > 1 ? window.history.back() : void navigate({ to: "/home" }))}
@@ -119,28 +122,57 @@ function Hero({ event }: { event: EventRow }) {
   );
 }
 
-/** Guests see only name, image, date and time. */
+/**
+ * Guest view: enough to want to come (what, when, city, price, how many are going),
+ * never who is going, who organizes, or the exact place.
+ */
 function GuestEvent({ event }: { event: EventRow }) {
+  const counts = useGuestEventCounts([event.id], true);
+  const count = Math.max(1, counts.data?.get(event.id) ?? 0);
   return (
-    <Page>
-      <Hero event={event} />
-      <div className="-mt-6 rounded-t-3xl bg-background pt-5">
-        <Badge variant="event">{hobbyLabel(event.subcategory ?? event.category)}</Badge>
-        <h1 className="mt-2 text-2xl font-bold">{whoComesTitle(event.title)}</h1>
-        <p className="mt-2 flex items-center gap-2 text-muted-foreground">
-          <CalendarDays className="size-4" />
-          {formatDate(event.starts_at, { weekday: "long", day: "numeric", month: "long" })} · {formatTime(event.starts_at)}
-        </p>
-        <div className="mt-8 rounded-2xl bg-primary-soft p-5 text-center">
-          <p className="font-bold">רוצים לדעת איפה, מי בא ולהצטרף?</p>
-          <p className="mt-1 text-sm text-muted-foreground">מיקום, תיאור, משתתפים וצ׳אט זמינים לחברי mibale</p>
-          <Button asChild variant="brand" size="lg" className="mt-4 w-full">
-            <Link to="/signup">הרשמה והצטרפות</Link>
-          </Button>
-          <Button asChild variant="ghost" className="mt-1 w-full">
-            <Link to="/login">כבר יש לי חשבון</Link>
-          </Button>
+    <Page size="narrow">
+      <div className="relative -mx-4 md:mx-0 md:mt-2">
+        <EventMedia event={event} className="aspect-[4/3] md:aspect-[16/9] md:rounded-3xl">
+          <DateBadge iso={event.starts_at} className="absolute top-4 left-4" />
+        </EventMedia>
+        <button
+          onClick={() => window.history.back()}
+          className="absolute top-4 right-4 grid size-10 place-items-center rounded-full bg-surface/90 shadow-soft"
+          aria-label="חזרה"
+        >
+          <ChevronRight className="size-6" />
+        </button>
+      </div>
+      <div className="-mt-6 rounded-t-3xl bg-background pt-5 md:mt-0">
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="event">{hobbyLabel(event.subcategory ?? event.category)}</Badge>
+          <Badge variant={event.price ? "muted" : "success"}>{priceLabel(event.price)}</Badge>
         </div>
+        <h1 className="mt-2 text-2xl font-bold">{whoComesTitle(event.title)}</h1>
+        <div className="mt-4 space-y-3 rounded-2xl bg-surface p-4 shadow-soft">
+          <p className="flex items-center gap-3">
+            <CalendarDays className="size-5 text-event" />
+            {formatDate(event.starts_at, { weekday: "long", day: "numeric", month: "long" })} · {formatTime(event.starts_at)}
+          </p>
+          <p className="flex items-center gap-3">
+            <MapPin className="size-5 text-teal" />
+            {event.is_online ? "אונליין — הקישור נשלח למשתתפים" : `${event.city ?? "המיקום"} · הכתובת המדויקת לחברים בלבד`}
+          </p>
+          <p className="flex items-center gap-3">
+            <Users className="size-5 text-partner-strong" />
+            <b>{count}</b> כבר נרשמו
+            {event.seats && event.seats < UNLIMITED_SEATS ? ` · ${Math.max(0, event.seats - count)} מקומות פנויים` : ""}
+          </p>
+        </div>
+        {event.description && <p className="mt-4 leading-relaxed whitespace-pre-line">{event.description}</p>}
+        <p className="mt-4 text-sm text-muted-foreground">מאורגן ע״י חבר/ת mibale · כל המשתתפים עם פרופיל מאומת</p>
+
+        <SignupLink className="mt-6 w-full">הרשמה והצטרפות לאירוע</SignupLink>
+        <SignupLink to="/login" variant="ghost" size="default" className="mt-1 w-full">
+          כבר יש לי חשבון
+        </SignupLink>
+
+        <GuestTeaser className="mt-6" title="מי בא?" text="המשתתפים, המארגן והצ׳אט של האירוע גלויים לחברי mibale בלבד — כדי לשמור על כולם." />
       </div>
     </Page>
   );
@@ -264,9 +296,9 @@ function MemberEvent({ event, viewerId }: { event: EventRow; viewerId: string })
   const ended = event.ends_at ? new Date(event.ends_at) < new Date() : false;
 
   return (
-    <Page>
+    <Page size="narrow">
       <Hero event={event} />
-      <div className="relative -mt-6 rounded-t-3xl bg-background pt-5">
+      <div className="relative -mt-6 rounded-t-3xl bg-background pt-5 md:mt-0">
         <div className="flex items-start justify-between gap-2">
           <Badge variant="event">{hobbyLabel(event.subcategory ?? event.category)}</Badge>
           <div className="flex gap-1">

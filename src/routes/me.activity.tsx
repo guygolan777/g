@@ -50,7 +50,7 @@ function MyActivity() {
 
   const d = q.data;
   return (
-    <Page>
+    <Page size="narrow">
       <PageHeader title="הפעילות שלי" back />
       {d && !d.saves.length && !d.views.length && !d.reviews.length && <EmptyState emoji="✨" title="עוד אין פעילות" />}
       {!!d?.saves.length && (

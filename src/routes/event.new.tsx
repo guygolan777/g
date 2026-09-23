@@ -144,7 +144,7 @@ function NewEvent() {
   }
 
   return (
-    <Page withNav={false}>
+    <Page withNav={false} size="narrow">
       <PageHeader title="יצירת הזמנה חדשה" back />
 
       {/* מי בא ל.. */}

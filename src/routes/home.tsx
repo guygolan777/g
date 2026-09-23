@@ -30,7 +30,7 @@ function Home() {
   return (
     <Page>
       <header className="flex items-center justify-between py-3">
-        <p className="font-display text-4xl font-extrabold text-gradient-brand">mibale</p>
+        <p className="font-display text-4xl font-extrabold text-gradient-brand lg:invisible">mibale</p>
         <div className="flex items-center gap-2">
           {!isGuest && (
             <Link to="/calendar" className="grid size-12 place-items-center rounded-full bg-surface-soft" aria-label="יומן">

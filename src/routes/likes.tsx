@@ -23,15 +23,41 @@ import { hapticTap } from "@/lib/native";
 import { seo } from "@/lib/seo";
 import type { AudienceGender, Profile } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { GuestTeaser } from "@/components/guest";
+import { useGuestStats } from "@/lib/guest";
 
 export const Route = createFileRoute("/likes")({
   head: () => seo({ title: "לייקים והתאמות", description: "הצד הרומנטי של mibale: סווינג, מי שחיבבתם והתאמות הדדיות." }),
-  component: () => (
+  component: LikesRoute,
+});
+
+function LikesRoute() {
+  const { ready, isGuest } = useAuth();
+  if (ready && isGuest) return <GuestDating />;
+  return (
     <RequireAuth reason="ההיכרויות זמינות לחברי mibale בלבד.">
       <Dating />
     </RequireAuth>
-  ),
-});
+  );
+}
+
+/** Guests see that dating exists and how many are open to it — never who. */
+function GuestDating() {
+  const { data } = useGuestStats();
+  return (
+    <Page size="narrow">
+      <header className="py-3">
+        <h1 className="text-2xl font-bold">לייקים והתאמות</h1>
+        <p className="text-sm text-muted-foreground">הצד הרומנטי של mibale</p>
+      </header>
+      <GuestTeaser
+        emoji="💘"
+        title={data ? `${data.dating_open} אנשים במצב היכרויות` : "היכרויות ב-mibale"}
+        text="פותחים את הלב בפרופיל, מחליקים, ורק התאמה הדדית פותחת צ׳אט. אף אחד לא רואה מי חיבב אותו — והפרופילים גלויים לחברים בלבד."
+      />
+    </Page>
+  );
+}
 
 const DISTANCE_UNLIMITED = 200;
 const AGE_TOP = 99;
@@ -193,7 +219,7 @@ function Dating() {
   const age = current ? ageFromBirthYear(current.birth_year) : null;
 
   return (
-    <Page>
+    <Page size="narrow">
       <header className="flex items-center gap-3 py-3">
         <button onClick={() => window.history.back()} className="grid size-12 place-items-center rounded-full bg-surface-soft" aria-label="חזרה">
           <ChevronRight className="size-6" />

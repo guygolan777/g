@@ -43,7 +43,7 @@ function Contacts() {
     );
 
   return (
-    <Page>
+    <Page size="narrow">
       <PageHeader title="אנשי קשר" back />
       <Tabs defaultValue="all">
         <TabsList>

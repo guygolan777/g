@@ -73,7 +73,7 @@ export function EventsFeed() {
           </Carousel>
         </>
       ) : (
-        <div className="mt-4 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">{ranked.map((r) => card(r.event))}</div>
+        <div className="mt-4 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-3">{ranked.map((r) => card(r.event))}</div>
       )}
     </div>
   );

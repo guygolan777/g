@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
 import { useMyGraph, useMyParticipations, useParticipants, useUpcomingEvents } from "@/lib/queries";
 import { getHiddenEvents, hideEvent } from "@/lib/hidden-events";
+import { useGuestEventCounts } from "@/lib/guest";
 import { ageFromBirthDate } from "@/lib/format";
 import { eventDistance, type RankContext } from "@/lib/event-ranking";
 import type { EventCardData } from "@/components/event-card";
@@ -27,6 +28,7 @@ export function useEventFeed() {
   const { events, isLoading } = useUpcomingEvents();
   const ids = React.useMemo(() => events.map((e) => e.id), [events]);
   const parts = useParticipants(ids);
+  const guestCounts = useGuestEventCounts(ids, isGuest);
   const graph = useMyGraph();
   const mine = useMyParticipations();
   const { data: location } = useMyLocation();
@@ -72,11 +74,11 @@ export function useEventFeed() {
     (event: EventRow): EventCardData => ({
       event,
       status: parts.myStatus.get(event.id),
-      approvedCount: parts.approvedCounts.get(event.id),
+      approvedCount: isGuest ? guestCounts.data?.get(event.id) : parts.approvedCounts.get(event.id),
       attendees: parts.attendeeProfiles.get(event.id),
       distanceKm: eventDistance(event, location),
     }),
-    [parts.myStatus, parts.approvedCounts, parts.attendeeProfiles, location],
+    [parts.myStatus, parts.approvedCounts, parts.attendeeProfiles, location, isGuest, guestCounts.data],
   );
 
   return {

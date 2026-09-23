@@ -3,9 +3,30 @@ import { useRouter } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function Page({ children, className, withNav = true }: { children: React.ReactNode; className?: string; withNav?: boolean }) {
+/**
+ * Page container. Mobile-first; on the web it widens ("wide", default) or stays
+ * form-width ("narrow"). The bottom nav is mobile-only, so its padding goes away on lg.
+ */
+export function Page({
+  children,
+  className,
+  withNav = true,
+  size = "wide",
+}: {
+  children: React.ReactNode;
+  className?: string;
+  withNav?: boolean;
+  size?: "wide" | "narrow";
+}) {
   return (
-    <main className={cn("mx-auto min-h-dvh w-full max-w-lg px-4 pt-safe", withNav ? "pb-28" : "pb-10", className)}>
+    <main
+      className={cn(
+        "mx-auto min-h-dvh w-full max-w-lg px-4 pt-safe lg:px-8 lg:pt-4",
+        size === "wide" ? "md:max-w-3xl lg:max-w-5xl" : "md:max-w-xl",
+        withNav ? "pb-28 lg:pb-10" : "pb-10",
+        className,
+      )}
+    >
       {children}
     </main>
   );

@@ -4,10 +4,12 @@ import { HeadContent, Outlet, Scripts, createRootRouteWithContext } from "@tanst
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import appCss from "@/styles.css?url";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { BottomNav } from "@/components/bottom-nav";
+import { DesktopSidebar, useSidebarVisible } from "@/components/desktop-sidebar";
 import { BannedGate } from "@/components/gates";
 import { NotificationToaster } from "@/components/notification-toaster";
+import { GuestSignupBar } from "@/components/guest";
 import { ThemeScript, useThemeSync } from "@/lib/theme";
 import { seo } from "@/lib/seo";
 
@@ -45,7 +47,11 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <BannedGate>
-          <Outlet />
+          <ContentFrame>
+            <Outlet />
+          </ContentFrame>
+          <DesktopSidebar />
+          <GuestSignupBar />
           <BottomNav />
           <NotificationToaster />
         </BannedGate>
@@ -53,6 +59,13 @@ function RootComponent() {
       </AuthProvider>
     </QueryClientProvider>
   );
+}
+
+/** Leaves room for the desktop sidebar (web layout) on wide screens. */
+function ContentFrame({ children }: { children: React.ReactNode }) {
+  const withSidebar = useSidebarVisible();
+  const { isGuest } = useAuth();
+  return <div className={[withSidebar ? "lg:ps-64" : "", isGuest ? "pb-20" : ""].join(" ")}>{children}</div>;
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {

@@ -100,7 +100,17 @@ export function EventCard({
       <div className="mt-1 flex flex-1 flex-col gap-1.5 px-1">
         <Link to="/e/$id" params={{ id: event.id }} className="block">
           <h3 className="truncate text-lg font-bold">{whoComesTitle(event.title)}</h3>
-          {!isGuest && (
+          {isGuest ? (
+            <>
+              <p className="mt-0.5 flex items-center gap-1 truncate text-sm">
+                <MapPin className="size-4 shrink-0 text-primary" />
+                <span className="truncate">{[cat?.label, sub?.label].filter(Boolean).join(" · ")}</span>
+              </p>
+              <p className="truncate text-sm text-muted-foreground">
+                {event.is_online ? "אונליין" : event.city ?? "המיקום לחברים בלבד"}
+              </p>
+            </>
+          ) : (
             <>
               <p className="mt-0.5 flex items-center gap-1 truncate text-sm">
                 <MapPin className="size-4 shrink-0 text-primary" />
@@ -113,7 +123,17 @@ export function EventCard({
             </>
           )}
         </Link>
-        {!isGuest && (
+        {isGuest ? (
+          <div className="flex items-center gap-2 text-sm">
+            <span className="flex -space-x-2 space-x-reverse blur-[1.5px]" aria-hidden>
+              <span className="size-6 rounded-full bg-event-soft ring-2 ring-surface" />
+              <span className="size-6 rounded-full bg-like-soft ring-2 ring-surface" />
+              <span className="size-6 rounded-full bg-partner-soft ring-2 ring-surface" />
+            </span>
+            <span className="font-bold">{count} נרשמו</span>
+            <span className="text-muted-foreground">· מי? לחברים 🔒</span>
+          </div>
+        ) : (
           <div className="flex items-center gap-2">
             <Avatar src={organizer?.avatar_url} name={organizer?.name} size={30} />
             <span className="text-sm font-bold" dir="ltr">

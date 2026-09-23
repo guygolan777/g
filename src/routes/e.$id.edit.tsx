@@ -48,7 +48,7 @@ function EditEvent() {
   if (q.isLoading || !form) return <CenteredSpinner />;
   if (q.data?.event?.organizer_id !== user?.id) {
     return (
-      <Page>
+      <Page size="narrow">
         <PageHeader title="עריכת אירוע" back />
         <p className="text-muted-foreground">רק המארגן/ת יכול/ה לערוך את האירוע.</p>
       </Page>
@@ -56,7 +56,7 @@ function EditEvent() {
   }
 
   return (
-    <Page>
+    <Page size="narrow">
       <PageHeader title="עריכת אירוע" back />
       <EventForm value={form} onChange={setForm} mode="edit" />
       <Button

@@ -133,7 +133,7 @@ function DirectChat({ partnerId }: { partnerId: string }) {
   const blocked = partner.data?.blocked || !p;
 
   return (
-    <Page withNav={false} className="pb-0">
+    <Page withNav={false} size="narrow" className="pb-0">
       <PageHeader
         back
         title={
@@ -263,7 +263,7 @@ function GroupChat({ groupId, kind }: { groupId: string; kind: "event" | "commun
   if (meta.isLoading || membership.isLoading) return <CenteredSpinner />;
 
   return (
-    <Page withNav={false} className="pb-0">
+    <Page withNav={false} size="narrow" className="pb-0">
       <PageHeader
         back
         title={

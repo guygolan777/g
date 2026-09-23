@@ -117,7 +117,7 @@ function Scan() {
   if (ev.isLoading) return <CenteredSpinner />;
   if (!ev.data || ev.data.organizer_id !== user?.id) {
     return (
-      <Page withNav={false}>
+      <Page withNav={false} size="narrow">
         <PageHeader title="סריקת כרטיסים" back />
         <p className="text-muted-foreground">מסך הסריקה זמין למארגן/ת האירוע בלבד.</p>
       </Page>
@@ -126,7 +126,7 @@ function Scan() {
 
   const ui = last ? RESULT_UI[last.result] : null;
   return (
-    <Page withNav={false}>
+    <Page withNav={false} size="narrow">
       <PageHeader title="סריקת כרטיסים" subtitle={whoComesTitle(ev.data.title)} back />
       <div className="relative aspect-square overflow-hidden rounded-3xl bg-foreground">
         <video ref={videoRef} playsInline muted className={cn("size-full object-cover", !scanning && "hidden")} />

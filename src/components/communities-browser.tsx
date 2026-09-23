@@ -16,6 +16,7 @@ import { useCommunities } from "@/lib/queries";
 import { hobbyEmoji, hobbyLabel } from "@/lib/hobby-categories";
 import type { Community } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { rememberRedirect, useGuestCommunityCounts } from "@/lib/guest";
 
 /** Upcoming event count per community ("N אירועים זמינים"). */
 export function useCommunityEventCounts() {
@@ -152,7 +153,10 @@ function CommunityListCard({
               className="h-9 px-4"
               disabled={busy}
               onClick={async () => {
-                if (!user) return void navigate({ to: "/signup" });
+                if (!user) {
+                  rememberRedirect(`/community/${community.id}`);
+                  return void navigate({ to: "/signup" });
+                }
                 setBusy(true);
                 const r = await joinCommunity(community.id);
                 setBusy(false);
@@ -192,6 +196,7 @@ export function CommunitiesBrowser() {
   const qc = useQueryClient();
   const { data: communities = [], isLoading } = useCommunities();
   const membership = useCommunityMembership();
+  const guestCounts = useGuestCommunityCounts(!user);
   const [query, setQuery] = React.useState("");
   const [cats, setCats] = useCategoryFilter("communities");
   const [creating, setCreating] = React.useState(false);
@@ -217,14 +222,14 @@ export function CommunitiesBrowser() {
       <div className="mt-3">
         <CategoryFilterRow selected={cats} onChange={setCats} />
       </div>
-      <div className="mt-4 space-y-3">
+      <div className="mt-4 grid gap-3 lg:grid-cols-2">
         {isLoading && [0, 1, 2].map((i) => <Skeleton key={i} className="h-32 w-full rounded-3xl" />)}
         {!isLoading && list.length === 0 && <EmptyState emoji="🔎" title="לא מצאנו קהילות" text="נסו חיפוש אחר או פתחו קהילה חדשה" />}
         {list.map((c) => (
           <CommunityListCard
             key={c.id}
             community={c}
-            members={membership.data?.counts.get(c.id)}
+            members={membership.data?.counts.get(c.id) ?? guestCounts.data?.get(c.id)}
             role={membership.data?.mine.get(c.id)}
             pending={!!membership.data?.pending.has(c.id)}
             onJoined={() => {

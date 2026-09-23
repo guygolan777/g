@@ -34,7 +34,7 @@ function TicketPage() {
   });
   if (q.isLoading) return <CenteredSpinner />;
   return (
-    <Page>
+    <Page size="narrow">
       <PageHeader title="הכרטיס שלי" back />
       {q.data?.event && q.data.code ? (
         <TicketCard event={q.data.event} code={q.data.code} holder={profile?.name ?? ""} />

@@ -48,7 +48,7 @@ function Settings() {
   }
 
   return (
-    <Page>
+    <Page size="narrow">
       <PageHeader title="הגדרות" back />
 
       <Section title="תצוגה">

@@ -1,13 +1,13 @@
 import * as React from "react";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Heart, Home, MessageCircle, Plus, User, CalendarPlus, Camera, Users } from "lucide-react";
+import { Heart, Home, MessageCircle, Plus, User } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useUnreadCounts } from "@/lib/queries";
 import { CountBadge } from "@/components/ui/badge";
-import { Dialog, SheetContent } from "@/components/ui/dialog";
+import { QuickCreateSheet } from "@/components/quick-create";
 import { cn } from "@/lib/utils";
 
-const HIDDEN_PREFIXES = ["/login", "/signup", "/forgot-password", "/reset-password", "/onboarding", "/story/", "/scan/", "/admin"];
+export const HIDDEN_PREFIXES = ["/login", "/signup", "/forgot-password", "/reset-password", "/onboarding", "/story/", "/scan/", "/admin"];
 
 export function BottomNav() {
   const { pathname } = useLocation();
@@ -34,7 +34,7 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 pb-safe backdrop-blur" dir="rtl">
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 pb-safe backdrop-blur lg:hidden" dir="rtl">
         <div className="mx-auto flex max-w-lg items-center px-2">
           {item("/home", "בית", Home, pathname.startsWith("/home") || pathname.startsWith("/discover"))}
           {item("/likes", "לייקים והתאמות", Heart, pathname.startsWith("/likes"))}
@@ -51,31 +51,7 @@ export function BottomNav() {
           {item("/me", "פרופיל", User, pathname.startsWith("/me") || pathname.startsWith("/settings"))}
         </div>
       </nav>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <SheetContent title="מה יוצרים היום?">
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { to: "/event/new", label: "אירוע", Icon: CalendarPlus, cls: "bg-event-soft text-event" },
-              { to: "/story/new", label: "סטורי", Icon: Camera, cls: "bg-like-soft text-like" },
-              { to: "/community/new", label: "קהילה", Icon: Users, cls: "bg-teal-soft text-teal" },
-            ].map(({ to, label, Icon, cls }) => (
-              <button
-                key={to}
-                onClick={() => {
-                  setOpen(false);
-                  void navigate({ to });
-                }}
-                className="flex flex-col items-center gap-2 rounded-2xl bg-surface-soft p-4 font-semibold"
-              >
-                <span className={cn("grid size-12 place-items-center rounded-full", cls)}>
-                  <Icon className="size-6" />
-                </span>
-                {label}
-              </button>
-            ))}
-          </div>
-        </SheetContent>
-      </Dialog>
+      <QuickCreateSheet open={open} onOpenChange={setOpen} />
     </>
   );
 }

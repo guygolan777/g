@@ -60,7 +60,7 @@ function ChatList() {
     .sort((a, b) => new Date(a.event!.starts_at).getTime() - new Date(b.event!.starts_at).getTime());
 
   return (
-    <Page>
+    <Page size="narrow">
       <header className="py-3">
         <h1 className="text-3xl font-extrabold text-gradient-brand">הודעות</h1>
       </header>

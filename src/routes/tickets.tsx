@@ -23,7 +23,7 @@ function Tickets() {
     .filter((p) => p.status === "approved" && p.event && new Date(p.event.ends_at ?? p.event.starts_at) > new Date())
     .sort((a, b) => new Date(a.event!.starts_at).getTime() - new Date(b.event!.starts_at).getTime());
   return (
-    <Page>
+    <Page size="narrow">
       <PageHeader title="הכרטיסים שלי" back />
       {upcoming.length === 0 ? (
         <EmptyState emoji="🎟️" title="אין כרטיסים פעילים" text="כשתאושרו לאירוע, הכרטיס יופיע כאן" />

@@ -74,7 +74,7 @@ function CalendarPage() {
   const upcoming = entries.filter((e) => new Date(e.event.starts_at) >= new Date()).slice(0, 10);
 
   return (
-    <Page>
+    <Page size="narrow">
       <PageHeader
         title="היומן שלי"
         actions={

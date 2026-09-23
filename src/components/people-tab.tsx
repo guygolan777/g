@@ -1,10 +1,8 @@
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
 import { Section, EmptyState } from "@/components/app-shell";
 import { PersonCard } from "@/components/person-row";
 import { Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
@@ -13,6 +11,8 @@ import { useBlockedIds, useMyGraph } from "@/lib/queries";
 import { withoutBlocked } from "@/lib/blocks";
 import { categoryOf } from "@/lib/hobby-categories";
 import type { Profile } from "@/lib/types";
+import { GuestTeaser } from "@/components/guest";
+import { useGuestStats } from "@/lib/guest";
 
 /** People: my contacts first, then similar interests, nearby, my age — each person once. */
 export function PeopleTab() {
@@ -72,26 +72,13 @@ export function PeopleTab() {
     return { contacts, similar, nearby, sameAge, near };
   }, [q.data, blocked, following, followers, profile, query]);
 
-  if (isGuest) {
-    return (
-      <EmptyState
-        emoji="👋"
-        title="הכירו אנשים חדשים"
-        text="הרשמו כדי לראות מי אוהב את מה שאתם אוהבים"
-        action={
-          <Button asChild variant="brand">
-            <Link to="/signup">הרשמה</Link>
-          </Button>
-        }
-      />
-    );
-  }
+  if (isGuest) return <GuestPeopleTeaser />;
   if (q.isLoading) return <Skeleton className="h-40 w-full" />;
 
   const block = (title: string, list: Profile[]) =>
     list.length > 0 && (
       <Section title={title}>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2 md:grid-cols-4 lg:grid-cols-5">
           {list.map((p) => (
             <PersonCard key={p.id} person={p} followingLabel="עוקב/ת" className="w-auto min-w-0 px-2" />
           ))}
@@ -120,5 +107,17 @@ export function PeopleTab() {
         </div>
       )}
     </div>
+  );
+}
+
+/** Guests never see people — only how many are waiting for them. */
+function GuestPeopleTeaser() {
+  const { data } = useGuestStats();
+  return (
+    <GuestTeaser
+      emoji="👋"
+      title={data ? `${data.members} אנשים כבר ב-mibale` : "הכירו אנשים חדשים"}
+      text="הרשמו כדי לראות מי אוהב את מה שאתם אוהבים, מי גר קרוב ומי בגילכם. הפרופילים גלויים לחברים בלבד."
+    />
   );
 }

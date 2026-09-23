@@ -68,7 +68,7 @@ function NewStory() {
   }
 
   return (
-    <Page withNav={false}>
+    <Page withNav={false} size="narrow">
       <PageHeader title={isRomantic ? "סטורי רומנטי" : "סטורי חדש"} subtitle={isRomantic ? "גלוי רק למי שמצב ההיכרויות שלו פתוח" : undefined} back />
       <button
         type="button"

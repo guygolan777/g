@@ -61,7 +61,7 @@ function Notifications() {
 
   const list = q.data ?? [];
   return (
-    <Page>
+    <Page size="narrow">
       <PageHeader
         title="התראות"
         back
