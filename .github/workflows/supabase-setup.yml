@@ -12,7 +12,11 @@ on:
   workflow_dispatch:
     inputs:
       seed:
-        description: "Also load the sample data (10 demo profiles, events, communities)"
+        description: "Also load the original sample data (10 demo profiles, events, communities)"
+        type: boolean
+        default: false
+      demo20:
+        description: "Also load 20 demo users (each with an event and a community, some in dating mode)"
         type: boolean
         default: false
 
@@ -24,6 +28,7 @@ jobs:
       PROJECT_URL: ${{ secrets.VITE_SUPABASE_URL }}
       DB: ${{ secrets.SUPABASE_DB_URL }}
       SEED: ${{ inputs.seed }}
+      DEMO20: ${{ inputs.demo20 }}
     steps:
       - uses: actions/checkout@v4
       - name: Apply migrations
@@ -58,5 +63,10 @@ jobs:
             echo "→ seed.sql"
             run_sql "$(cat drizzle/seed.sql)" >/dev/null
             echo "Sample data loaded (password for all demo users: mibale1234)"
+          fi
+          if [ "$DEMO20" = "true" ]; then
+            echo "→ seed-demo20.sql"
+            run_sql "$(cat drizzle/seed-demo20.sql)" >/dev/null
+            echo "20 demo users loaded (password for all: mibale1234)"
           fi
           echo "Database is ready ✅"
