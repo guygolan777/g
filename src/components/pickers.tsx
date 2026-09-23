@@ -1,6 +1,6 @@
 import * as React from "react";
 import { SafeImg } from "@/components/safe-img";
-import { Camera, X } from "lucide-react";
+import { Camera, Video, X } from "lucide-react";
 import { toast } from "sonner";
 import { Chip } from "@/components/chip";
 import { HOBBY_CATEGORIES } from "@/lib/hobby-categories";
@@ -67,6 +67,8 @@ export function TraitPicker({ value, onChange }: { value: string[]; onChange: (v
 export function PhotoGridPicker({ userId, value, onChange }: { userId: string; value: string[]; onChange: (v: string[]) => void }) {
   const [busy, setBusy] = React.useState(false);
   const input = React.useRef<HTMLInputElement>(null);
+  const videoInput = React.useRef<HTMLInputElement>(null);
+  const full = value.length >= MAX_PROFILE_PHOTOS;
   async function add(files: FileList | null) {
     if (!files?.length) return;
     setBusy(true);
@@ -85,6 +87,7 @@ export function PhotoGridPicker({ userId, value, onChange }: { userId: string; v
     } finally {
       setBusy(false);
       if (input.current) input.current.value = "";
+      if (videoInput.current) videoInput.current.value = "";
     }
   }
   return (
@@ -121,9 +124,21 @@ export function PhotoGridPicker({ userId, value, onChange }: { userId: string; v
         );
       })}
       <input ref={input} type="file" accept="image/*,video/*" multiple hidden onChange={(e) => void add(e.target.files)} />
-      <p className="col-span-3 text-xs text-muted-foreground">
-        אפשר להעלות תמונות וגם סרטון קצר (עד {MAX_PROFILE_VIDEO_SECONDS} שניות). התמונה הראשונה היא תמונת הפרופיל.
-      </p>
+      {/* Separate picker so phones open straight on videos (the mixed picker defaults to photos). */}
+      <input ref={videoInput} type="file" accept="video/*" hidden onChange={(e) => void add(e.target.files)} />
+      <div className="col-span-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs text-muted-foreground">
+          אפשר להעלות תמונות וגם סרטון קצר (עד {MAX_PROFILE_VIDEO_SECONDS} שניות). התמונה הראשונה היא תמונת הפרופיל.
+        </p>
+        <button
+          type="button"
+          disabled={busy || full}
+          onClick={() => videoInput.current?.click()}
+          className="inline-flex h-9 items-center gap-1.5 rounded-full bg-secondary px-4 text-sm font-semibold disabled:opacity-50"
+        >
+          <Video className="size-4" /> הוספת סרטון
+        </button>
+      </div>
     </div>
   );
 }
