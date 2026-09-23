@@ -1,9 +1,13 @@
 name: Supabase database setup
 
 # Applies drizzle/migrations/*.sql (in order) to the Supabase project, and optionally the sample data.
-# Needs one repository secret: SUPABASE_DB_URL — Supabase → Connect → "Session pooler" connection
-# string (postgresql://postgres.<ref>:<password>@aws-…pooler.supabase.com:5432/postgres).
 # Migrations are tracked in public.schema_migrations, so running it again only applies new files.
+#
+# Uses ONE of these repository secrets:
+#   SUPABASE_ACCESS_TOKEN (recommended) — supabase.com/dashboard/account/tokens → "Generate new token";
+#                                         runs SQL through the Supabase Management API, no DB password needed.
+#                                         Also needs VITE_SUPABASE_URL (to know the project).
+#   SUPABASE_DB_URL                      — Connect → "Session pooler" connection string (with the DB password).
 on:
   workflow_dispatch:
     inputs:
@@ -16,25 +20,43 @@ jobs:
   migrate:
     runs-on: ubuntu-latest
     env:
+      TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_URL: ${{ secrets.VITE_SUPABASE_URL }}
       DB: ${{ secrets.SUPABASE_DB_URL }}
+      SEED: ${{ inputs.seed }}
     steps:
       - uses: actions/checkout@v4
-      - name: Check secret
-        run: '[ -n "$DB" ] || { echo "::error::Add the SUPABASE_DB_URL repository secret first"; exit 1; }'
       - name: Apply migrations
         run: |
-          psql "$DB" -v ON_ERROR_STOP=1 -qc "create table if not exists public.schema_migrations (name text primary key, applied_at timestamptz not null default now()); revoke all on public.schema_migrations from anon, authenticated;"
+          set -euo pipefail
+          if [ -n "$TOKEN" ]; then
+            REF=$(echo "$PROJECT_URL" | sed -E 's#https?://([a-z0-9]+)\..*#\1#')
+            [ -n "$REF" ] || { echo "::error::VITE_SUPABASE_URL secret is missing"; exit 1; }
+            echo "Using the Management API for project $REF"
+            run_sql() { # $1 = SQL text; prints the JSON result
+              jq -Rs '{query: .}' <<<"$1" | curl -sS --fail-with-body -X POST \
+                -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+                "https://api.supabase.com/v1/projects/$REF/database/query" -d @-
+            }
+          else
+            [ -n "$DB" ] || { echo "::error::Add the SUPABASE_ACCESS_TOKEN (or SUPABASE_DB_URL) repository secret"; exit 1; }
+            # Show the non-secret parts so a wrong user/host is easy to spot.
+            echo "Connecting as user '$(echo "$DB" | sed -E 's#^postgres(ql)?://([^:]+):.*#\2#')' to host '$(echo "$DB" | sed -E 's#.*@([^:/]+).*#\1#')'"
+            run_sql() { psql "$DB" -v ON_ERROR_STOP=1 -q -1 -At -f - <<<"$1"; }
+          fi
+
+          run_sql "create table if not exists public.schema_migrations (name text primary key, applied_at timestamptz not null default now()); revoke all on public.schema_migrations from anon, authenticated;" >/dev/null
+          applied=$(run_sql "select coalesce(string_agg(name, ' '), '') as names from public.schema_migrations")
           for f in drizzle/migrations/*.sql; do
             name=$(basename "$f")
-            if [ "$(psql "$DB" -Atc "select 1 from public.schema_migrations where name = '$name'")" = "1" ]; then
-              echo "✓ $name (already applied)"; continue
-            fi
+            if grep -q "$name" <<<"$applied"; then echo "✓ $name (already applied)"; continue; fi
             echo "→ $name"
-            psql "$DB" -v ON_ERROR_STOP=1 -q -1 -f "$f"
-            psql "$DB" -qc "insert into public.schema_migrations (name) values ('$name')"
+            run_sql "$(cat "$f")" >/dev/null
+            run_sql "insert into public.schema_migrations (name) values ('$name')" >/dev/null
           done
-      - name: Load sample data
-        if: ${{ inputs.seed }}
-        run: |
-          psql "$DB" -v ON_ERROR_STOP=1 -q -1 -f drizzle/seed.sql
-          echo "Sample data loaded (password for all demo users: mibale1234)"
+          if [ "$SEED" = "true" ]; then
+            echo "→ seed.sql"
+            run_sql "$(cat drizzle/seed.sql)" >/dev/null
+            echo "Sample data loaded (password for all demo users: mibale1234)"
+          fi
+          echo "Database is ready ✅"
