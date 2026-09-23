@@ -1,0 +1,54 @@
+name: Android demo APK
+
+# Builds an installable debug APK of the backend-less demo (sample data, no Supabase needed)
+# and publishes it as the "demo-apk" release, so it can be downloaded straight to a phone.
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/mibale-social-app-t8djka]
+    paths-ignore: ["**.md", "drizzle/**"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-demo-apk
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - name: Build demo web bundle
+        run: npm run build:demo
+      - name: Sync into the Android project
+        run: CAP_WEB_DIR=dist-demo npx cap sync android
+      - name: Assemble debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk mibale-demo.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mibale-demo-apk
+          path: mibale-demo.apk
+      - name: Publish to the demo-apk release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: demo-apk
+          name: mibale — APK הדגמה
+          prerelease: true
+          make_latest: false
+          body: |
+            גרסת הדגמה להתקנה באנדרואיד (נתוני דוגמה, בלי שרת). נבנתה מ-${{ github.sha }}.
+            הורידו את mibale-demo.apk בטלפון, אשרו "התקנה ממקורות לא ידועים" ופתחו.
+          files: mibale-demo.apk

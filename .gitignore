@@ -12,3 +12,5 @@ android/app/build
 android/.gradle
 ios/App/Pods
 ios/App/build
+dist-demo
+demo/routeTree.gen.ts

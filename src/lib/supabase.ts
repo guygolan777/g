@@ -1,7 +1,8 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { DEMO_ANON_KEY, DEMO_URL, DemoSocket, demoFetch, isDemo, seedDemoSession } from "./demo";
 
-const url = (import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "";
-const anonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ?? "";
+const url = isDemo ? DEMO_URL : ((import.meta.env.VITE_SUPABASE_URL as string | undefined) ?? "");
+const anonKey = isDemo ? DEMO_ANON_KEY : ((import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ?? "");
 
 export const isSupabaseConfigured = Boolean(url && anonKey);
 
@@ -9,7 +10,10 @@ let client: SupabaseClient | null = null;
 
 function makeClient(): SupabaseClient {
   const isBrowser = typeof window !== "undefined";
+  if (isDemo && isBrowser) seedDemoSession();
   return createClient(url || "http://localhost:54321", anonKey || "public-anon-key", {
+    global: isDemo ? { fetch: demoFetch } : undefined,
+    realtime: isDemo ? { transport: DemoSocket as never } : undefined,
     auth: {
       persistSession: isBrowser,
       autoRefreshToken: isBrowser,

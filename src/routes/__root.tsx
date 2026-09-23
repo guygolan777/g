@@ -39,7 +39,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useThemeSync();
   React.useEffect(() => {
-    if ("serviceWorker" in navigator && import.meta.env.PROD) {
+    if ("serviceWorker" in navigator && import.meta.env.PROD && import.meta.env.VITE_DEMO !== "1") {
       void navigator.serviceWorker.register("/sw.js").catch(() => undefined);
     }
   }, []);
