@@ -81,7 +81,7 @@ export function StoryRail({ romantic = false }: { romantic?: boolean }) {
         <Link to="/story/new" search={romantic ? { romantic: "1" } : {}} className="flex w-20 shrink-0 flex-col items-center gap-1">
           <div className="relative">
             <Avatar src={profile?.avatar_url} name={profile?.name} size={76} />
-            <span className="absolute -bottom-0.5 -left-0.5 grid size-7 place-items-center rounded-full bg-gradient-brand text-primary-foreground ring-2 ring-surface">
+            <span className="absolute -bottom-0.5 -left-0.5 grid size-7 place-items-center rounded-full bg-gradient-brand text-brand-foreground ring-2 ring-surface">
               <Plus className="size-4" />
             </span>
           </div>

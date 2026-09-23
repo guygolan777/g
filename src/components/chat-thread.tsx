@@ -125,7 +125,7 @@ export function ChatThread({
                 <div
                   className={cn(
                     "max-w-[78%] rounded-2xl px-3.5 py-2 text-[15px]",
-                    mine ? "rounded-br-md bg-gradient-brand text-primary-foreground" : "rounded-bl-md bg-surface shadow-soft",
+                    mine ? "rounded-br-md bg-gradient-brand text-brand-foreground" : "rounded-bl-md bg-surface shadow-soft",
                   )}
                 >
                   {!mine && showSenders && firstOfRun && <p className="mb-0.5 text-xs font-bold text-primary">{sender?.name}</p>}
@@ -187,7 +187,7 @@ export function ChatThread({
               className="h-12 min-w-0 flex-1 rounded-full bg-surface-soft px-5 outline-none"
             />
             {text.trim() ? (
-              <button type="submit" disabled={sending} className="grid size-12 shrink-0 place-items-center rounded-full bg-gradient-brand text-primary-foreground" aria-label="שליחה">
+              <button type="submit" disabled={sending} className="grid size-12 shrink-0 place-items-center rounded-full bg-gradient-brand text-brand-foreground" aria-label="שליחה">
                 <Send className="size-5 -scale-x-100" />
               </button>
             ) : (

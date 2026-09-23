@@ -322,7 +322,7 @@ export function ProfileView({
       onClick={() => setFilter(v)}
       className={cn(
         "shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold",
-        filter === v ? "bg-gradient-brand text-primary-foreground" : "bg-surface-soft text-muted-foreground",
+        filter === v ? "bg-gradient-brand text-brand-foreground" : "bg-surface-soft text-muted-foreground",
       )}
     >
       {label}

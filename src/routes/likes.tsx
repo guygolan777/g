@@ -274,7 +274,7 @@ function Dating() {
                   key={m.id}
                   person={m}
                   action={
-                    <Link to="/chat/$id" params={{ id: m.id }} className="grid size-14 shrink-0 place-items-center rounded-full bg-gradient-brand text-primary-foreground" aria-label="צ׳אט">
+                    <Link to="/chat/$id" params={{ id: m.id }} className="grid size-14 shrink-0 place-items-center rounded-full bg-gradient-brand text-brand-foreground" aria-label="צ׳אט">
                       <MessageSquare className="size-6" />
                     </Link>
                   }

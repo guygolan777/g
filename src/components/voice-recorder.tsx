@@ -46,7 +46,7 @@ export function VoiceRecorder({ onRecorded, disabled }: { onRecorded: (blob: Blo
       onClick={() => (rec ? stop() : void start())}
       className={cn(
         "grid size-12 shrink-0 place-items-center rounded-full transition",
-        rec ? "animate-pulse bg-like text-like-foreground" : "bg-gradient-brand text-primary-foreground",
+        rec ? "animate-pulse bg-like text-like-foreground" : "bg-gradient-brand text-brand-foreground",
       )}
       aria-label={rec ? "עצירה ושליחה" : "הקלטת הודעה קולית"}
     >

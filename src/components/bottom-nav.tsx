@@ -41,7 +41,7 @@ export function BottomNav() {
           <div className="flex flex-1 justify-center">
             <button
               onClick={() => (isGuest ? navigate({ to: "/signup" }) : setOpen(true))}
-              className="-mt-8 grid size-16 place-items-center rounded-full bg-gradient-brand text-primary-foreground shadow-lift ring-4 ring-surface transition active:scale-95"
+              className="-mt-8 grid size-16 place-items-center rounded-full bg-gradient-brand text-brand-foreground shadow-lift ring-4 ring-surface transition active:scale-95"
               aria-label="יצירה מהירה"
             >
               <Plus className="size-8" strokeWidth={2.6} />

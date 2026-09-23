@@ -55,7 +55,7 @@ function Pill({ active, onClick, children, className }: { active: boolean; onCli
       onClick={onClick}
       className={cn(
         "h-11 shrink-0 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition active:scale-95",
-        active ? "bg-gradient-brand text-primary-foreground shadow-soft" : "bg-surface-soft text-foreground",
+        active ? "bg-gradient-brand text-brand-foreground shadow-soft" : "bg-surface-soft text-foreground",
         className,
       )}
     >

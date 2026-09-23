@@ -4,6 +4,7 @@ import { Link, Outlet, createFileRoute, useChildMatches, useNavigate } from "@ta
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
+  Wallet,
   Bookmark,
   CalendarDays,
   ChevronRight,
@@ -300,7 +301,10 @@ function MemberEvent({ event, viewerId }: { event: EventRow; viewerId: string })
       <Hero event={event} />
       <div className="relative -mt-6 rounded-t-3xl bg-background pt-5 md:mt-0">
         <div className="flex items-start justify-between gap-2">
-          <Badge variant="event">{hobbyLabel(event.subcategory ?? event.category)}</Badge>
+          <div className="flex flex-wrap gap-2">
+            <Badge variant="event">{hobbyLabel(event.subcategory ?? event.category)}</Badge>
+            <Badge variant={event.price ? "muted" : "success"}>{priceLabel(event.price)}</Badge>
+          </div>
           <div className="flex gap-1">
             <Button size="icon-sm" variant="ghost" onClick={() => void toggleSave()} aria-label="שמירה">
               <Bookmark className={cn(saved.data && "fill-primary text-primary")} />
@@ -368,6 +372,12 @@ function MemberEvent({ event, viewerId }: { event: EventRow; viewerId: string })
               {seats < UNLIMITED_SEATS && ` מתוך ${seats}`}
               {!event.auto_approve && " · באישור המארגן"}
             </span>
+          </p>
+          <p className="flex items-center gap-3">
+            <span className="grid size-9 place-items-center rounded-full bg-success-soft text-success">
+              <Wallet className="size-4" />
+            </span>
+            <span className="text-sm">{event.price ? <><b>{priceLabel(event.price)}</b> למשתתף · התשלום למארגן</> : "כניסה חופשית"}</span>
           </p>
         </div>
 
