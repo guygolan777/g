@@ -53,13 +53,25 @@ function ProviderButton({ provider, label, icon }: { provider: "google" | "apple
   );
 }
 
+/** Providers enabled in Supabase, e.g. VITE_AUTH_PROVIDERS="google,apple". Unset → email only. */
+const ENABLED_PROVIDERS = new Set(
+  ((import.meta.env.VITE_AUTH_PROVIDERS as string | undefined) ?? "")
+    .split(",")
+    .map((p) => p.trim().toLowerCase())
+    .filter(Boolean),
+);
+
 /** Google + Sign in with Apple (the App Store requires Apple whenever another social login is offered). */
 export function SocialButtons() {
+  if (ENABLED_PROVIDERS.size === 0) return null;
   return (
-    <div className="grid gap-3">
-      <ProviderButton provider="apple" label="המשך עם Apple" icon={APPLE_ICON} />
-      <ProviderButton provider="google" label="המשך עם Google" icon={GOOGLE_ICON} />
-    </div>
+    <>
+      <div className="grid gap-3">
+        {ENABLED_PROVIDERS.has("apple") && <ProviderButton provider="apple" label="המשך עם Apple" icon={APPLE_ICON} />}
+        {ENABLED_PROVIDERS.has("google") && <ProviderButton provider="google" label="המשך עם Google" icon={GOOGLE_ICON} />}
+      </div>
+      <Divider />
+    </>
   );
 }
 

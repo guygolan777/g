@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { AuthLayout, Divider, SocialButtons, authErrorMessage } from "@/components/auth-form";
+import { AuthLayout, SocialButtons, authErrorMessage } from "@/components/auth-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/label";
@@ -52,7 +52,6 @@ function Signup() {
       }
     >
       <SocialButtons />
-      <Divider />
       <form onSubmit={submit} className="space-y-4">
         <Field label="שם">
           <Input required value={name} onChange={(e) => setName(e.target.value)} autoComplete="given-name" />

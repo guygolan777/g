@@ -81,6 +81,7 @@ PGUSER=postgres npm run db:test   # מריץ את כל המיגרציות + seed
 ## Auth
 
 - אימייל+סיסמה, Google ו-Sign in with Apple (Supabase → Authentication → Providers). Apple חובה ב-App Store כשיש התחברות חברתית אחרת.
+- הכפתורים מוצגים רק לספקים שמופיעים ב-`VITE_AUTH_PROVIDERS` (למשל `google,apple`); ריק = אימייל בלבד.
 - Redirect URLs: `https://<domain>/`, `https://<domain>/reset-password`, `https://<domain>/onboarding/profile`, `mibale://auth-callback`.
 - באפליקציה (נייטיב) ההתחברות עם Google/Apple נפתחת בדפדפן המערכת (Google חוסמת WebView) וחוזרת דרך `mibale://auth-callback`.
 
