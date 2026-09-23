@@ -13,6 +13,7 @@ import { GuestSignupBar } from "@/components/guest";
 import { ThemeScript, useThemeSync } from "@/lib/theme";
 import { seo } from "@/lib/seo";
 import { listenAuthCallback } from "@/lib/native";
+import { useAutoLocation } from "@/lib/location";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
@@ -68,6 +69,7 @@ function RootComponent() {
 
 /** Leaves room for the desktop sidebar (web layout) on wide screens. */
 function ContentFrame({ children }: { children: React.ReactNode }) {
+  useAutoLocation(); // inside AuthProvider: silently refreshes location if already permitted
   const withSidebar = useSidebarVisible();
   const { isGuest } = useAuth();
   return <div className={[withSidebar ? "lg:ps-64" : "", isGuest ? "pb-20" : ""].join(" ")}>{children}</div>;

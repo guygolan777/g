@@ -250,3 +250,22 @@
   background-size: 100% 1px;
   background-repeat: no-repeat;
 }
+
+/* Pulsing ring for "happening now" map pins */
+@keyframes mibale-ping {
+  75%,
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [style*="mibale-ping"] {
+    animation: none !important;
+  }
+}
+
+/* Dark mode: darken the OpenStreetMap tiles instead of a blinding white map */
+.dark .mibale-map .leaflet-tile {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}

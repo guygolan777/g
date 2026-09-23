@@ -1,5 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Bell, CalendarDays, Search } from "lucide-react";
+import { Bell, CalendarDays, MapPin, Search } from "lucide-react";
 import { Page } from "@/components/app-shell";
 import { StoryRail } from "@/components/story-rail";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,6 +32,11 @@ function Home() {
       <header className="flex items-center justify-between py-3">
         <p className="font-display text-4xl font-extrabold text-gradient-brand lg:invisible">mibale</p>
         <div className="flex items-center gap-2">
+          {!isGuest && (
+            <Link to="/nearby" className="grid size-12 place-items-center rounded-full bg-surface-soft" aria-label="קרוב אליי">
+              <MapPin className="size-5" />
+            </Link>
+          )}
           {!isGuest && (
             <Link to="/calendar" className="grid size-12 place-items-center rounded-full bg-surface-soft" aria-label="יומן">
               <CalendarDays className="size-5" />

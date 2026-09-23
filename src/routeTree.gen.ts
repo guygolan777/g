@@ -22,6 +22,7 @@ import { Route as HomeRouteImport } from './routes/home'
 import { Route as LikesRouteImport } from './routes/likes'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MeRouteImport } from './routes/me'
+import { Route as NearbyRouteImport } from './routes/nearby'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -118,6 +119,11 @@ const LoginRoute = LoginRouteImport.update({
 const MeRoute = MeRouteImport.update({
   id: '/me',
   path: '/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NearbyRoute = NearbyRouteImport.update({
+  id: '/nearby',
+  path: '/nearby',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificationsRoute = NotificationsRouteImport.update({
@@ -295,6 +301,7 @@ export interface FileRoutesByFullPath {
   '/likes': typeof LikesRoute
   '/login': typeof LoginRoute
   '/me': typeof MeRouteWithChildren
+  '/nearby': typeof NearbyRoute
   '/notifications': typeof NotificationsRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -340,6 +347,7 @@ export interface FileRoutesByTo {
   '/home': typeof HomeRoute
   '/likes': typeof LikesRoute
   '/login': typeof LoginRoute
+  '/nearby': typeof NearbyRoute
   '/notifications': typeof NotificationsRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -388,6 +396,7 @@ export interface FileRoutesById {
   '/likes': typeof LikesRoute
   '/login': typeof LoginRoute
   '/me': typeof MeRouteWithChildren
+  '/nearby': typeof NearbyRoute
   '/notifications': typeof NotificationsRoute
   '/privacy': typeof PrivacyRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -437,6 +446,7 @@ export interface FileRouteTypes {
     | '/likes'
     | '/login'
     | '/me'
+    | '/nearby'
     | '/notifications'
     | '/privacy'
     | '/reset-password'
@@ -482,6 +492,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/likes'
     | '/login'
+    | '/nearby'
     | '/notifications'
     | '/privacy'
     | '/reset-password'
@@ -529,6 +540,7 @@ export interface FileRouteTypes {
     | '/likes'
     | '/login'
     | '/me'
+    | '/nearby'
     | '/notifications'
     | '/privacy'
     | '/reset-password'
@@ -577,6 +589,7 @@ export interface RootRouteChildren {
   LikesRoute: typeof LikesRoute
   LoginRoute: typeof LoginRoute
   MeRoute: typeof MeRouteWithChildren
+  NearbyRoute: typeof NearbyRoute
   NotificationsRoute: typeof NotificationsRoute
   PrivacyRoute: typeof PrivacyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -693,6 +706,13 @@ declare module '@tanstack/react-router' {
       path: '/me'
       fullPath: '/me'
       preLoaderRoute: typeof MeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nearby': {
+      id: '/nearby'
+      path: '/nearby'
+      fullPath: '/nearby'
+      preLoaderRoute: typeof NearbyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notifications': {
@@ -978,6 +998,7 @@ const rootRouteChildren: RootRouteChildren = {
   LikesRoute: LikesRoute,
   LoginRoute: LoginRoute,
   MeRoute: MeRouteWithChildren,
+  NearbyRoute: NearbyRoute,
   NotificationsRoute: NotificationsRoute,
   PrivacyRoute: PrivacyRoute,
   ResetPasswordRoute: ResetPasswordRoute,

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Bell, CalendarDays, Compass, Heart, Home, MessageCircle, Plus, Search, Settings, User } from "lucide-react";
+import { Bell, CalendarDays, Compass, Heart, Home, MapPin, MessageCircle, Plus, Search, Settings, User } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import { QuickCreateSheet } from "@/components/quick-create";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ export function DesktopSidebar() {
     { to: "/home", label: "בית", Icon: Home, match: ["/home"] },
     { to: "/discover", label: "גילוי אירועים", Icon: Compass },
     { to: "/search", label: "חיפוש", Icon: Search },
+    { to: "/nearby", label: "קרוב אליי", Icon: MapPin, member: true },
     { to: "/likes", label: "לייקים והתאמות", Icon: Heart, member: true },
     { to: "/chat", label: "הודעות", Icon: MessageCircle, badge: unread.messages, member: true },
     { to: "/notifications", label: "התראות", Icon: Bell, badge: unread.notifications, member: true },

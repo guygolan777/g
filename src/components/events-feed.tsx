@@ -1,5 +1,8 @@
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
+import { List, Map as MapIcon, MapPin } from "lucide-react";
+import { EventsMapView } from "@/components/events-map-view";
+import { cn } from "@/lib/utils";
 import { Carousel } from "@/components/carousel";
 import { EventCard } from "@/components/event-card";
 import { CategoryChipsRow, EventFilterSheet, applyEventFilters, useEventFilters } from "@/components/event-filters";
@@ -28,12 +31,42 @@ export function EventsFeed() {
     <EventCard key={e.id} data={feed.toCard(e)} viewerId={feed.viewerId} isGuest={feed.isGuest} onHide={feed.hide} />
   );
 
+  const [view, setView] = useEventsView();
+  const mapCards = React.useMemo(() => (view === "map" ? filtered.map(feed.toCard) : []), [view, filtered, feed.toCard]);
+
   return (
     <div>
-      <CategoryChipsRow filters={filters} onChange={setFilters} onOpenFilters={() => setSheet(true)} />
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <CategoryChipsRow filters={filters} onChange={setFilters} onOpenFilters={() => setSheet(true)} />
+        </div>
+        <div className="flex shrink-0 rounded-full bg-surface-soft p-1" role="group" aria-label="תצוגה">
+          {(
+            [
+              ["list", "רשימה", List],
+              ["map", "מפה", MapIcon],
+            ] as const
+          ).map(([v, label, Icon]) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setView(v)}
+              aria-pressed={view === v}
+              aria-label={label}
+              className={cn("grid size-9 place-items-center rounded-full transition", view === v ? "bg-surface text-primary shadow-soft" : "text-muted-foreground")}
+            >
+              <Icon className="size-4" />
+            </button>
+          ))}
+        </div>
+      </div>
       <EventFilterSheet open={sheet} onOpenChange={setSheet} value={filters} onApply={setFilters} />
 
-      {feed.isLoading ? (
+      {view === "map" && !feed.isLoading ? (
+        <EventsMapView cards={mapCards} center={feed.location} isGuest={feed.isGuest} />
+      ) : null}
+
+      {view === "map" && !feed.isLoading ? null : feed.isLoading ? (
         <div className="mt-4 flex gap-3 overflow-hidden">
           {[0, 1].map((i) => (
             <Skeleton key={i} className="h-96 w-[219px] shrink-0 rounded-3xl" />
@@ -65,9 +98,22 @@ export function EventsFeed() {
           <Carousel title="מאנשים במעקב" moreTo="/discover" moreSearch={{ section: "following" }}>
             {carousels.fromFollowing.map(card)}
           </Carousel>
-          <Carousel title="קרוב אליך" moreTo="/discover" moreSearch={{ section: "nearby" }}>
-            {carousels.nearby.map(card)}
-          </Carousel>
+          {feed.location ? (
+            <Carousel title="קרוב אליך" moreTo="/nearby">
+              {carousels.nearby.map(card)}
+            </Carousel>
+          ) : (
+            <Link to="/nearby" className="mt-6 flex items-center gap-3 rounded-3xl bg-teal-soft p-4">
+              <span className="grid size-11 shrink-0 place-items-center rounded-full bg-surface text-teal">
+                <MapPin className="size-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-bold">מה קורה קרוב אליך?</span>
+                <span className="block text-sm text-muted-foreground">הפעילו מיקום וגלו אירועים ואנשים בסביבה</span>
+              </span>
+              <span className="text-sm font-semibold text-teal">הפעלה</span>
+            </Link>
+          )}
           <Carousel title="האירועים שפתחת" moreTo="/me">
             {carousels.mine.map(card)}
           </Carousel>
@@ -77,4 +123,27 @@ export function EventsFeed() {
       )}
     </div>
   );
+}
+
+const VIEW_KEY = "mibale-events-view";
+
+/** List or map, remembered per device. */
+function useEventsView(): ["list" | "map", (v: "list" | "map") => void] {
+  const [view, setViewState] = React.useState<"list" | "map">("list");
+  React.useEffect(() => {
+    try {
+      if (localStorage.getItem(VIEW_KEY) === "map") setViewState("map");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const setView = React.useCallback((v: "list" | "map") => {
+    setViewState(v);
+    try {
+      localStorage.setItem(VIEW_KEY, v);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  return [view, setView];
 }
