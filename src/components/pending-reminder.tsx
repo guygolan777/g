@@ -32,9 +32,9 @@ export function PendingReminder() {
   const { data: count = 0 } = usePendingRequestsCount();
   if (!count) return null;
   return (
-    <Link to="/me" search={{ filter: "pending" }} className="mb-2 flex items-center gap-3 rounded-2xl bg-partner-soft px-4 py-3 text-sm font-semibold text-partner-foreground">
+    <Link to="/me" search={{ filter: "pending" }} className="mb-2 flex items-center gap-3 rounded-2xl bg-partner-soft px-4 py-3 text-sm font-semibold text-partner-strong">
       <Hourglass className="size-5 shrink-0" />
-      <span className="flex-1">יש לך {count} בקשות שממתינות לאישור</span>
+      <span className="flex-1">{count === 1 ? "יש לך בקשה אחת שממתינה לאישור" : `יש לך ${count} בקשות שממתינות לאישור`}</span>
       <span className="text-xs underline">לפרופיל</span>
     </Link>
   );
