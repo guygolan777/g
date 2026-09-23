@@ -1,6 +1,7 @@
 import * as React from "react";
-import { Chip, ChipRow } from "@/components/chip";
-import { HOBBY_CATEGORIES } from "@/lib/hobby-categories";
+import { ChipRow } from "@/components/chip";
+import { HOBBY_CATEGORIES, hobbyToneClass } from "@/lib/hobby-categories";
+import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "mibale-category-filter";
 
@@ -29,22 +30,23 @@ export function useCategoryFilter(scope = "home") {
   return [selected, update] as const;
 }
 
+/** One-line row of colored category chips (text only) with multi-select. */
 export function CategoryFilterRow({ selected, onChange }: { selected: string[]; onChange: (next: string[]) => void }) {
   return (
     <ChipRow>
-      <Chip active={selected.length === 0} onClick={() => onChange([])}>
-        הכל
-      </Chip>
       {HOBBY_CATEGORIES.map((c) => {
         const active = selected.includes(c.id);
         return (
-          <Chip
+          <button
             key={c.id}
-            active={active}
             onClick={() => onChange(active ? selected.filter((s) => s !== c.id) : [...selected, c.id])}
+            className={cn(
+              "shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition active:scale-95",
+              active ? "bg-primary text-primary-foreground" : hobbyToneClass(c.id),
+            )}
           >
             {c.label}
-          </Chip>
+          </button>
         );
       })}
     </ChipRow>

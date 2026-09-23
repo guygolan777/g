@@ -1,8 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Bell, Heart, Search } from "lucide-react";
+import { Bell, CalendarDays, Search } from "lucide-react";
 import { Page } from "@/components/app-shell";
 import { StoryRail } from "@/components/story-rail";
-import { CountBadge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EventsFeed } from "@/components/events-feed";
 import { CommunitiesBrowser } from "@/components/communities-browser";
@@ -23,7 +22,7 @@ export const Route = createFileRoute("/home")({
 });
 
 function Home() {
-  const { user, profile, isGuest } = useAuth();
+  const { user, isGuest } = useAuth();
   const unread = useUnreadCounts();
   const { tab = "events" } = Route.useSearch();
   const navigate = Route.useNavigate();
@@ -31,23 +30,20 @@ function Home() {
   return (
     <Page>
       <header className="flex items-center justify-between py-3">
-        <div>
-          <p className="font-display text-2xl font-bold text-gradient-brand">mibale</p>
-          {profile?.name && <p className="text-sm text-muted-foreground">היי {profile.name.split(" ")[0]}, מי בא היום?</p>}
-        </div>
-        <div className="flex items-center gap-1">
-          <Link to="/search" className="grid size-10 place-items-center rounded-full bg-surface shadow-soft" aria-label="חיפוש">
+        <p className="font-display text-4xl font-extrabold text-gradient-brand">mibale</p>
+        <div className="flex items-center gap-2">
+          {!isGuest && (
+            <Link to="/calendar" className="grid size-12 place-items-center rounded-full bg-surface-soft" aria-label="יומן">
+              <CalendarDays className="size-5" />
+            </Link>
+          )}
+          <Link to="/search" className="grid size-12 place-items-center rounded-full bg-surface-soft" aria-label="חיפוש">
             <Search className="size-5" />
           </Link>
           {!isGuest && (
-            <Link to="/likes" className="grid size-10 place-items-center rounded-full bg-surface text-like shadow-soft" aria-label="היכרויות">
-              <Heart className="size-5" />
-            </Link>
-          )}
-          {!isGuest && (
-            <Link to="/notifications" className="relative grid size-10 place-items-center rounded-full bg-surface shadow-soft" aria-label="התראות">
+            <Link to="/notifications" className="relative grid size-12 place-items-center rounded-full bg-surface-soft" aria-label="התראות">
               <Bell className="size-5" />
-              <CountBadge count={unread.notifications} />
+              {unread.notifications > 0 && <span className="absolute top-2.5 left-3 size-2.5 rounded-full bg-like ring-2 ring-surface-soft" />}
             </Link>
           )}
         </div>
@@ -57,10 +53,10 @@ function Home() {
       <StoryRail />
 
       <Tabs value={tab} onValueChange={(v) => void navigate({ search: { tab: v === "events" ? undefined : (v as HomeSearch["tab"]) }, replace: true })} className="mt-3">
-        <TabsList>
+        <TabsList className="h-14">
           <TabsTrigger value="events">אירועים</TabsTrigger>
-          <TabsTrigger value="communities">קהילות</TabsTrigger>
           <TabsTrigger value="people">אנשים</TabsTrigger>
+          <TabsTrigger value="communities">קהילות</TabsTrigger>
         </TabsList>
         <TabsContent value="events">
           <EventsFeed />

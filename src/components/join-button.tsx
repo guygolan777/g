@@ -80,7 +80,7 @@ export function JoinButton({
   }
   if (local === "approved") {
     return (
-      <Button asChild size={size} variant="success" className={cls}>
+      <Button asChild size={size} variant="secondary" className={cn(cls, "h-auto min-h-8 whitespace-normal py-1.5 leading-tight")}>
         <Link to="/e/$id" params={{ id: event.id }}>אתם בפנים — לפרטי האירוע</Link>
       </Button>
     );
@@ -95,7 +95,7 @@ export function JoinButton({
   return (
     <Button
       size={size}
-      variant="default"
+      variant="brand"
       className={cls}
       disabled={loading}
       onClick={async (e) => {

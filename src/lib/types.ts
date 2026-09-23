@@ -1,7 +1,7 @@
 export type Gender = "female" | "male" | "other";
 export type AudienceGender = "all" | "female" | "male";
 export type ParticipantStatus = "pending" | "approved" | "declined";
-export type MessageKind = "text" | "voice" | "image" | "story_reply" | "system";
+export type MessageKind = "text" | "voice" | "image" | "story_reply" | "system" | "date_invite";
 export type Recurrence = "none" | "daily" | "weekly" | "biweekly" | "monthly";
 
 export type Profile = {
@@ -58,6 +58,8 @@ export type EventRow = {
   min_age?: number | null;
   max_age?: number | null;
   gender_target?: AudienceGender;
+  price?: number;
+  max_distance_km?: number | null;
   created_at?: string;
 };
 
@@ -90,6 +92,7 @@ export type Story = {
   media_url: string;
   media_type: "image" | "video";
   caption: string;
+  is_romantic?: boolean;
   created_at: string;
   expires_at: string;
 };
@@ -102,6 +105,7 @@ export type DirectMessage = {
   body: string;
   media_url: string | null;
   story_id: string | null;
+  date_invite_id?: string | null;
   read_at: string | null;
   created_at: string;
 };
@@ -136,5 +140,17 @@ export type Report = {
   reason: string;
   details: string;
   status: "open" | "resolved" | "dismissed";
+  created_at: string;
+};
+
+export type DateInvite = {
+  id: string;
+  sender_id: string;
+  recipient_id: string;
+  title: string;
+  location: string | null;
+  starts_at: string;
+  note: string;
+  status: "pending" | "approved" | "declined";
   created_at: string;
 };

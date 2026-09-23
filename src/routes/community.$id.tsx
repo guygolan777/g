@@ -1,21 +1,19 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { SafeImg } from "@/components/safe-img";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ChevronRight, MessageCircle, Plus, Share2, Trash2 } from "lucide-react";
-import { CenteredSpinner, EmptyState, Page } from "@/components/app-shell";
+import { CalendarPlus, MapPin, MessageCircle, Share2, Trash2, Users } from "lucide-react";
+import { CenteredSpinner, EmptyState, Page, PageHeader, Section } from "@/components/app-shell";
+import { CommunityThumb, joinCommunity } from "@/components/communities-browser";
 import { Avatar } from "@/components/avatar";
-import { EventCard } from "@/components/event-card";
 import { ReportDialog } from "@/components/report-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
-import { useEventFeed } from "@/hooks/use-event-feed";
 import { supabase } from "@/lib/supabase";
 import { EVENT_COLUMNS, EVENT_GUEST_COLUMNS, PROFILE_MINI, SITE_URL } from "@/lib/constants";
 import { hobbyLabel } from "@/lib/hobby-categories";
-import { formatRelative } from "@/lib/format";
+import { formatDate, formatRelative, formatTime } from "@/lib/format";
+import { whoComesTitle } from "@/lib/event-title";
 import { shareLink } from "@/lib/native";
 import { seo } from "@/lib/seo";
 import type { Community, EventRow, Profile } from "@/lib/types";
@@ -36,7 +34,6 @@ function CommunityPage() {
   const { user, isGuest, ready } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const feed = useEventFeed();
 
   const q = useQuery({
     queryKey: ["community", id, isGuest],
@@ -89,17 +86,12 @@ function CommunityPage() {
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: ["community", id] });
     void qc.invalidateQueries({ queryKey: ["my-communities"] });
+    void qc.invalidateQueries({ queryKey: ["community-membership"] });
   };
 
   async function join() {
     if (!user) return void navigate({ to: "/signup" });
-    const { data, error } = await supabase.rpc("request_community_join", { _community_id: id, _message: null });
-    if (error) {
-      const m = error.message;
-      return void toast.error(m.includes("audience") ? "הקהילה מיועדת לקהל אחר" : m.includes("age") ? "הקהילה מיועדת לטווח גילאים אחר" : "ההצטרפות נכשלה");
-    }
-    toast.success(data === "member" ? "🎉 הצטרפת לקהילה" : "הבקשה נשלחה למנהלי הקהילה");
-    refresh();
+    if (await joinCommunity(id)) refresh();
   }
 
   async function leave() {
@@ -130,142 +122,145 @@ function CommunityPage() {
     void navigate({ to: "/home", search: { tab: "communities" }, replace: true });
   }
 
+  const upcoming = q.data!.events;
   return (
     <Page>
-      <div className="relative -mx-4 aspect-[16/9] bg-teal-soft">
-        {c.image_url && <SafeImg src={c.image_url} alt="" className="size-full object-cover" />}
-        <button
-          onClick={() => window.history.back()}
-          className="absolute top-4 right-4 grid size-10 place-items-center rounded-full bg-surface/90 shadow-soft"
-          aria-label="חזרה"
-        >
-          <ChevronRight className="size-6" />
-        </button>
-      </div>
-      <div className="relative -mt-6 rounded-t-3xl bg-background pt-5">
-        <div className="flex flex-wrap gap-1.5">
-          <Badge variant="teal">{hobbyLabel(c.hobby)}</Badge>
+      <PageHeader title="קהילה" back />
+      <div className="rounded-3xl bg-card p-6 text-center shadow-soft">
+        <CommunityThumb community={c} className="mx-auto size-32 rounded-3xl" />
+        <h1 className="mt-4 text-2xl font-bold">{c.name}</h1>
+        <p className="font-semibold text-primary">{hobbyLabel(c.hobby, false)}</p>
+        {c.description && <p className="mt-2 whitespace-pre-line text-muted-foreground">{c.description}</p>}
+        <p className="mt-2 flex items-center justify-center gap-1 text-sm text-muted-foreground">
+          {!isGuest && (
+            <>
+              <Users className="size-4" /> {members.length} חברים
+            </>
+          )}
+          {c.city && (
+            <>
+              {!isGuest && " · "}
+              <MapPin className="size-4" /> {c.city}
+            </>
+          )}
+        </p>
+        <div className="mt-2 flex flex-wrap justify-center gap-1.5">
           {c.audience_gender !== "all" && <Badge variant="violet">{AUDIENCE[c.audience_gender]}</Badge>}
-          <Badge variant="muted">
-            גילאי {c.min_age}–{c.max_age}
-          </Badge>
+          {(c.min_age > 18 || c.max_age < 99) && (
+            <Badge variant="muted">
+              גילאי {c.min_age}–{c.max_age}
+            </Badge>
+          )}
           {!c.auto_approve && <Badge variant="partner">באישור מנהלים</Badge>}
         </div>
-        <h1 className="mt-2 text-2xl font-bold">{c.name}</h1>
-        <p className="text-sm text-muted-foreground">
-          {c.city ? `${c.city} · ` : ""}
-          {isGuest ? "" : `${members.length} חברים · `}
-          {q.data!.events.length} אירועים זמינים
-        </p>
-        {c.description && <p className="mt-3 leading-relaxed whitespace-pre-line">{c.description}</p>}
 
-        <div className="mt-4 flex gap-2">
+        <div className="mt-5 space-y-3">
           {me ? (
             <>
-              <Button asChild variant="brand" className="flex-1">
+              <Button
+                variant="secondary"
+                size="lg"
+                className="w-full shadow-soft"
+                disabled={me.role === "founder"}
+                onClick={() => void leave()}
+              >
+                {me.role === "founder" ? "את/ה מייסד/ת הקהילה" : "הצטרפתי — עזיבה"}
+              </Button>
+              <Button asChild variant="brand" size="lg" className="w-full">
+                <Link to="/event/new" search={{ community: id }}>
+                  <CalendarPlus /> פתיחת אירוע לקהילה
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" className="w-full">
                 <Link to="/chat/$id" params={{ id }} search={{ kind: "community" }}>
                   <MessageCircle /> צ׳אט הקהילה
                 </Link>
               </Button>
-              <Button asChild variant="soft">
-                <Link to="/event/new">
-                  <Plus /> אירוע
-                </Link>
-              </Button>
             </>
           ) : q.data!.myRequest === "pending" ? (
-            <Button variant="secondary" className="flex-1" disabled>
+            <Button variant="secondary" size="lg" className="w-full" disabled>
               הבקשה ממתינה לאישור
             </Button>
           ) : (
-            <Button variant="brand" className="flex-1" onClick={() => void join()}>
+            <Button variant="brand" size="lg" className="w-full" onClick={() => void join()}>
               {c.auto_approve ? "הצטרפות לקהילה" : "בקשת הצטרפות"}
             </Button>
           )}
-          <Button size="icon" variant="outline" onClick={() => void shareLink({ title: c.name, url: `${SITE_URL}/community/${c.id}` })} aria-label="שיתוף">
-            <Share2 />
+        </div>
+      </div>
+
+      <Section title="פעילות קרובה בקהילה">
+        {upcoming.length === 0 ? (
+          <p className="text-sm text-muted-foreground">אין אירועים קרובים</p>
+        ) : (
+          <div className="space-y-2">
+            {upcoming.map((e) => (
+              <Link key={e.id} to="/e/$id" params={{ id: e.id }} className="flex items-center justify-between gap-3 rounded-2xl bg-card px-4 py-4 shadow-soft">
+                <span className="truncate font-semibold">{whoComesTitle(e.title)}</span>
+                <span className="shrink-0 text-sm text-muted-foreground">{formatDate(e.starts_at, { weekday: "short", day: "2-digit", month: "2-digit" })}, {formatTime(e.starts_at)}</span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      {isAdmin && q.data!.requests.length > 0 && (
+        <Section title={`בקשות הצטרפות (${q.data!.requests.length})`}>
+          <div className="space-y-2">
+            {q.data!.requests.map((r) => (
+              <div key={r.id} className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-soft">
+                <Avatar src={r.profile?.avatar_url} name={r.profile?.name} size={44} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold">{r.profile?.name}</p>
+                  <p className="text-xs text-muted-foreground">{formatRelative(r.created_at)}</p>
+                </div>
+                <Button size="sm" onClick={() => void review(r.id, true)}>
+                  אישור
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => void review(r.id, false)}>
+                  דחייה
+                </Button>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {!isGuest && (
+        <Section title="חברי הקהילה">
+          <div className="space-y-2">
+            {[...members]
+              .sort((a, b) => ["founder", "admin", "member"].indexOf(a.role) - ["founder", "admin", "member"].indexOf(b.role))
+              .map((m) => (
+                <div key={m.profile_id} className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-soft">
+                  <Link to="/profile/$id" params={{ id: m.profile_id }}>
+                    <Avatar src={m.profile?.avatar_url} name={m.profile?.name} size={52} />
+                  </Link>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-bold">{m.profile?.name}</p>
+                    <p className="text-sm text-muted-foreground">{ROLE_LABEL[m.role]}</p>
+                  </div>
+                  {me?.role === "founder" && m.role !== "founder" && (
+                    <Button size="sm" variant="ghost" onClick={() => void setRole(m.profile_id, m.role === "admin" ? "member" : "admin")}>
+                      {m.role === "admin" ? "הסרת ניהול" : "מינוי למנהל/ת"}
+                    </Button>
+                  )}
+                </div>
+              ))}
+          </div>
+        </Section>
+      )}
+
+      <div className="mt-10 flex justify-center gap-2">
+        <Button variant="ghost" size="sm" onClick={() => void shareLink({ title: c.name, url: `${SITE_URL}/community/${c.id}` })}>
+          <Share2 /> שיתוף
+        </Button>
+        {me?.role === "founder" && (
+          <Button variant="ghost" size="sm" className="text-destructive" onClick={() => void removeCommunity()}>
+            <Trash2 /> מחיקת הקהילה
           </Button>
-        </div>
-
-        <Tabs defaultValue="events" className="mt-6">
-          <TabsList>
-            <TabsTrigger value="events">אירועים</TabsTrigger>
-            {!isGuest && <TabsTrigger value="members">חברים</TabsTrigger>}
-            {isAdmin && (
-              <TabsTrigger value="requests">
-                בקשות{q.data!.requests.length > 0 && ` (${q.data!.requests.length})`}
-              </TabsTrigger>
-            )}
-          </TabsList>
-          <TabsContent value="events">
-            {q.data!.events.length === 0 ? (
-              <EmptyState emoji="🗓️" title="אין אירועים קרובים" />
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                {q.data!.events.map((e) => (
-                  <EventCard key={e.id} data={feed.toCard(e)} viewerId={feed.viewerId} isGuest={isGuest} />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-          <TabsContent value="members">
-            <div className="space-y-2">
-              {members
-                .sort((a, b) => ["founder", "admin", "member"].indexOf(a.role) - ["founder", "admin", "member"].indexOf(b.role))
-                .map((m) => (
-                  <div key={m.profile_id} className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-soft">
-                    <Link to="/profile/$id" params={{ id: m.profile_id }}>
-                      <Avatar src={m.profile?.avatar_url} name={m.profile?.name} size={40} />
-                    </Link>
-                    <p className="flex-1 truncate font-semibold">{m.profile?.name}</p>
-                    <Badge variant={m.role === "member" ? "muted" : "teal"}>{ROLE_LABEL[m.role]}</Badge>
-                    {me?.role === "founder" && m.role !== "founder" && (
-                      <Button size="sm" variant="ghost" onClick={() => void setRole(m.profile_id, m.role === "admin" ? "member" : "admin")}>
-                        {m.role === "admin" ? "הסרת ניהול" : "מינוי למנהל/ת"}
-                      </Button>
-                    )}
-                  </div>
-                ))}
-            </div>
-          </TabsContent>
-          <TabsContent value="requests">
-            {q.data!.requests.length === 0 ? (
-              <p className="text-sm text-muted-foreground">אין בקשות ממתינות</p>
-            ) : (
-              <div className="space-y-2">
-                {q.data!.requests.map((r) => (
-                  <div key={r.id} className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-soft">
-                    <Avatar src={r.profile?.avatar_url} name={r.profile?.name} size={40} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold">{r.profile?.name}</p>
-                      <p className="text-xs text-muted-foreground">{formatRelative(r.created_at)}</p>
-                    </div>
-                    <Button size="sm" onClick={() => void review(r.id, true)}>
-                      אישור
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => void review(r.id, false)}>
-                      דחייה
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-
-        <div className="mt-10 flex justify-center gap-2">
-          {me && me.role !== "founder" && (
-            <Button variant="ghost" size="sm" onClick={() => void leave()}>
-              עזיבת הקהילה
-            </Button>
-          )}
-          {me?.role === "founder" && (
-            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => void removeCommunity()}>
-              <Trash2 /> מחיקת הקהילה
-            </Button>
-          )}
-          {!me && <ReportDialog targetType="community" targetId={c.id} />}
-        </div>
+        )}
+        {!me && <ReportDialog targetType="community" targetId={c.id} />}
       </div>
     </Page>
   );

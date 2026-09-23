@@ -4,11 +4,11 @@ import { List, Map as MapIcon } from "lucide-react";
 import { EmptyState, Page, PageHeader } from "@/components/app-shell";
 import { EventCard } from "@/components/event-card";
 import { EventMap } from "@/components/event-map";
-import { CategoryFilterRow, matchesCategories, useCategoryFilter } from "@/components/category-filter";
-import { SortRow } from "@/components/events-feed";
+import { CategoryChipsRow, EventFilterSheet, applyEventFilters, useEventFilters } from "@/components/event-filters";
+import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { useEventFeed } from "@/hooks/use-event-feed";
-import { buildHomeCarousels, rankEvents, type SortMode } from "@/lib/event-ranking";
+import { buildHomeCarousels, rankEvents } from "@/lib/event-ranking";
 import { seo } from "@/lib/seo";
 
 type Section = "all" | "recommended" | "soon" | "following" | "nearby";
@@ -31,12 +31,14 @@ export const Route = createFileRoute("/discover")({
 function Discover() {
   const { section = "all" } = Route.useSearch();
   const feed = useEventFeed();
-  const [cats, setCats] = useCategoryFilter("discover");
-  const [sort, setSort] = React.useState<SortMode>(section === "soon" ? "time" : section === "nearby" ? "distance" : "recommended");
+  const { profile } = useAuth();
+  const [filters, setFilters] = useEventFilters("discover");
+  const [sheet, setSheet] = React.useState(false);
+  const sort = section === "soon" ? "time" : section === "nearby" ? "distance" : filters.sort;
   const [view, setView] = React.useState<"list" | "map">("list");
 
   const list = React.useMemo(() => {
-    const base = feed.events.filter((e) => matchesCategories(e.category, cats));
+    const base = applyEventFilters(feed.events, filters, { gender: profile?.gender, location: feed.location });
     let pool = base;
     if (section !== "all") {
       // Full list of the section — same filters as its home carousel, without the per-carousel cap.
@@ -44,7 +46,7 @@ function Discover() {
       pool = section === "recommended" ? c.recommended : section === "soon" ? c.startingSoon : section === "following" ? c.fromFollowing : c.nearby;
     }
     return rankEvents(pool, feed.ctx, sort).map((r) => r.event);
-  }, [feed.events, feed.ctx, cats, section, sort]);
+  }, [feed.events, feed.ctx, filters, section, sort, profile?.gender, feed.location]);
 
   return (
     <Page>
@@ -57,17 +59,15 @@ function Discover() {
           </Button>
         }
       />
-      <div className="space-y-2">
-        <SortRow value={sort} onChange={setSort} />
-        <CategoryFilterRow selected={cats} onChange={setCats} />
-      </div>
+      <CategoryChipsRow filters={filters} onChange={setFilters} onOpenFilters={() => setSheet(true)} />
+      <EventFilterSheet open={sheet} onOpenChange={setSheet} value={filters} onApply={setFilters} />
       <div className="mt-4">
         {view === "map" ? (
           <EventMap events={list} center={feed.location} />
         ) : list.length === 0 ? (
           <EmptyState emoji="🔭" title="אין כאן אירועים כרגע" />
         ) : (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
             {list.map((e) => (
               <EventCard key={e.id} data={feed.toCard(e)} viewerId={feed.viewerId} isGuest={feed.isGuest} onHide={feed.hide} />
             ))}

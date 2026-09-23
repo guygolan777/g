@@ -21,6 +21,7 @@ import type { ParticipantStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/story/$id")({
+  validateSearch: (s: Record<string, unknown>): { romantic?: "1" } => ({ romantic: s.romantic === "1" ? "1" : undefined }),
   head: () => seo({ title: "סטורי", description: "סטוריז מאנשים ואירועים ב-mibale." }),
   component: () => (
     <RequireAuth>
@@ -34,14 +35,15 @@ const IMAGE_MS = 5000;
 function StoryViewer() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
-  const { flat, isLoading } = useActiveStories();
+  const { romantic } = Route.useSearch();
+  const { flat, isLoading } = useActiveStories(romantic === "1");
   const scroller = React.useRef<HTMLDivElement>(null);
   const [current, setCurrent] = React.useState(id);
   const [muted, setMuted] = React.useState(true);
   const [paused, setPaused] = React.useState(false);
 
   const index = flat.findIndex((s) => s.id === current);
-  const close = React.useCallback(() => void navigate({ to: "/home" }), [navigate]);
+  const close = React.useCallback(() => void navigate({ to: romantic === "1" ? "/likes" : "/home" }), [navigate, romantic]);
 
   const goTo = React.useCallback(
     (i: number) => {

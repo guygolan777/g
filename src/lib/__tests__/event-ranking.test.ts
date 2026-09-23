@@ -10,8 +10,8 @@ function ev(id: string, over: Partial<EventRow> = {}): EventRow {
     id,
     organizer_id: "stranger",
     title: id,
-    category: "games",
-    subcategory: "games.board",
+    category: "board",
+    subcategory: "board.strategy",
     image_url: null,
     starts_at: hours(72),
     ends_at: null,
@@ -24,11 +24,11 @@ function ev(id: string, over: Partial<EventRow> = {}): EventRow {
 
 function ctx(over: Partial<RankContext> = {}): RankContext {
   return {
-    me: { id: "me", hobbies: ["sport.running", "music"], gender: "female", age: 30, location: { lat: 32.08, lng: 34.78 } },
+    me: { id: "me", hobbies: ["fitness.running", "fun"], gender: "female", age: 30, location: { lat: 32.08, lng: 34.78 } },
     following: new Set(["friend", "mutual"]),
     followers: new Set(["fan", "mutual"]),
     myStatus: new Map(),
-    pastCategories: new Map([["food", 2]]),
+    pastCategories: new Map([["meet", 2]]),
     approvedCounts: new Map(),
     attendees: new Map(),
     now: NOW,
@@ -59,10 +59,10 @@ describe("personal tier hierarchy", () => {
 describe("match tier", () => {
   it("exact subcategory > category > past taste", () => {
     const c = ctx();
-    expect(matchTier(ev("x", { category: "sport", subcategory: "sport.running" }), c)).toBe("exactSub");
-    expect(matchTier(ev("x", { category: "music", subcategory: "music.jam" }), c)).toBe("category");
-    expect(matchTier(ev("x", { category: "sport", subcategory: "sport.yoga" }), c)).toBe("category");
-    expect(matchTier(ev("x", { category: "food", subcategory: "food.wine" }), c)).toBe("pastTaste");
+    expect(matchTier(ev("x", { category: "fitness", subcategory: "fitness.running" }), c)).toBe("exactSub");
+    expect(matchTier(ev("x", { category: "fun", subcategory: "fun.concert" }), c)).toBe("category");
+    expect(matchTier(ev("x", { category: "fitness", subcategory: "fitness.yoga" }), c)).toBe("category");
+    expect(matchTier(ev("x", { category: "meet", subcategory: "meet.beer" }), c)).toBe("pastTaste");
     expect(matchTier(ev("x"), c)).toBe("none");
   });
 });
@@ -81,19 +81,19 @@ describe("occupancy tier", () => {
 describe("ranking", () => {
   it("pushes unrelated events to the end", () => {
     const c = ctx();
-    const ranked = rankEvents([ev("unrelated", { starts_at: hours(2) }), ev("run", { category: "sport", subcategory: "sport.running" })], c);
+    const ranked = rankEvents([ev("unrelated", { starts_at: hours(2) }), ev("run", { category: "fitness", subcategory: "fitness.running" })], c);
     expect(ranked.map((r) => r.event.id)).toEqual(["run", "unrelated"]);
   });
   it("prefers sooner events among equals", () => {
     const c = ctx();
-    const a = ev("soon", { category: "sport", subcategory: "sport.running", starts_at: hours(5) });
-    const b = ev("later", { category: "sport", subcategory: "sport.running", starts_at: hours(24 * 10) });
+    const a = ev("soon", { category: "fitness", subcategory: "fitness.running", starts_at: hours(5) });
+    const b = ev("later", { category: "fitness", subcategory: "fitness.running", starts_at: hours(24 * 10) });
     expect(rankEvents([b, a], c)[0].event.id).toBe("soon");
   });
   it("gives full distance bonus within 5 km", () => {
     const c = ctx();
-    const near = scoreEvent(ev("n", { category: "sport", subcategory: "sport.running" }), c);
-    const far = scoreEvent(ev("f", { category: "sport", subcategory: "sport.running", lat: 31.25, lng: 34.79 }), c);
+    const near = scoreEvent(ev("n", { category: "fitness", subcategory: "fitness.running" }), c);
+    const far = scoreEvent(ev("f", { category: "fitness", subcategory: "fitness.running", lat: 31.25, lng: 34.79 }), c);
     expect(near.distanceKm).toBeLessThan(1);
     expect(near.total).toBeGreaterThan(far.total);
   });
@@ -103,8 +103,8 @@ describe("home carousels", () => {
   it("never repeats an event and keeps my events out of recommended", () => {
     const c = ctx();
     const events = [
-      ev("mine", { organizer_id: "me", category: "sport", subcategory: "sport.running", starts_at: hours(3) }),
-      ev("run", { category: "sport", subcategory: "sport.running", starts_at: hours(4) }),
+      ev("mine", { organizer_id: "me", category: "fitness", subcategory: "fitness.running", starts_at: hours(3) }),
+      ev("run", { category: "fitness", subcategory: "fitness.running", starts_at: hours(4) }),
       ev("friend", { organizer_id: "friend", starts_at: hours(5) }),
       ev("near", { starts_at: hours(200) }),
     ];

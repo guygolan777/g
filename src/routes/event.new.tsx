@@ -1,18 +1,32 @@
 import * as React from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { CalendarDays, ChevronDown, ChevronUp, Clock, DollarSign, ImagePlus, MapPin, Ticket, Users } from "lucide-react";
 import { Page, PageHeader } from "@/components/app-shell";
 import { RequireAuth } from "@/components/gates";
-import { EventForm, emptyEventForm, formToPayload } from "@/components/event-form";
+import { emptyEventForm, formToPayload, type EventFormValues } from "@/components/event-form";
+import { SafeImg } from "@/components/safe-img";
 import { Button } from "@/components/ui/button";
+import { Input, Select, Textarea } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/range";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
-import { useInvalidateEvents } from "@/lib/queries";
+import { useInvalidateEvents, useMyCommunities } from "@/lib/queries";
+import { HOBBY_CATEGORIES, getSubcategory } from "@/lib/hobby-categories";
+import { UNLIMITED_SEATS } from "@/lib/constants";
+import { uploadMedia } from "@/lib/storage";
+import { toLocalInput } from "@/lib/format";
 import { hapticTap } from "@/lib/native";
 import { seo } from "@/lib/seo";
+import type { Recurrence } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/event/new")({
-  head: () => seo({ title: "אירוע חדש", description: "פתחו אירוע ב-mibale וגלו מי בא: קטגוריה, מועד, מיקום, מקומות ואישור משתתפים." }),
+  validateSearch: (s: Record<string, unknown>): { community?: string } => ({
+    community: typeof s.community === "string" ? s.community : undefined,
+  }),
+  head: () => seo({ title: "יצירת הזמנה חדשה", description: "פותחים אירוע ב-mibale בשניות: מה, מתי ואיפה — ומגלים מי בא." }),
   component: () => (
     <RequireAuth reason="כדי לפתוח אירוע צריך חשבון mibale.">
       <NewEvent />
@@ -20,17 +34,89 @@ export const Route = createFileRoute("/event/new")({
   ),
 });
 
+type When = "now" | "hour" | "custom";
+const DISTANCE_OFF = 100;
+
+function SectionTitle({ Icon, children, className }: { Icon: typeof Clock; children: React.ReactNode; className?: string }) {
+  return (
+    <div className={cn("flex items-center gap-3", className)}>
+      <span className="grid size-11 place-items-center rounded-full bg-event-soft text-primary">
+        <Icon className="size-5" />
+      </span>
+      <p className="text-lg font-bold">{children}</p>
+    </div>
+  );
+}
+
+function Pill({ active, onClick, children, className }: { active: boolean; onClick: () => void; children: React.ReactNode; className?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "h-11 shrink-0 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition active:scale-95",
+        active ? "bg-gradient-brand text-primary-foreground shadow-soft" : "bg-surface-soft text-foreground",
+        className,
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** Quick "יצירת הזמנה חדשה": what → when → where → publish, with "עוד פרטים" for the rest. */
 function NewEvent() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const invalidate = useInvalidateEvents();
-  const [form, setForm] = React.useState(emptyEventForm);
-  const [saving, setSaving] = React.useState(false);
+  const { community } = Route.useSearch();
+  const { data: myCommunities = [] } = useMyCommunities(user?.id);
+  const fileRef = React.useRef<HTMLInputElement>(null);
 
-  async function submit() {
+  const [form, setForm] = React.useState<EventFormValues>(() => ({
+    ...emptyEventForm(),
+    category: HOBBY_CATEGORIES[0].id,
+    community_id: community ?? null,
+  }));
+  const [when, setWhen] = React.useState<When>("now");
+  const [more, setMore] = React.useState(false);
+  const [paid, setPaid] = React.useState(false);
+  const [uploading, setUploading] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  const set = <K extends keyof EventFormValues>(k: K, v: EventFormValues[K]) => setForm((f) => ({ ...f, [k]: v }));
+
+  const cat = HOBBY_CATEGORIES.find((c) => c.id === form.category) ?? HOBBY_CATEGORIES[0];
+  const unlimited = form.seats >= UNLIMITED_SEATS;
+  const ready = !!form.subcategory && (form.is_online ? /^https?:\/\//.test(form.meeting_url.trim()) : form.location_name.trim().length > 1);
+
+  function startsAt(): string {
+    if (when === "custom") return form.starts_at;
+    const d = new Date(Date.now() + (when === "hour" ? 3_600_000 : 5 * 60_000));
+    return toLocalInput(d.toISOString());
+  }
+
+  const summary = [
+    form.auto_approve ? "הרשמה אוטומטית" : "הרשמה באישור",
+    unlimited ? "ללא הגבלת משתתפים" : `עד ${form.seats} משתתפים`,
+    form.gender_target === "all" && form.min_age == null && form.max_age == null && form.max_distance_km == null ? "פתוח לכולם" : "לקהל יעד מוגדר",
+    paid && form.price > 0 ? `₪${form.price}` : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  async function publish() {
     setSaving(true);
     try {
-      const payload = await formToPayload(form);
+      const sub = getSubcategory(form.subcategory);
+      const start = startsAt();
+      const values: EventFormValues = {
+        ...form,
+        title: form.title.trim() || sub?.label || cat.label,
+        starts_at: start,
+        ends_at: form.ends_at && form.ends_at > start ? form.ends_at : "",
+        price: paid ? form.price : 0,
+      };
+      const payload = await formToPayload(values);
       const { data, error } = await supabase
         .from("events")
         .insert({ ...payload, organizer_id: user!.id, recurrence: form.recurrence })
@@ -47,24 +133,325 @@ function NewEvent() {
         });
       }
       void hapticTap("success");
-      toast.success("🎉 האירוע נפתח!");
+      toast.success("🎉 ההזמנה פורסמה!");
       invalidate();
       void navigate({ to: "/e/$id", params: { id: data.id as string }, replace: true });
     } catch (e) {
-      toast.error((e as Error).message || "השמירה נכשלה");
+      toast.error((e as Error).message || "הפרסום נכשל");
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <Page>
-      <PageHeader title="אירוע חדש" back />
-      <EventForm value={form} onChange={setForm} mode="create" />
-      <Button variant="brand" size="lg" className="mt-6 w-full" disabled={saving} onClick={() => void submit()}>
-        {saving ? "פותחים…" : "פתיחת האירוע"}
+    <Page withNav={false}>
+      <PageHeader title="יצירת הזמנה חדשה" back />
+
+      {/* מי בא ל.. */}
+      <p className="mt-2 text-2xl font-bold">מי בא ל..</p>
+      <div className="-mx-4 mt-3 flex gap-5 overflow-x-auto border-b border-border px-4 scrollbar-none">
+        {HOBBY_CATEGORIES.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => setForm((f) => ({ ...f, category: c.id, subcategory: null }))}
+            className={cn(
+              "shrink-0 border-b-[3px] pb-2 text-lg whitespace-nowrap transition",
+              form.category === c.id ? "border-primary font-bold text-foreground" : "border-transparent text-muted-foreground",
+            )}
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
+      <div className="mt-4 grid grid-cols-3 gap-3">
+        {cat.subs.map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            onClick={() => set("subcategory", s.id)}
+            className={cn(
+              "flex aspect-[4/5] flex-col items-center justify-center gap-3 rounded-3xl bg-card shadow-soft transition active:scale-95",
+              form.subcategory === s.id ? "ring-[3px] ring-primary" : "ring-1 ring-border",
+            )}
+          >
+            <span className="text-5xl">{s.emoji}</span>
+            <span className="text-base font-bold">{s.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* מתי? */}
+      <div className="-mx-4 mt-8 flex items-center gap-2 overflow-x-auto px-4 scrollbar-none">
+        <span className="flex shrink-0 items-center gap-2 text-lg font-bold">
+          <Clock className="size-6 text-primary" /> מתי?
+        </span>
+        <Pill active={when === "now"} onClick={() => setWhen("now")}>
+          עכשיו
+        </Pill>
+        <Pill active={when === "hour"} onClick={() => setWhen("hour")}>
+          עוד שעה
+        </Pill>
+        <Pill active={when === "custom"} onClick={() => setWhen("custom")}>
+          בחירת זמן ותאריך
+        </Pill>
+      </div>
+      {when === "custom" && <Input className="mt-3" type="datetime-local" value={form.starts_at} onChange={(e) => set("starts_at", e.target.value)} />}
+
+      {/* איפה? */}
+      <SectionTitle Icon={MapPin} className="mt-8">
+        איפה?
+      </SectionTitle>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => set("is_online", false)}
+          className={cn("h-12 rounded-full font-semibold", !form.is_online ? "bg-primary text-primary-foreground" : "bg-surface-soft")}
+        >
+          מיקום פיזי
+        </button>
+        <button
+          type="button"
+          onClick={() => set("is_online", true)}
+          className={cn("h-12 rounded-full font-semibold", form.is_online ? "bg-primary text-primary-foreground" : "bg-surface-soft")}
+        >
+          אונליין
+        </button>
+      </div>
+      {form.is_online ? (
+        <Input className="mt-3 rounded-full border-0 bg-surface-soft" dir="ltr" placeholder="https://" value={form.meeting_url} onChange={(e) => set("meeting_url", e.target.value)} />
+      ) : (
+        <Input
+          className="mt-3 rounded-full border-0 bg-surface-soft"
+          placeholder="לדוגמה: פארק הירקון"
+          value={form.location_name}
+          onChange={(e) => setForm((f) => ({ ...f, location_name: e.target.value, lat: null, lng: null }))}
+        />
+      )}
+
+      {/* עוד פרטים */}
+      <button type="button" onClick={() => setMore(!more)} className="mt-6 flex h-14 w-full items-center justify-center gap-2 rounded-full bg-surface-soft font-bold">
+        {more ? <ChevronUp className="size-5" /> : <ChevronDown className="size-5" />}
+        {more ? "פחות פרטים" : "עוד פרטים"}
+      </button>
+
+      {more && (
+        <div className="mt-6 space-y-8">
+          <div className="space-y-3">
+            <input
+              value={form.title}
+              maxLength={120}
+              onChange={(e) => set("title", e.target.value)}
+              placeholder="הוספת כותרת"
+              className="w-full border-s-4 border-primary bg-transparent ps-3 text-3xl font-bold outline-none placeholder:text-muted-foreground"
+            />
+            <Textarea className="rounded-3xl border-0 bg-surface-soft" placeholder="הוספת תיאור" value={form.description} onChange={(e) => set("description", e.target.value)} />
+          </div>
+
+          <div>
+            <SectionTitle Icon={ImagePlus}>מדיה</SectionTitle>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="relative mt-3 grid aspect-[16/9] w-full place-items-center overflow-hidden rounded-3xl border-2 border-dashed border-border text-4xl text-muted-foreground"
+            >
+              {uploading ? "…" : "+"}
+              <SafeImg src={form.image_url ?? undefined} className="absolute inset-0 size-full object-cover" />
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                if (!f || !user) return;
+                setUploading(true);
+                try {
+                  set("image_url", await uploadMedia(user.id, f, "events"));
+                } catch {
+                  toast.error("העלאת התמונה נכשלה");
+                } finally {
+                  setUploading(false);
+                }
+              }}
+            />
+            {form.image_url && (
+              <label className="mt-3 flex items-center justify-between rounded-2xl bg-like-soft p-4">
+                <span className="font-semibold">לפרסם גם כסטורי</span>
+                <Switch checked={form.also_story} onCheckedChange={(c) => set("also_story", c)} />
+              </label>
+            )}
+          </div>
+
+          <div>
+            <SectionTitle Icon={CalendarDays}>שעת סיום (לא חובה)</SectionTitle>
+            <Input className="mt-3 rounded-full border-0 bg-surface-soft" type="datetime-local" value={form.ends_at} onChange={(e) => set("ends_at", e.target.value)} />
+          </div>
+
+          <div>
+            <SectionTitle Icon={CalendarDays}>חזרה</SectionTitle>
+            <label className="mt-3 block rounded-3xl bg-card p-4 shadow-soft">
+              <span className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  className="size-6 accent-primary"
+                  checked={form.recurrence !== "none"}
+                  onChange={(e) => set("recurrence", e.target.checked ? "weekly" : "none")}
+                />
+                <span className="text-lg font-bold">אירוע חוזר</span>
+              </span>
+              <span className="mt-1 block text-sm text-muted-foreground">כל מופע הוא אירוע נפרד עם משתתפים, צ׳אט וקבוצה משלו.</span>
+              {form.recurrence !== "none" && (
+                <Select className="mt-3" value={form.recurrence} onChange={(e) => set("recurrence", e.target.value as Recurrence)}>
+                  <option value="daily">כל יום</option>
+                  <option value="weekly">כל שבוע</option>
+                  <option value="biweekly">כל שבועיים</option>
+                  <option value="monthly">כל חודש</option>
+                </Select>
+              )}
+            </label>
+          </div>
+
+          <div>
+            <SectionTitle Icon={Ticket}>כמות מקומות</SectionTitle>
+            <div className="mt-3 flex items-center gap-3">
+              <button
+                type="button"
+                className="grid size-12 place-items-center rounded-full bg-surface-soft text-2xl"
+                onClick={() => set("seats", unlimited ? 10 : Math.max(2, form.seats - 1))}
+                aria-label="פחות מקומות"
+              >
+                −
+              </button>
+              <span className="grid h-14 min-w-24 place-items-center rounded-2xl bg-surface-soft px-4 text-2xl font-bold">
+                {unlimited ? "∞" : form.seats}
+              </span>
+              <button
+                type="button"
+                className="grid size-12 place-items-center rounded-full bg-primary text-2xl text-primary-foreground"
+                onClick={() => set("seats", unlimited ? 10 : Math.min(5000, form.seats + 1))}
+                aria-label="עוד מקומות"
+              >
+                +
+              </button>
+              <p className="flex-1 text-sm text-muted-foreground">
+                {unlimited ? "ללא הגבלת משתתפים" : "ההרשמה תיסגר אוטומטית כשכל המקומות יתפסו."}
+              </p>
+            </div>
+            {!unlimited && (
+              <button type="button" className="mt-2 text-sm font-semibold text-primary" onClick={() => set("seats", UNLIMITED_SEATS)}>
+                ללא הגבלה
+              </button>
+            )}
+          </div>
+
+          <div>
+            <SectionTitle Icon={Users}>קהל יעד</SectionTitle>
+            <p className="mt-2 text-sm text-muted-foreground">רק אנשים שתואמים לסינונים האלה יראו את ההזמנה.</p>
+            <p className="mt-4 mb-2 text-sm font-semibold">מגדר</p>
+            <div className="grid grid-cols-3 gap-2">
+              {(
+                [
+                  ["all", "הכול"],
+                  ["male", "גברים"],
+                  ["female", "נשים"],
+                ] as const
+              ).map(([g, l]) => (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => set("gender_target", g)}
+                  className={cn("h-12 rounded-full font-semibold", form.gender_target === g ? "bg-primary text-primary-foreground" : "bg-surface-soft")}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+            <p className="mt-4 mb-2 text-sm font-semibold">טווח גילאים</p>
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                type="number"
+                min={18}
+                placeholder="18"
+                className="rounded-full border-0 bg-surface-soft"
+                value={form.min_age ?? ""}
+                onChange={(e) => set("min_age", e.target.value ? Number(e.target.value) : null)}
+              />
+              <Input
+                type="number"
+                min={18}
+                placeholder="99"
+                className="rounded-full border-0 bg-surface-soft"
+                value={form.max_age ?? ""}
+                onChange={(e) => set("max_age", e.target.value ? Number(e.target.value) : null)}
+              />
+            </div>
+            <p className="mt-4 mb-2 text-sm font-semibold">
+              מרחק מקסימלי: {form.max_distance_km == null ? "ללא הגבלה" : `${form.max_distance_km} ק״מ`}
+            </p>
+            <Slider
+              label="מרחק מקסימלי"
+              min={1}
+              max={DISTANCE_OFF}
+              value={form.max_distance_km ?? DISTANCE_OFF}
+              onChange={(v) => set("max_distance_km", v >= DISTANCE_OFF ? null : v)}
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between">
+              <SectionTitle Icon={DollarSign}>מחיר</SectionTitle>
+              <Switch checked={paid} onCheckedChange={setPaid} aria-label="אירוע בתשלום" />
+            </div>
+            {paid ? (
+              <Input
+                className="mt-3 rounded-full border-0 bg-surface-soft"
+                type="number"
+                min={1}
+                placeholder="מחיר בש״ח"
+                value={form.price || ""}
+                onChange={(e) => set("price", Math.max(0, Number(e.target.value) || 0))}
+              />
+            ) : (
+              <p className="mt-2 text-sm text-muted-foreground">ההזמנה הזו חינמית להצטרפות.</p>
+            )}
+          </div>
+
+          {myCommunities.length > 0 && (
+            <div>
+              <SectionTitle Icon={Users}>שייך לקהילה</SectionTitle>
+              <Select className="mt-3" value={form.community_id ?? ""} onChange={(e) => set("community_id", e.target.value || null)}>
+                <option value="">ללא</option>
+                {myCommunities.map((m) => (
+                  <option key={m.community!.id} value={m.community!.id}>
+                    {m.community!.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          )}
+
+          <label className="flex items-center justify-between gap-3 rounded-3xl bg-card p-4 shadow-soft">
+            <span>
+              <span className="block text-lg font-bold">הרשמה אוטומטית של משתתפים</span>
+              <span className="text-sm text-muted-foreground">
+                {form.auto_approve
+                  ? `כל מי שתואם לסינונים נרשם מיידית${unlimited ? "" : `, עד ${form.seats} משתתפים`}.`
+                  : "כל בקשה ממתינה לאישור שלך."}
+              </span>
+            </span>
+            <Switch checked={form.auto_approve} onCheckedChange={(c) => set("auto_approve", c)} />
+          </label>
+        </div>
+      )}
+
+      <Button variant="brand" size="lg" className="mt-8 h-14 w-full text-lg" disabled={!ready || saving} onClick={() => void publish()}>
+        {saving ? "מפרסמים…" : "פרסום"}
       </Button>
-      {form.also_story && !form.image_url && <p className="mt-2 text-center text-xs text-muted-foreground">לסטורי צריך תמונה לאירוע</p>}
+      <p className="mt-3 text-center text-sm text-muted-foreground">
+        {!form.subcategory ? "בחרו מה עושים ואיפה — וזהו." : `${summary}.`}
+      </p>
     </Page>
   );
 }

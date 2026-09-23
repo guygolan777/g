@@ -3,7 +3,7 @@ import { SafeImg } from "@/components/safe-img";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, Users } from "lucide-react";
-import { EmptyState, Page, PageHeader } from "@/components/app-shell";
+import { EmptyState, Page } from "@/components/app-shell";
 import { Avatar } from "@/components/avatar";
 import { RequireAuth } from "@/components/gates";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -61,7 +61,9 @@ function ChatList() {
 
   return (
     <Page>
-      <PageHeader title="צ׳אט" />
+      <header className="py-3">
+        <h1 className="text-3xl font-extrabold text-gradient-brand">הודעות</h1>
+      </header>
       <Tabs defaultValue="direct">
         <TabsList>
           <TabsTrigger value="direct">אישי</TabsTrigger>

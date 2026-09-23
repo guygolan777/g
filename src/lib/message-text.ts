@@ -17,6 +17,8 @@ export function messagePreview(msg: MessageLike, myId: string | null | undefined
       return mine ? "📷 שלחת תמונה" : "📷 תמונה";
     case "system":
       return msg.body;
+    case "date_invite":
+      return mine ? `את/ה: ${msg.body}` : msg.body;
     default:
       return mine ? `את/ה: ${msg.body}` : msg.body;
   }

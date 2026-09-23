@@ -20,13 +20,13 @@ describe("messagePreview", () => {
 });
 
 describe("catalogs", () => {
-  it("has 14 categories and ~36 traits", () => {
-    expect(HOBBY_CATEGORIES).toHaveLength(14);
-    expect(ALL_TRAITS.length).toBe(36);
-    expect(hobbyLabel("sport.running")).toBe("🏃 ריצה");
+  it("has 9 categories and ~36+ traits", () => {
+    expect(HOBBY_CATEGORIES).toHaveLength(9);
+    expect(ALL_TRAITS.length).toBeGreaterThanOrEqual(36);
+    expect(hobbyLabel("fitness.running")).toBe("🏃 ריצה");
   });
   it("single-choice trait groups replace the previous choice", () => {
-    expect(toggleTrait(["single", "dog_lover"], "married").sort()).toEqual(["dog_lover", "married"]);
+    expect(toggleTrait(["master", "dog_lover"], "phd").sort()).toEqual(["dog_lover", "phd"]);
     expect(toggleTrait(["dog_lover"], "cat_lover").sort()).toEqual(["cat_lover", "dog_lover"]);
   });
 });

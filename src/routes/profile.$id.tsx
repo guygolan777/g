@@ -2,7 +2,7 @@ import * as React from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Ban, ChevronRight, Heart, MessageCircle, MoreHorizontal } from "lucide-react";
+import { Ban, Heart, MessageCircle, MoreHorizontal } from "lucide-react";
 import { CenteredSpinner, Page, PageHeader } from "@/components/app-shell";
 import { FollowButton } from "@/components/follow-button";
 import { ProfileUnavailable, ProfileView } from "@/components/profile-view";
@@ -83,14 +83,7 @@ function ProfilePage() {
 
   return (
     <Page>
-      <div className="absolute top-0 right-0 left-0 z-10 mx-auto flex max-w-lg justify-between px-4 pt-safe">
-        <div className="mt-3 flex w-full justify-between">
-          <Button size="icon" variant="outline" className="bg-surface/90" onClick={() => window.history.back()} aria-label="חזרה">
-            <ChevronRight />
-          </Button>
-          <ProfileMenu profile={p} />
-        </div>
-      </div>
+      <PageHeader title={p.name} back actions={<ProfileMenu profile={p} />} />
       <ProfileView
         profile={p}
         isMe={false}
@@ -151,7 +144,7 @@ function ProfileMenu({ profile }: { profile: Profile }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="icon" variant="outline" className="bg-surface/90" aria-label="עוד">
+        <Button size="icon" variant="ghost" aria-label="עוד">
           <MoreHorizontal />
         </Button>
       </DialogTrigger>

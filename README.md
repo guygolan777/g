@@ -27,6 +27,8 @@ npm run dev                       # http://localhost:3000
 | `0003_functions.sql` | פונקציות SECURITY DEFINER ב-`app_private` + עטיפות SECURITY INVOKER ב-`public`, טריגרים |
 | `0004_policies.sql` | כל מדיניות ה-RLS |
 | `0005_realtime_storage.sql` | Realtime (`event_participants`, `notifications`, הודעות) + bucket `media` |
+| `0006_enum_date_invite.sql` | סוג הודעה `date_invite` (מיגרציה נפרדת — ערך enum חדש לא נצרך באותה טרנזקציה) |
+| `0007_pricing_audience_dating.sql` | מחיר ומרחק מקסימלי לאירוע, נראות לפי קהל יעד (מגדר/גיל/מרחק), סטוריז רומנטיים, `date_invites` |
 
 הרצה על פרויקט Supabase:
 
@@ -64,6 +66,8 @@ PGUSER=postgres npm run db:test   # מריץ את כל המיגרציות + seed
 - **כרטיסי QR** בטבלה נפרדת `event_tickets` (נראית רק לבעלים) — כך הקוד לא דולף דרך Realtime של `event_participants`.
 - **חסימות** דו-כיווניות: `blocks_with()`, `blocked_profile_ids()`, טריגר שמנתק עוקבים/לייקים/התאמות, ובלקוח
   `fetchBlockedIds()` + `withoutBlocked()`.
+- **קהל יעד:** אירוע עם מגדר/גילאים/מרחק מקסימלי גלוי רק למי שמתאים (`event_visible()` ב-RLS); המארגן והמשתתפים תמיד רואים.
+- **סטוריז רומנטיים** גלויים רק למי שמצב ההיכרויות שלו פתוח; **הזמנה לדייט** נשלחת מהצ׳אט ורק הנמען יכול לאשר.
 - **השהיית משתמש:** `admin_set_banned()`; כל מדיניות כתיבה בודקת `can_write()`, ו-`<BannedGate>` חוסם את הממשק.
 
 ---
@@ -107,8 +111,8 @@ src/
     event-ranking.ts     אלגוריתם הדירוג והקרוסלות
     event-title.ts       whoComesTitle() — "מי בא ל…"
     message-text.ts      ניסוח הודעות מערכת/סטורי
-    hobby-categories.ts  14 קטגוריות + תתי-קטגוריות
-    traits.ts            36 מאפייני אישיות
+    hobby-categories.ts  9 קטגוריות + תתי-קטגוריות עם אימוג'י וצבע לכל קטגוריה
+    traits.ts            39 מאפייני אישיות
     blocks.ts            fetchBlockedIds / withoutBlocked
     hidden-events.ts     "הסר" — mibale-hidden-events:{profileId}
     server/              server functions (OG, FCM)

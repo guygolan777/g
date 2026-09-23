@@ -39,6 +39,8 @@ export type EventFormValues = {
   min_age: number | null;
   max_age: number | null;
   gender_target: AudienceGender;
+  price: number;
+  max_distance_km: number | null;
   also_story: boolean;
 };
 
@@ -68,6 +70,8 @@ export function emptyEventForm(): EventFormValues {
     min_age: null,
     max_age: null,
     gender_target: "all",
+    price: 0,
+    max_distance_km: null,
     also_story: false,
   };
 }
@@ -95,6 +99,8 @@ export function eventToForm(e: EventRow, meetingUrl: string | null): EventFormVa
     min_age: e.min_age ?? null,
     max_age: e.max_age ?? null,
     gender_target: e.gender_target ?? "all",
+    price: Number(e.price ?? 0),
+    max_distance_km: e.max_distance_km ?? null,
   };
 }
 
@@ -133,6 +139,8 @@ export async function formToPayload(v: EventFormValues) {
     min_age: v.min_age,
     max_age: v.max_age,
     gender_target: v.gender_target,
+    price: Math.max(0, Number(v.price) || 0),
+    max_distance_km: v.max_distance_km,
   };
 }
 
@@ -285,6 +293,10 @@ export function EventForm({
         <Switch checked={value.auto_approve} onCheckedChange={(c) => set("auto_approve", c)} />
       </div>
 
+      <Field label="מחיר (₪, 0 = חינם)">
+        <Input type="number" min={0} value={value.price} onChange={(e) => set("price", Math.max(0, Number(e.target.value) || 0))} />
+      </Field>
+
       {mode === "create" && (
         <Field label="חזרתיות">
           <Select value={value.recurrence} onChange={(e) => set("recurrence", e.target.value as Recurrence)}>
@@ -326,6 +338,14 @@ export function EventForm({
               </Chip>
             ))}
           </div>
+          <Field label="מרחק מקסימלי (ק״מ, ריק = ללא הגבלה)">
+            <Input
+              type="number"
+              min={1}
+              value={value.max_distance_km ?? ""}
+              onChange={(e) => set("max_distance_km", e.target.value ? Math.max(1, Number(e.target.value)) : null)}
+            />
+          </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="גיל מינימלי">
               <Input type="number" min={18} value={value.min_age ?? ""} onChange={(e) => set("min_age", e.target.value ? Number(e.target.value) : null)} />

@@ -9,7 +9,17 @@ import { useMyGraph } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 
 /** עקוב / עקוב בחזרה / הפסק לעקוב */
-export function FollowButton({ profileId, className, size = "sm" }: { profileId: string; className?: string; size?: "sm" | "default" }) {
+export function FollowButton({
+  profileId,
+  className,
+  size = "sm",
+  followingLabel = "הפסק לעקוב",
+}: {
+  profileId: string;
+  className?: string;
+  size?: "sm" | "default";
+  followingLabel?: string;
+}) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -36,12 +46,12 @@ export function FollowButton({ profileId, className, size = "sm" }: { profileId:
   return (
     <Button
       size={size}
-      variant={isFollowing ? "outline" : "default"}
+      variant={isFollowing ? "secondary" : "brand"}
       className={cn("min-w-24", className)}
       disabled={busy}
       onClick={(e) => void toggle(e)}
     >
-      {isFollowing ? "הפסק לעקוב" : followsMe ? "עקוב בחזרה" : "עקוב"}
+      {isFollowing ? followingLabel : followsMe ? "עקוב בחזרה" : "עקוב"}
     </Button>
   );
 }

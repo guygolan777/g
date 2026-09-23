@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { CalendarDays, Home, MessageCircle, Plus, User, CalendarPlus, Camera, Users } from "lucide-react";
+import { Heart, Home, MessageCircle, Plus, User, CalendarPlus, Camera, Users } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useUnreadCounts } from "@/lib/queries";
 import { CountBadge } from "@/components/ui/badge";
@@ -22,36 +22,33 @@ export function BottomNav() {
   const item = (to: string, label: string, Icon: typeof Home, active: boolean, badge = 0) => (
     <Link
       to={to}
-      className={cn(
-        "relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition",
-        active ? "text-primary" : "text-muted-foreground",
-      )}
+      aria-label={label}
+      className={cn("relative flex flex-1 items-center justify-center py-3 transition", active ? "text-primary" : "text-muted-foreground")}
     >
       <span className="relative">
-        <Icon className="size-6" strokeWidth={active ? 2.4 : 1.9} />
+        <Icon className="size-7" strokeWidth={active ? 2.3 : 1.8} />
         <CountBadge count={badge} />
       </span>
-      {label}
     </Link>
   );
 
   return (
     <>
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 pb-safe backdrop-blur" dir="rtl">
-        <div className="mx-auto flex max-w-lg items-end px-2">
+        <div className="mx-auto flex max-w-lg items-center px-2">
           {item("/home", "בית", Home, pathname.startsWith("/home") || pathname.startsWith("/discover"))}
-          {item("/calendar", "אירועים", CalendarDays, pathname.startsWith("/calendar") || pathname.startsWith("/tickets"))}
+          {item("/likes", "לייקים והתאמות", Heart, pathname.startsWith("/likes"))}
           <div className="flex flex-1 justify-center">
             <button
               onClick={() => (isGuest ? navigate({ to: "/signup" }) : setOpen(true))}
-              className="-mt-6 grid size-14 place-items-center rounded-full bg-gradient-brand text-primary-foreground shadow-lift ring-4 ring-surface transition active:scale-95"
+              className="-mt-8 grid size-16 place-items-center rounded-full bg-gradient-brand text-primary-foreground shadow-lift ring-4 ring-surface transition active:scale-95"
               aria-label="יצירה מהירה"
             >
-              <Plus className="size-7" strokeWidth={2.6} />
+              <Plus className="size-8" strokeWidth={2.6} />
             </button>
           </div>
           {item("/chat", "צ׳אט", MessageCircle, pathname.startsWith("/chat"), user ? unread.messages : 0)}
-          {item("/me", "פרופיל", User, pathname.startsWith("/me") || pathname.startsWith("/settings"), user ? unread.notifications : 0)}
+          {item("/me", "פרופיל", User, pathname.startsWith("/me") || pathname.startsWith("/settings"))}
         </div>
       </nav>
       <Dialog open={open} onOpenChange={setOpen}>

@@ -17,6 +17,7 @@ import { whoComesTitle } from "@/lib/event-title";
 import { seo } from "@/lib/seo";
 
 export const Route = createFileRoute("/story/new")({
+  validateSearch: (s: Record<string, unknown>): { romantic?: "1" } => ({ romantic: s.romantic === "1" ? "1" : undefined }),
   head: () => seo({ title: "סטורי חדש", description: "שתפו תמונה או סרטון לסטורי — אפשר גם לצרף אירוע עם כפתור הצטרפות." }),
   component: () => (
     <RequireAuth>
@@ -27,6 +28,8 @@ export const Route = createFileRoute("/story/new")({
 
 function NewStory() {
   const { user } = useAuth();
+  const { romantic } = Route.useSearch();
+  const isRomantic = romantic === "1";
   const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: parts = [] } = useMyParticipations();
@@ -50,12 +53,13 @@ function NewStory() {
         media_url: url,
         media_type: isVideo ? "video" : "image",
         caption: caption.trim(),
-        event_id: eventId || null,
+        event_id: isRomantic ? null : eventId || null,
+        is_romantic: isRomantic,
       });
       if (error) throw error;
       toast.success("הסטורי פורסם ✨");
       void qc.invalidateQueries({ queryKey: ["stories"] });
-      void navigate({ to: "/home", replace: true });
+      void navigate({ to: isRomantic ? "/likes" : "/home", replace: true });
     } catch {
       toast.error("הפרסום נכשל");
     } finally {
@@ -65,7 +69,7 @@ function NewStory() {
 
   return (
     <Page withNav={false}>
-      <PageHeader title="סטורי חדש" back />
+      <PageHeader title={isRomantic ? "סטורי רומנטי" : "סטורי חדש"} subtitle={isRomantic ? "גלוי רק למי שמצב ההיכרויות שלו פתוח" : undefined} back />
       <button
         type="button"
         onClick={() => fileRef.current?.click()}
@@ -98,7 +102,7 @@ function NewStory() {
         <Field label="כיתוב">
           <Input value={caption} maxLength={120} onChange={(e) => setCaption(e.target.value)} />
         </Field>
-        {myEvents.length > 0 && (
+        {!isRomantic && myEvents.length > 0 && (
           <Field label="צירוף אירוע (כפתור הצטרפות בסטורי)">
             <Select value={eventId} onChange={(e) => setEventId(e.target.value)}>
               <option value="">ללא</option>

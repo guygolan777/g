@@ -8,13 +8,12 @@ export const TRAIT_GROUPS: TraitGroup[] = [
   {
     id: "status",
     label: "מצב אישי",
-    single: true,
     traits: [
       { id: "single", label: "רווק/ה", emoji: "✨" },
       { id: "relationship", label: "בזוגיות", emoji: "💑" },
       { id: "married", label: "נשוי/אה", emoji: "💍" },
       { id: "divorced", label: "גרוש/ה", emoji: "🌱" },
-      { id: "parent", label: "הורה", emoji: "👶" },
+      { id: "parent", label: "יש ילדים", emoji: "👶" },
     ],
   },
   {
@@ -26,7 +25,7 @@ export const TRAIT_GROUPS: TraitGroup[] = [
       { id: "vegetarian", label: "צמחוני/ת", emoji: "🥗" },
       { id: "vegan", label: "טבעוני/ת", emoji: "🌿" },
       { id: "social_drinker", label: "שותה חברתית", emoji: "🍷" },
-      { id: "sporty", label: "ספורטיבי/ת", emoji: "💪" },
+      { id: "sporty", label: "אקטיבי/ת", emoji: "💪" },
     ],
   },
   {
@@ -36,22 +35,31 @@ export const TRAIT_GROUPS: TraitGroup[] = [
       { id: "cat_lover", label: "אוהב/ת חתולים", emoji: "🐱" },
       { id: "dog_lover", label: "אוהב/ת כלבים", emoji: "🐶" },
       { id: "has_pet", label: "יש לי חיית מחמד", emoji: "🐾" },
-      { id: "pet_allergy", label: "אלרגי/ת לבעלי חיים", emoji: "🤧" },
     ],
   },
   {
     id: "character",
     label: "אופי",
     traits: [
-      { id: "extrovert", label: "מוחצן/ת", emoji: "🎤" },
+      { id: "extrovert", label: "חברותי/ת", emoji: "🎤" },
+      { id: "adventurous", label: "ספונטני/ת", emoji: "⚡" },
       { id: "introvert", label: "מופנם/ת", emoji: "📖" },
       { id: "funny", label: "הומוריסטי/ת", emoji: "😂" },
       { id: "romantic", label: "רומנטי/ת", emoji: "🌹" },
-      { id: "adventurous", label: "הרפתקן/ית", emoji: "🧗" },
       { id: "calm", label: "רגוע/ה", emoji: "🌊" },
       { id: "ambitious", label: "אמביציוזי/ת", emoji: "🚀" },
       { id: "creative", label: "יצירתי/ת", emoji: "🎨" },
       { id: "optimist", label: "אופטימי/ת", emoji: "☀️" },
+    ],
+  },
+  {
+    id: "loves",
+    label: "אוהב/ת",
+    traits: [
+      { id: "traveler", label: "אוהב/ת לטייל בעולם", emoji: "✈️" },
+      { id: "movie_lover", label: "אוהב/ת קולנוע", emoji: "🎬" },
+      { id: "nature_lover", label: "אוהב/ת טבע", emoji: "🌳" },
+      { id: "musician", label: "מנגן/ת", emoji: "🎸" },
     ],
   },
   {
@@ -61,7 +69,7 @@ export const TRAIT_GROUPS: TraitGroup[] = [
     traits: [
       { id: "secular", label: "חילוני/ת", emoji: "🌍" },
       { id: "traditional", label: "מסורתי/ת", emoji: "🕯️" },
-      { id: "keeps_tradition", label: "שומר/ת מסורת", emoji: "🍷" },
+      { id: "keeps_tradition", label: "דתי/שומר מסורת", emoji: "🍷" },
       { id: "religious", label: "דתי/ה", emoji: "📜" },
       { id: "orthodox", label: "חרדי/ת", emoji: "🎩" },
       { id: "spiritual", label: "רוחני/ת", emoji: "🔮" },
@@ -88,6 +96,18 @@ const groupByTrait = new Map(TRAIT_GROUPS.flatMap((g) => g.traits.map((t) => [t.
 
 export function getTrait(id: string): Trait | undefined {
   return traitById.get(id);
+}
+
+/** Soft chip tone per trait group, so trait chips are colorful like hobby chips. */
+const GROUP_TONES = [
+  "bg-partner-soft text-partner-strong",
+  "bg-like-soft text-like",
+  "bg-muted text-foreground",
+  "bg-event-soft text-event",
+];
+export function traitToneClass(id: string): string {
+  const idx = ALL_TRAITS.findIndex((t) => t.id === id);
+  return GROUP_TONES[(idx < 0 ? 0 : idx) % GROUP_TONES.length];
 }
 
 /** Toggle a trait, respecting single-choice groups. */

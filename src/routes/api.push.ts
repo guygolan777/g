@@ -17,6 +17,8 @@ const PREF_BY_TYPE: Record<string, "notify_messages" | "notify_events" | "notify
   follow: "notify_social",
   story_like: "notify_social",
   match: "notify_social",
+  date_invite: "notify_messages",
+  date_answer: "notify_messages",
 };
 
 export const Route = createFileRoute("/api/push")({

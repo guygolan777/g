@@ -1,7 +1,7 @@
 import * as React from "react";
 import { SafeImg } from "@/components/safe-img";
 import { Link } from "@tanstack/react-router";
-import { Send } from "lucide-react";
+import { Paperclip, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar } from "@/components/avatar";
 import { VoiceRecorder } from "@/components/voice-recorder";
@@ -20,6 +20,7 @@ export type ThreadMessage = {
   media_url: string | null;
   created_at: string;
   story_id?: string | null;
+  date_invite_id?: string | null;
 };
 
 export function ChatThread({
@@ -29,6 +30,7 @@ export function ChatThread({
   onSend,
   disabled,
   disabledText,
+  renderSpecial,
 }: {
   messages: ThreadMessage[];
   senders: Map<string, Pick<Profile, "id" | "name" | "avatar_url">>;
@@ -36,11 +38,14 @@ export function ChatThread({
   onSend: (msg: { kind: MessageKind; body: string; media_url?: string | null }) => Promise<boolean>;
   disabled?: boolean;
   disabledText?: string;
+  /** Custom rendering for special messages (e.g. date invites); return null to use the default bubble. */
+  renderSpecial?: (m: ThreadMessage, mine: boolean) => React.ReactNode | null;
 }) {
   const { user } = useAuth();
   const [text, setText] = React.useState("");
   const [sending, setSending] = React.useState(false);
   const bottom = React.useRef<HTMLDivElement>(null);
+  const fileRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     bottom.current?.scrollIntoView({ block: "end" });
@@ -69,6 +74,19 @@ export function ChatThread({
     }
   }
 
+  async function sendImage(file: File) {
+    if (!user) return;
+    setSending(true);
+    try {
+      const url = await uploadMedia(user.id, file, "chat");
+      await onSend({ kind: "image", body: "", media_url: url });
+    } catch {
+      toast.error("שליחת התמונה נכשלה");
+    } finally {
+      setSending(false);
+    }
+  }
+
   let lastDay = "";
   return (
     <div className="flex min-h-[calc(100dvh-4.5rem)] flex-col">
@@ -80,6 +98,19 @@ export function ChatThread({
           const showDay = day !== lastDay;
           lastDay = day;
           const firstOfRun = i === 0 || messages[i - 1].sender_id !== m.sender_id || showDay;
+          const special = renderSpecial?.(m, mine);
+          if (special) {
+            return (
+              <React.Fragment key={m.id}>
+                {showDay && (
+                  <p className="py-2 text-center text-xs text-muted-foreground">
+                    {new Intl.DateTimeFormat("he-IL", { weekday: "long", day: "numeric", month: "long" }).format(new Date(m.created_at))}
+                  </p>
+                )}
+                <div className={cn("flex", mine ? "justify-start" : "justify-end")}>{special}</div>
+              </React.Fragment>
+            );
+          }
           return (
             <React.Fragment key={m.id}>
               {showDay && (
@@ -94,7 +125,7 @@ export function ChatThread({
                 <div
                   className={cn(
                     "max-w-[78%] rounded-2xl px-3.5 py-2 text-[15px]",
-                    mine ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md bg-surface shadow-soft",
+                    mine ? "rounded-br-md bg-gradient-brand text-primary-foreground" : "rounded-bl-md bg-surface shadow-soft",
                   )}
                 >
                   {!mine && showSenders && firstOfRun && <p className="mb-0.5 text-xs font-bold text-primary">{sender?.name}</p>}
@@ -129,16 +160,39 @@ export function ChatThread({
           <p className="py-2 text-center text-sm text-muted-foreground">{disabledText}</p>
         ) : (
           <form onSubmit={send} className="flex items-center gap-2">
-            <VoiceRecorder onRecorded={(b) => void sendVoice(b)} disabled={sending} />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={sending}
+              className="grid size-12 shrink-0 place-items-center rounded-full bg-surface-soft"
+              aria-label="צירוף תמונה"
+            >
+              <Paperclip className="size-5" />
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void sendImage(f);
+                e.target.value = "";
+              }}
+            />
             <input
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="הודעה…"
-              className="h-11 flex-1 rounded-full border border-input bg-surface px-4 outline-none focus:border-ring"
+              placeholder="כתבו הודעה…"
+              className="h-12 min-w-0 flex-1 rounded-full bg-surface-soft px-5 outline-none"
             />
-            <button type="submit" disabled={sending || !text.trim()} className="grid size-11 place-items-center rounded-full bg-primary text-primary-foreground disabled:opacity-50" aria-label="שליחה">
-              <Send className="size-5 -scale-x-100" />
-            </button>
+            {text.trim() ? (
+              <button type="submit" disabled={sending} className="grid size-12 shrink-0 place-items-center rounded-full bg-gradient-brand text-primary-foreground" aria-label="שליחה">
+                <Send className="size-5 -scale-x-100" />
+              </button>
+            ) : (
+              <VoiceRecorder onRecorded={(b) => void sendVoice(b)} disabled={sending} />
+            )}
           </form>
         )}
       </div>

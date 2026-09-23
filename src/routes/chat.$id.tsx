@@ -5,6 +5,9 @@ import { toast } from "sonner";
 import { CenteredSpinner, Page, PageHeader } from "@/components/app-shell";
 import { Avatar } from "@/components/avatar";
 import { ChatThread, type ThreadMessage } from "@/components/chat-thread";
+import { DateInviteCard, DateInviteDialog } from "@/components/date-invite";
+import { Wine } from "lucide-react";
+import type { DateInvite } from "@/lib/types";
 import { RequireAuth } from "@/components/gates";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
@@ -68,6 +71,28 @@ function DirectChat({ partnerId }: { partnerId: string }) {
     },
   });
 
+  const invites = useQuery({
+    queryKey: ["date-invites", uid, partnerId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("date_invites")
+        .select("*")
+        .or(`and(sender_id.eq.${uid},recipient_id.eq.${partnerId}),and(sender_id.eq.${partnerId},recipient_id.eq.${uid})`);
+      return new Map(((data ?? []) as DateInvite[]).map((d) => [d.id, d]));
+    },
+  });
+  const [inviteOpen, setInviteOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const ch = supabase
+      .channel(channelName(`date-invites-${uid}`))
+      .on("postgres_changes", { event: "*", schema: "public", table: "date_invites", filter: `sender_id=eq.${uid}` }, () =>
+        void qc.invalidateQueries({ queryKey: ["date-invites", uid, partnerId] }),
+      )
+      .subscribe();
+    return () => void supabase.removeChannel(ch);
+  }, [uid, partnerId, qc]);
+
   const online = useQuery({
     queryKey: ["online", partnerId],
     refetchInterval: 60_000,
@@ -93,7 +118,10 @@ function DirectChat({ partnerId }: { partnerId: string }) {
     const ch = supabase
       .channel(channelName(`dm-${uid}-${partnerId}`))
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "direct_messages", filter: `recipient_id=eq.${uid}` }, (p) => {
-        if ((p.new as ThreadMessage).sender_id === partnerId) void qc.invalidateQueries({ queryKey: key });
+        if ((p.new as ThreadMessage).sender_id === partnerId) {
+          void qc.invalidateQueries({ queryKey: key });
+          void qc.invalidateQueries({ queryKey: ["date-invites", uid, partnerId] });
+        }
       })
       .subscribe();
     return () => void supabase.removeChannel(ch);
@@ -118,9 +146,39 @@ function DirectChat({ partnerId }: { partnerId: string }) {
             "שיחה"
           )
         }
-        subtitle={!blocked && online.data ? "מחובר/ת עכשיו" : undefined}
+        subtitle={
+          p ? (
+            <Link to="/profile/$id" params={{ id: partnerId }} className="text-muted-foreground">
+              {!blocked && online.data ? "מחובר/ת עכשיו · " : ""}צפייה בפרופיל
+            </Link>
+          ) : undefined
+        }
+        actions={
+          !blocked && (
+            <button onClick={() => setInviteOpen(true)} className="grid size-12 place-items-center rounded-full bg-like-soft text-like" aria-label="הזמנה לדייט">
+              <Wine className="size-6" />
+            </button>
+          )
+        }
+      />
+      <DateInviteDialog
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        senderId={uid}
+        recipientId={partnerId}
+        onSent={() => {
+          void qc.invalidateQueries({ queryKey: key });
+          void qc.invalidateQueries({ queryKey: ["date-invites", uid, partnerId] });
+        }}
       />
       <ChatThread
+        renderSpecial={(m) => {
+          if (m.kind !== "date_invite" || !m.date_invite_id) return null;
+          const inv = invites.data?.get(m.date_invite_id);
+          return inv ? (
+            <DateInviteCard invite={inv} viewerId={uid} onAnswered={() => void qc.invalidateQueries({ queryKey: ["date-invites", uid, partnerId] })} />
+          ) : null;
+        }}
         messages={msgs.data ?? []}
         senders={new Map([[uid, { id: uid, name: profile?.name ?? "", avatar_url: profile?.avatar_url ?? null }], ...(p ? [[p.id, p] as const] : [])])}
         showSenders={false}

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
+import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -12,7 +13,7 @@ export function Carousel({
   moreSearch,
   children,
   className,
-  itemClassName = "w-[57vw] max-w-[219px]",
+  itemClassName = "w-[58vw] max-w-[230px]",
 }: {
   title?: React.ReactNode;
   moreTo?: string;
@@ -28,8 +29,9 @@ export function Carousel({
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-bold">{title}</h2>
           {moreTo && (
-            <Link to={moreTo} search={moreSearch as never} className="text-sm font-semibold text-primary">
+            <Link to={moreTo} search={moreSearch as never} className="flex items-center gap-1 text-sm font-semibold text-primary">
               הצג הכול
+              <ChevronLeft className="size-4" />
             </Link>
           )}
         </div>

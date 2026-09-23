@@ -12,11 +12,11 @@ import type { Profile, Story } from "@/lib/types";
 
 export type StoryWithAuthor = Story & { author: Pick<Profile, "id" | "name" | "avatar_url"> | null };
 
-export function useActiveStories() {
+export function useActiveStories(romantic = false) {
   const { user } = useAuth();
   const { data: blocked } = useBlockedIds();
   const q = useQuery({
-    queryKey: ["stories", "active", user?.id],
+    queryKey: ["stories", "active", user?.id, romantic],
     enabled: !!user,
     queryFn: async () => {
       const [{ data: stories }, { data: views }] = await Promise.all([
@@ -24,6 +24,7 @@ export function useActiveStories() {
           .from("stories")
           .select(`*, author:profiles!stories_author_id_fkey(${PROFILE_MINI})`)
           .gt("expires_at", new Date().toISOString())
+          .eq("is_romantic", romantic)
           .order("created_at", { ascending: true }),
         supabase.from("story_views").select("story_id").eq("viewer_id", user!.id),
       ]);
@@ -50,22 +51,22 @@ export function useActiveStories() {
 }
 
 /** Round story rail with a gradient ring for unseen stories. */
-export function StoryRail() {
+export function StoryRail({ romantic = false }: { romantic?: boolean }) {
   const { user, profile } = useAuth();
-  const { groups, viewed } = useActiveStories();
+  const { groups, viewed } = useActiveStories(romantic);
   if (!user) return null;
   const hasMine = groups.some((g) => g[0].author_id === user.id);
   return (
     <div className="-mx-4 flex gap-3 overflow-x-auto px-4 py-2 scrollbar-none">
       {!hasMine && (
-        <Link to="/story/new" className="flex w-16 shrink-0 flex-col items-center gap-1">
+        <Link to="/story/new" search={romantic ? { romantic: "1" } : {}} className="flex w-20 shrink-0 flex-col items-center gap-1">
           <div className="relative">
-            <Avatar src={profile?.avatar_url} name={profile?.name} size={64} />
-            <span className="absolute -bottom-0.5 -left-0.5 grid size-6 place-items-center rounded-full bg-primary text-primary-foreground ring-2 ring-surface">
+            <Avatar src={profile?.avatar_url} name={profile?.name} size={76} />
+            <span className="absolute -bottom-0.5 -left-0.5 grid size-7 place-items-center rounded-full bg-gradient-brand text-primary-foreground ring-2 ring-surface">
               <Plus className="size-4" />
             </span>
           </div>
-          <span className="w-full truncate text-center text-xs">הסטורי שלך</span>
+          <span className="w-full truncate text-center text-xs text-muted-foreground">את/ה</span>
         </Link>
       )}
       {groups.map((g) => {
@@ -73,10 +74,10 @@ export function StoryRail() {
         const unseen = g.some((s) => !viewed.has(s.id));
         const a = g[0].author;
         return (
-          <Link key={g[0].author_id} to="/story/$id" params={{ id: first.id }} className="flex w-16 shrink-0 flex-col items-center gap-1">
-            <Avatar src={a?.avatar_url} name={a?.name} size={64} ring={unseen} className={unseen ? "" : "opacity-80"} />
+          <Link key={g[0].author_id} to="/story/$id" params={{ id: first.id }} search={romantic ? { romantic: "1" } : {}} className="flex w-20 shrink-0 flex-col items-center gap-1">
+            <Avatar src={a?.avatar_url} name={a?.name} size={76} ring={unseen} className={unseen ? "" : "opacity-80"} />
             <span className="w-full truncate text-center text-xs">
-              {g[0].author_id === user.id ? "הסטורי שלך" : (a?.name?.split(" ")[0] ?? "")}
+              {g[0].author_id === user.id ? "את/ה" : (a?.name?.split(" ")[0] ?? "")}
             </span>
           </Link>
         );

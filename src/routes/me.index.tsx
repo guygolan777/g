@@ -1,9 +1,9 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { Activity, Pencil, Settings, Ticket, Users } from "lucide-react";
+import { Bell, Search, Settings, Ticket, Users, Activity } from "lucide-react";
 import { CenteredSpinner, Page } from "@/components/app-shell";
 import { ProfileView } from "@/components/profile-view";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { useUnreadCounts } from "@/lib/queries";
 import { seo } from "@/lib/seo";
 
 export const Route = createFileRoute("/me/")({
@@ -15,32 +15,39 @@ export const Route = createFileRoute("/me/")({
 function MyProfile() {
   const { profile } = useAuth();
   const { filter } = Route.useSearch();
+  const unread = useUnreadCounts();
   if (!profile) return <CenteredSpinner />;
+  const icon = "grid size-12 place-items-center rounded-full bg-surface-soft";
   return (
     <Page>
-      <div className="absolute top-0 right-0 left-0 z-10 mx-auto flex max-w-lg justify-end gap-2 px-4 pt-safe">
-        <div className="mt-3 flex gap-2">
-          <Button asChild size="icon" variant="outline" className="bg-surface/90" aria-label="הגדרות">
-            <Link to="/settings">
-              <Settings />
-            </Link>
-          </Button>
+      <header className="flex items-center justify-between py-3">
+        <h1 className="text-3xl font-extrabold text-gradient-brand">הפרופיל שלי</h1>
+        <div className="flex gap-2">
+          <Link to="/search" className={icon} aria-label="חיפוש">
+            <Search className="size-5" />
+          </Link>
+          <Link to="/notifications" className={`relative ${icon}`} aria-label="התראות">
+            <Bell className="size-5" />
+            {unread.notifications > 0 && <span className="absolute top-2.5 left-3 size-2.5 rounded-full bg-like ring-2 ring-surface-soft" />}
+          </Link>
+          <Link to="/settings" className={icon} aria-label="הגדרות">
+            <Settings className="size-5" />
+          </Link>
         </div>
-      </div>
+      </header>
       <ProfileView
         profile={profile}
         isMe
         initialFilter={filter}
         actions={
-          <div className="grid grid-cols-4 gap-2">
+          <div className="flex justify-center gap-2">
             {[
-              { to: "/me/edit", label: "עריכה", Icon: Pencil },
-              { to: "/tickets", label: "כרטיסים", Icon: Ticket },
+              { to: "/tickets", label: "הכרטיסים שלי", Icon: Ticket },
               { to: "/contacts", label: "אנשי קשר", Icon: Users },
               { to: "/me/activity", label: "פעילות", Icon: Activity },
             ].map(({ to, label, Icon }) => (
-              <Link key={to} to={to} className="flex flex-col items-center gap-1 rounded-2xl bg-surface py-3 text-xs font-semibold shadow-soft">
-                <Icon className="size-5 text-primary" />
+              <Link key={to} to={to} className="flex items-center gap-1.5 rounded-full bg-surface-soft px-3 py-2 text-xs font-semibold">
+                <Icon className="size-4 text-primary" />
                 {label}
               </Link>
             ))}

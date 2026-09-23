@@ -93,4 +93,54 @@ do $$ begin
 end $$;
 rollback;
 
+-- Audience: an event limited to women / 30 km is hidden from people who don't match.
+begin;
+update public.events set gender_target = 'female' where id = '20000000-0000-4000-a000-000000000011';
+update public.profile_locations set lat = 29.5577, lng = 34.9519 where profile_id = '00000000-0000-4000-a000-000000000004'; -- Tamar → Eilat
+set local role authenticated;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000007'); -- Omer (male, not a participant)
+do $$ begin
+  if exists (select 1 from public.events where id = '20000000-0000-4000-a000-000000000011'
+             and not exists (select 1 from public.event_participants p where p.event_id = events.id and p.profile_id = auth.uid()))
+  then raise exception 'FAIL: female-only event visible to a man'; end if;
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000004'); -- Tamar in Eilat
+do $$ begin
+  if exists (select 1 from public.events where id = '20000000-0000-4000-a000-000000000018') then
+    raise exception 'FAIL: 30 km event visible 250 km away';
+  end if;
+end $$;
+rollback;
+
+-- Romantic stories are visible only with dating mode on.
+begin;
+update public.profiles set dating_enabled = false where id = '00000000-0000-4000-a000-000000000007';
+set local role authenticated; select pg_temp.as_user('00000000-0000-4000-a000-000000000007');
+do $$ begin
+  if exists (select 1 from public.stories where is_romantic) then raise exception 'FAIL: romantic story visible with dating off'; end if;
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000006');
+do $$ begin
+  if not exists (select 1 from public.stories where is_romantic) then raise exception 'FAIL: romantic story hidden with dating on'; end if;
+end $$;
+rollback;
+
+-- Date invites: sender creates, a DM + notification appear, only the recipient answers.
+begin;
+set local role authenticated; select pg_temp.as_user('00000000-0000-4000-a000-000000000006');
+insert into public.date_invites (sender_id, recipient_id, title, starts_at)
+values ('00000000-0000-4000-a000-000000000006', '00000000-0000-4000-a000-000000000001', 'קפה', now() + interval '1 day');
+do $$ begin
+  if not exists (select 1 from public.direct_messages where kind = 'date_invite' and sender_id = auth.uid()) then raise exception 'FAIL: no invite message'; end if;
+  update public.date_invites set status = 'approved' where sender_id = auth.uid();
+  if exists (select 1 from public.date_invites where sender_id = auth.uid() and status = 'approved') then raise exception 'FAIL: sender answered own invite'; end if;
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000001');
+update public.date_invites set status = 'approved' where recipient_id = auth.uid();
+select pg_temp.as_user('00000000-0000-4000-a000-000000000006');
+do $$ begin
+  if not exists (select 1 from public.notifications where type = 'date_answer') then raise exception 'FAIL: no answer notification'; end if;
+end $$;
+rollback;
+
 select 'RLS tests passed' as result;

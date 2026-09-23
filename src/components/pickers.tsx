@@ -7,7 +7,7 @@ import { HOBBY_CATEGORIES } from "@/lib/hobby-categories";
 import { TRAIT_GROUPS, toggleTrait } from "@/lib/traits";
 import { MAX_PROFILE_PHOTOS } from "@/lib/constants";
 import { uploadMedia } from "@/lib/storage";
-import { cn } from "@/lib/utils";
+import { cn, isVideoUrl } from "@/lib/utils";
 
 /** Hobbies: pick categories, then refine by subcategory. */
 export function HobbyPicker({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
@@ -88,7 +88,11 @@ export function PhotoGridPicker({ userId, value, onChange }: { userId: string; v
           <div key={i} className={cn("relative aspect-[3/4] overflow-hidden rounded-2xl", url ? "" : "border-2 border-dashed border-border bg-surface-soft")}>
             {url ? (
               <>
-                <SafeImg src={url} alt="" className="size-full object-cover" />
+                {isVideoUrl(url) ? (
+                  <video src={url} muted playsInline className="size-full object-cover" />
+                ) : (
+                  <SafeImg src={url} alt="" className="size-full object-cover" />
+                )}
                 {i === 0 && <span className="absolute right-1.5 bottom-1.5 rounded-full bg-surface/90 px-2 py-0.5 text-[10px] font-bold">ראשית</span>}
                 <button
                   type="button"
@@ -109,7 +113,7 @@ export function PhotoGridPicker({ userId, value, onChange }: { userId: string; v
           </div>
         );
       })}
-      <input ref={input} type="file" accept="image/*" multiple hidden onChange={(e) => void add(e.target.files)} />
+      <input ref={input} type="file" accept="image/*,video/*" multiple hidden onChange={(e) => void add(e.target.files)} />
     </div>
   );
 }

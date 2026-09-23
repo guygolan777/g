@@ -1,29 +1,32 @@
 import * as React from "react";
-import { SafeImg } from "@/components/safe-img";
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { CalendarDays, MapPin } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { CalendarDays, ChevronLeft, ChevronRight, Heart, Pause, Pencil, Play, Volume2, VolumeX } from "lucide-react";
 import { Section, EmptyState } from "@/components/app-shell";
-import { PhotoCarousel } from "@/components/pickers";
-import { CommunityCard, useCommunityEventCounts } from "@/components/communities-browser";
+import { CommunityCard, useCommunityEventCounts, useCommunityMembership } from "@/components/communities-browser";
 import { PersonCard } from "@/components/person-row";
-import { Chip, ChipRow, Tag } from "@/components/chip";
-import { Badge } from "@/components/ui/badge";
+import { SafeImg } from "@/components/safe-img";
+import { Switch } from "@/components/ui/switch";
+import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
 import { EVENT_COLUMNS, PROFILE_COLUMNS } from "@/lib/constants";
 import { useBlockedIds, useMyCommunities } from "@/lib/queries";
 import { withoutBlocked } from "@/lib/blocks";
-import { ageFromBirthYear, formatEventWhen } from "@/lib/format";
-import { hobbyLabel } from "@/lib/hobby-categories";
-import { getTrait } from "@/lib/traits";
+import { ageFromBirthYear, formatDate, formatTime } from "@/lib/format";
+import { hobbyLabel, hobbyToneClass } from "@/lib/hobby-categories";
+import { getTrait, traitToneClass } from "@/lib/traits";
 import { whoComesTitle } from "@/lib/event-title";
+import { hapticTap } from "@/lib/native";
 import type { EventRow, ParticipantStatus, Profile } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, isVideoUrl } from "@/lib/utils";
 
 type EventFilter = "all" | "organizer" | "participant" | "pending";
-type ProfileEvent = { event: EventRow; role: "organizer" | "participant" | "pending"; pendingRequests: number };
+type Role = "organizer" | "participant" | "pending";
+type ProfileEvent = { event: EventRow; role: Role; pendingRequests: number };
 
-/** Followers / following / events-count for a profile. */
+
+/** Followers / following for a profile. */
 export function useProfileGraph(profileId: string) {
   const { data: blocked } = useBlockedIds();
   const q = useQuery({
@@ -47,39 +50,209 @@ export function useProfileGraph(profileId: string) {
   };
 }
 
-/** Upcoming events of a profile; an event I opened appears exactly once — as organizer. */
+/** Upcoming + past events of a profile; an event I opened appears exactly once — as organizer. */
 function useProfileEvents(profileId: string, isMe: boolean) {
   return useQuery({
     queryKey: ["profile-events", profileId, isMe],
     queryFn: async () => {
-      const now = new Date().toISOString();
-      let q = supabase
-        .from("event_participants")
-        .select(`status, event:events(${EVENT_COLUMNS})`)
-        .eq("profile_id", profileId);
+      let q = supabase.from("event_participants").select(`status, event:events(${EVENT_COLUMNS})`).eq("profile_id", profileId);
       if (!isMe) q = q.eq("status", "approved");
       const { data } = await q;
       const rows = ((data ?? []) as unknown as Array<{ status: ParticipantStatus; event: EventRow | null }>).filter(
-        (r) => r.event && (r.event.ends_at ?? r.event.starts_at) >= now && r.status !== "declined",
+        (r) => r.event && r.status !== "declined",
       );
-
       const organizedIds = rows.filter((r) => r.event!.organizer_id === profileId).map((r) => r.event!.id);
       const pendingByEvent = new Map<string, number>();
       if (isMe && organizedIds.length) {
         const { data: pend } = await supabase.from("event_participants").select("event_id").in("event_id", organizedIds).eq("status", "pending");
         for (const p of (pend ?? []) as Array<{ event_id: string }>) pendingByEvent.set(p.event_id, (pendingByEvent.get(p.event_id) ?? 0) + 1);
       }
-
       const byId = new Map<string, ProfileEvent>();
       for (const r of rows) {
         const e = r.event!;
-        const role: ProfileEvent["role"] = e.organizer_id === profileId ? "organizer" : r.status === "pending" ? "pending" : "participant";
-        const prev = byId.get(e.id);
-        if (!prev || role === "organizer") byId.set(e.id, { event: e, role, pendingRequests: pendingByEvent.get(e.id) ?? 0 });
+        const role: Role = e.organizer_id === profileId ? "organizer" : r.status === "pending" ? "pending" : "participant";
+        if (!byId.has(e.id) || role === "organizer") byId.set(e.id, { event: e, role, pendingRequests: pendingByEvent.get(e.id) ?? 0 });
       }
-      return [...byId.values()].sort((a, b) => a.event.starts_at.localeCompare(b.event.starts_at));
+      const now = new Date().toISOString();
+      const all = [...byId.values()];
+      return {
+        upcoming: all.filter((x) => (x.event.ends_at ?? x.event.starts_at) >= now).sort((a, b) => a.event.starts_at.localeCompare(b.event.starts_at)),
+        past: all
+          .filter((x) => (x.event.ends_at ?? x.event.starts_at) < now && x.role !== "pending")
+          .sort((a, b) => b.event.starts_at.localeCompare(a.event.starts_at)),
+      };
     },
   });
+}
+
+/** Photo/video carousel card with arrows, dots, and (on my profile) edit + dating toggle. */
+function MediaCard({ profile, isMe }: { profile: Profile; isMe: boolean }) {
+  const { refreshProfile } = useAuth();
+  const qc = useQueryClient();
+  const media = profile.photos?.length ? profile.photos : profile.avatar_url ? [profile.avatar_url] : [];
+  const [idx, setIdx] = React.useState(0);
+  const [playing, setPlaying] = React.useState(true);
+  const [muted, setMuted] = React.useState(true);
+  const [progress, setProgress] = React.useState(0);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const [dating, setDating] = React.useState(!!profile.dating_enabled);
+  React.useEffect(() => setDating(!!profile.dating_enabled), [profile.dating_enabled]);
+  const current = media[idx];
+  const age = ageFromBirthYear(profile.birth_year);
+  const go = (d: number) => {
+    if (!media.length) return;
+    setIdx((i) => (i + d + media.length) % media.length);
+    setPlaying(true);
+    setProgress(0);
+  };
+
+  async function toggleDating(on: boolean) {
+    setDating(on);
+    const { error } = await supabase.from("profiles").update({ dating_enabled: on }).eq("id", profile.id);
+    if (error) {
+      setDating(!on);
+      return void toast.error("השמירה נכשלה");
+    }
+    if (on) void hapticTap("success");
+    toast.success(on ? "מצב היכרויות פתוח" : "מצב היכרויות סגור");
+    await refreshProfile();
+    void qc.invalidateQueries({ queryKey: ["dating-candidates"] });
+  }
+
+  return (
+    <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-surface-soft shadow-lift">
+      {!current && <div className="grid size-full place-items-center text-7xl">🙂</div>}
+      {current && isVideoUrl(current) ? (
+        <video
+          ref={videoRef}
+          key={current}
+          src={current}
+          autoPlay
+          loop
+          playsInline
+          muted={muted}
+          className="size-full object-cover"
+          onTimeUpdate={(e) => setProgress(e.currentTarget.currentTime / (e.currentTarget.duration || 1))}
+        />
+      ) : (
+        current && <SafeImg key={current} src={current} className="size-full object-cover" />
+      )}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-gradient-scrim" />
+
+      {isMe && (
+        <Link to="/me/edit" className="absolute top-4 left-4 grid size-14 place-items-center rounded-full bg-surface shadow-soft" aria-label="עריכת פרופיל">
+          <Pencil className="size-6" />
+        </Link>
+      )}
+      {media.length > 1 && (
+        <>
+          <button onClick={() => go(-1)} className="absolute top-1/2 right-3 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-surface/30 text-scrim-foreground backdrop-blur" aria-label="הקודם">
+            <ChevronRight className="size-6" />
+          </button>
+          <button onClick={() => go(1)} className="absolute top-1/2 left-3 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-surface/30 text-scrim-foreground backdrop-blur" aria-label="הבא">
+            <ChevronLeft className="size-6" />
+          </button>
+        </>
+      )}
+      {current && isVideoUrl(current) && (
+        <button
+          onClick={() => {
+            const v = videoRef.current;
+            if (!v) return;
+            if (v.paused) void v.play();
+            else v.pause();
+            setPlaying(!v.paused);
+          }}
+          className="absolute top-1/2 left-1/2 grid size-20 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-surface/90 shadow-soft"
+          aria-label={playing ? "השהיה" : "ניגון"}
+        >
+          {playing ? <Pause className="size-9 fill-current" /> : <Play className="size-9 fill-current" />}
+        </button>
+      )}
+
+      <div className="absolute right-6 bottom-12 text-scrim-foreground">
+        <p className="text-3xl font-extrabold">{profile.name}</p>
+        <p className="text-lg opacity-90">{[age, profile.city].filter(Boolean).join(", ")}</p>
+      </div>
+      {current && isVideoUrl(current) && (
+        <button onClick={() => setMuted(!muted)} className="absolute bottom-12 left-1/2 text-scrim-foreground" aria-label={muted ? "הפעלת קול" : "השתקה"}>
+          {muted ? <VolumeX className="size-6" /> : <Volume2 className="size-6" />}
+        </button>
+      )}
+      {isMe && (
+        <div className="absolute bottom-10 left-5 flex items-center gap-3">
+          <button
+            onClick={() => void toggleDating(!dating)}
+            className={cn("grid size-14 place-items-center rounded-full shadow-soft", dating ? "bg-like text-like-foreground" : "bg-surface/40 text-scrim-foreground backdrop-blur")}
+            aria-label="מצב היכרויות"
+          >
+            <Heart className={cn("size-7", dating && "fill-current")} />
+          </button>
+          <Switch checked={dating} onCheckedChange={(c) => void toggleDating(c)} aria-label="מצב היכרויות" className="h-8 w-14 [&>span]:size-7 data-[state=checked]:[&>span]:translate-x-6" />
+        </div>
+      )}
+
+      <div className="absolute inset-x-6 bottom-4 flex items-center gap-3">
+        {current && isVideoUrl(current) && (
+          <div className="h-1 flex-1 overflow-hidden rounded-full bg-scrim-foreground/30" dir="ltr">
+            <div className="h-full bg-scrim-foreground" style={{ width: `${progress * 100}%` }} />
+          </div>
+        )}
+        {media.length > 1 && (
+          <div className="mx-auto flex gap-1.5">
+            {media.map((_, i) => (
+              <span key={i} className={cn("size-2.5 rounded-full", i === idx ? "bg-scrim-foreground" : "bg-scrim-foreground/40")} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const ROLE_TAG: Record<Role, { label: string; cls: string }> = {
+  organizer: { label: "מארגן", cls: "bg-event-soft text-event" },
+  participant: { label: "משתתף", cls: "bg-success-soft text-success" },
+  pending: { label: "ממתין", cls: "bg-muted text-muted-foreground" },
+};
+
+function ProfileEventCard({ item, isMe }: { item: ProfileEvent; isMe: boolean }) {
+  const { event, role, pendingRequests } = item;
+  const tag = ROLE_TAG[role];
+  return (
+    <Link to="/e/$id" params={{ id: event.id }} className="flex h-full flex-col gap-2 rounded-3xl bg-card p-4 shadow-soft ring-1 ring-border">
+      <div className="flex items-center gap-3">
+        <span className="grid size-12 shrink-0 place-items-center rounded-full bg-event-soft text-primary">
+          <CalendarDays className="size-6" />
+        </span>
+        <p className="line-clamp-1 text-lg font-bold">{whoComesTitle(event.title)}</p>
+      </div>
+      <p className="truncate text-sm text-muted-foreground">
+        {formatDate(event.starts_at, { weekday: "short" })}, {formatDate(event.starts_at, { day: "2-digit", month: "2-digit" })}, {formatTime(event.starts_at)}
+        {event.is_online ? " · אונליין" : event.city ? ` · ${event.city}` : event.location_name ? ` · ${event.location_name}` : ""}
+      </p>
+      <div className="mt-auto flex items-center gap-2">
+        <span className={cn("rounded-full px-3 py-1 text-sm font-semibold", tag.cls)}>{tag.label}</span>
+        {isMe && pendingRequests > 0 && <span className="rounded-full bg-like-soft px-3 py-1 text-sm font-semibold text-like">{pendingRequests} בקשות</span>}
+      </div>
+    </Link>
+  );
+}
+
+function CountPill({ n }: { n: number }) {
+  return <span className="grid h-7 min-w-7 place-items-center rounded-full bg-surface-soft px-2 text-sm font-bold text-muted-foreground">{n}</span>;
+}
+
+function Rail({ children }: { children: React.ReactNode[] }) {
+  return (
+    <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 scrollbar-none" dir="rtl">
+      {children.map((c, i) => (
+        <div key={i} className="w-[72vw] max-w-[270px] shrink-0 snap-start">
+          {c}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function ProfileView({
@@ -97,17 +270,18 @@ export function ProfileView({
   const events = useProfileEvents(profile.id, isMe);
   const { data: communities = [] } = useMyCommunities(profile.id);
   const { data: counts = new Map<string, number>() } = useCommunityEventCounts();
+  const membership = useCommunityMembership();
   const [filter, setFilter] = React.useState<EventFilter>(initialFilter ?? "all");
   const followersRef = React.useRef<HTMLDivElement>(null);
   const followingRef = React.useRef<HTMLDivElement>(null);
-
   React.useEffect(() => {
     if (initialFilter) setFilter(initialFilter);
   }, [initialFilter]);
 
-  const all = events.data ?? [];
-  const pendingCount = all.reduce((n, e) => n + e.pendingRequests + (e.role === "pending" ? 1 : 0), 0);
-  const shown = all.filter((e) =>
+  const upcoming = events.data?.upcoming ?? [];
+  const past = events.data?.past ?? [];
+  const pendingCount = upcoming.reduce((n, e) => n + e.pendingRequests + (e.role === "pending" ? 1 : 0), 0);
+  const shown = upcoming.filter((e) =>
     filter === "all"
       ? e.role !== "pending" || isMe
       : filter === "organizer"
@@ -116,97 +290,105 @@ export function ProfileView({
           ? e.role === "participant"
           : e.role === "pending" || e.pendingRequests > 0,
   );
-  const age = ageFromBirthYear(profile.birth_year);
-  const photos = profile.photos?.length ? profile.photos : profile.avatar_url ? [profile.avatar_url] : [];
 
   const stat = (n: number, label: string, onClick?: () => void) => (
-    <button onClick={onClick} className="flex flex-1 flex-col items-center rounded-2xl py-2 hover:bg-muted">
-      <span className="text-xl font-bold">{n}</span>
-      <span className="text-xs text-muted-foreground">{label}</span>
+    <button onClick={onClick} className="flex flex-1 flex-col items-center py-2">
+      <span className="text-3xl font-extrabold">{n}</span>
+      <span className="text-sm text-muted-foreground">{label}</span>
     </button>
   );
+  const chip = (v: EventFilter, label: React.ReactNode) => (
+    <button
+      onClick={() => setFilter(v)}
+      className={cn(
+        "shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold",
+        filter === v ? "bg-gradient-brand text-primary-foreground" : "bg-surface-soft text-muted-foreground",
+      )}
+    >
+      {label}
+    </button>
+  );
+  const editLink = isMe ? (
+    <Link to="/me/edit" className="text-sm font-semibold text-primary">
+      שינוי
+    </Link>
+  ) : undefined;
 
   return (
     <div>
-      {/* 1. Big photo + stats */}
-      <PhotoCarousel photos={photos} className="-mx-4 aspect-[4/5] rounded-none rounded-b-3xl">
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-scrim" />
-        <div className="absolute right-4 bottom-4 left-4 text-scrim-foreground">
-          <h1 className="text-3xl font-bold">
-            {profile.name}
-            {age ? <span className="font-normal">, {age}</span> : null}
-          </h1>
-          {profile.city && (
-            <p className="mt-1 flex items-center gap-1 text-sm opacity-90">
-              <MapPin className="size-4" /> {profile.city}
-            </p>
-          )}
-        </div>
-      </PhotoCarousel>
-      <div className="mt-3 flex rounded-2xl bg-surface p-1 shadow-soft">
+      <MediaCard profile={profile} isMe={isMe} />
+
+      <div className="mt-4 flex">
+        {stat(upcoming.filter((e) => e.role !== "pending").length + past.length, "אירועים")}
+        {stat(communities.length, "קהילות")}
         {stat(graph.followers.length, "עוקבים", () => followersRef.current?.scrollIntoView({ behavior: "smooth" }))}
-        {stat(graph.following.length, "נעקבים", () => followingRef.current?.scrollIntoView({ behavior: "smooth" }))}
-        {stat(all.filter((e) => e.role !== "pending").length, "אירועים")}
+        {stat(graph.following.length, "עוקב/ת", () => followingRef.current?.scrollIntoView({ behavior: "smooth" }))}
       </div>
       {actions && <div className="mt-3">{actions}</div>}
 
-      {/* 2. Upcoming events with filters + calendar link in the same row */}
-      <Section title="אירועים קרובים">
-        <div className="flex items-center gap-2">
-          <ChipRow className="me-0 min-w-0 flex-1 pe-0">
-            <Chip active={filter === "all"} onClick={() => setFilter("all")}>
-              הכל
-            </Chip>
-            <Chip active={filter === "organizer"} onClick={() => setFilter("organizer")}>
-              כמארגן
-            </Chip>
-            <Chip active={filter === "participant"} onClick={() => setFilter("participant")}>
-              כמשתתף
-            </Chip>
-            {isMe && (
-              <Chip active={filter === "pending"} onClick={() => setFilter("pending")}>
-                ממתינים
-                {pendingCount > 0 && <span className="rounded-full bg-partner px-1.5 text-xs text-partner-foreground">{pendingCount}</span>}
-              </Chip>
-            )}
-          </ChipRow>
+      {/* Upcoming events: filters and the calendar link on the same row */}
+      <section className="mt-6">
+        <div className="mb-3 flex items-center gap-2">
+          <h2 className="shrink-0 text-lg font-bold">אירועים עתידיים</h2>
+          <CountPill n={upcoming.filter((e) => e.role !== "pending" || isMe).length} />
+          <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto scrollbar-none">
+            {chip("all", "הכל")}
+            {chip("organizer", "כמארגן")}
+            {chip("participant", "כמשתתף")}
+            {isMe &&
+              chip(
+                "pending",
+                <>
+                  ממתינים{pendingCount > 0 && <span className="ms-1 rounded-full bg-partner px-1.5 text-xs text-partner-foreground">{pendingCount}</span>}
+                </>,
+              )}
+          </div>
           {isMe && (
-            <Link to="/calendar" className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary">
-              <CalendarDays className="size-4" /> ליומן
+            <Link to="/calendar" className="shrink-0 text-sm font-semibold text-primary">
+              ליומן
             </Link>
           )}
         </div>
-        <div className="mt-3 space-y-2">
-          {shown.length === 0 && <p className="text-sm text-muted-foreground">אין אירועים להצגה</p>}
-          {shown.map(({ event, role, pendingRequests }) => (
-            <Link key={event.id} to="/e/$id" params={{ id: event.id }} className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-soft">
-              <div className="size-14 shrink-0 overflow-hidden rounded-xl bg-muted">
-                {event.image_url && <SafeImg src={event.image_url} alt="" className="size-full object-cover" />}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-semibold">{whoComesTitle(event.title)}</p>
-                <p className="text-xs text-event">{formatEventWhen(event.starts_at)}</p>
-              </div>
-              {role === "organizer" && <Badge variant="partner">מארגן/ת</Badge>}
-              {role === "pending" && <Badge variant="muted">ממתין</Badge>}
-              {isMe && pendingRequests > 0 && <Badge variant="like">{pendingRequests} בקשות</Badge>}
-            </Link>
-          ))}
-        </div>
-      </Section>
+        {shown.length === 0 ? (
+          <p className="text-sm text-muted-foreground">אין אירועים להצגה</p>
+        ) : (
+          <Rail>{shown.map((e) => <ProfileEventCard key={e.event.id} item={e} isMe={isMe} />)}</Rail>
+        )}
+      </section>
 
-      {/* 3. Communities */}
-      {communities.length > 0 && (
-        <Section title={isMe ? "הקהילות שלי" : "קהילות"}>
-          <div className="space-y-2">
-            {communities.map(({ community }) => (
-              <CommunityCard key={community!.id} community={community!} eventCount={counts.get(community!.id) ?? 0} />
-            ))}
+      {past.length > 0 && (
+        <section className="mt-6">
+          <div className="mb-3 flex items-center gap-2">
+            <h2 className="text-lg font-bold">אירועים שעברו</h2>
+            <CountPill n={past.length} />
           </div>
-        </Section>
+          <Rail>{past.map((e) => <ProfileEventCard key={e.event.id} item={e} isMe={isMe} />)}</Rail>
+        </section>
       )}
 
-      {/* 4. Following / followers carousels */}
+      {communities.length > 0 && (
+        <section className="mt-6">
+          <div className="mb-3 flex items-center gap-2">
+            <h2 className="text-lg font-bold">{isMe ? "הקהילות שלי" : "קהילות"}</h2>
+            <CountPill n={communities.length} />
+            <Link to="/home" search={{ tab: "communities" }} className="ms-auto text-sm font-semibold text-primary">
+              לכל הקהילות
+            </Link>
+          </div>
+          <Rail>
+            {communities.map(({ community, role }) => (
+              <CommunityCard
+                key={community!.id}
+                community={community!}
+                eventCount={counts.get(community!.id) ?? 0}
+                role={role}
+                members={membership.data?.counts.get(community!.id)}
+              />
+            ))}
+          </Rail>
+        </section>
+      )}
+
       <div ref={followingRef} className="scroll-mt-20">
         <PeopleCarousel title="עוקב/ת אחרי" people={graph.following} />
       </div>
@@ -214,30 +396,33 @@ export function ProfileView({
         <PeopleCarousel title="עוקבים" people={graph.followers} />
       </div>
 
-      {/* 5. About */}
       {profile.bio && (
         <Section title="קצת עליי">
-          <p className="leading-relaxed whitespace-pre-line">{profile.bio}</p>
+          <p className="leading-relaxed whitespace-pre-line text-muted-foreground">{profile.bio}</p>
         </Section>
       )}
 
-      {/* 6. Hobbies & traits */}
-      {((profile.hobbies?.length ?? 0) > 0 || (profile.traits?.length ?? 0) > 0) && (
-        <Section title="תחביבים ומאפיינים">
+      {(profile.hobbies?.length ?? 0) > 0 && (
+        <Section title="תחומי עניין" action={editLink}>
           <div className="flex flex-wrap gap-2">
             {profile.hobbies?.map((h) => (
-              <Tag key={h} className="bg-primary-soft text-primary">
-                {hobbyLabel(h)}
-              </Tag>
+              <span key={h} className={cn("rounded-full px-4 py-2 text-sm font-semibold", hobbyToneClass(h))}>
+                {hobbyLabel(h, false)}
+              </span>
             ))}
           </div>
-          <div className="mt-2 flex flex-wrap gap-2">
+        </Section>
+      )}
+
+      {(profile.traits?.length ?? 0) > 0 && (
+        <Section title="מאפיינים אישיים" action={editLink}>
+          <div className="flex flex-wrap gap-2">
             {profile.traits?.map((t) => {
               const tr = getTrait(t);
               return tr ? (
-                <Tag key={t}>
-                  {tr.emoji} {tr.label}
-                </Tag>
+                <span key={t} className={cn("rounded-full px-4 py-2 text-sm font-semibold", traitToneClass(t))}>
+                  {tr.label}
+                </span>
               ) : null;
             })}
           </div>
@@ -249,17 +434,21 @@ export function ProfileView({
 
 function PeopleCarousel({ title, people }: { title: string; people: Profile[] }) {
   return (
-    <Section title={`${title} (${people.length})`}>
+    <section className="mt-6">
+      <div className="mb-3 flex items-center gap-2">
+        <h2 className="text-lg font-bold">{title}</h2>
+        <CountPill n={people.length} />
+      </div>
       {people.length === 0 ? (
         <p className="text-sm text-muted-foreground">עדיין אין</p>
       ) : (
-        <div className={cn("-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-none")} dir="rtl">
+        <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-none" dir="rtl">
           {people.map((p) => (
-            <PersonCard key={p.id} person={p} />
+            <PersonCard key={p.id} person={p} className="w-40 shrink-0" />
           ))}
         </div>
       )}
-    </Section>
+    </section>
   );
 }
 

@@ -1,13 +1,14 @@
+import type * as React from "react";
 import { Link } from "@tanstack/react-router";
-import { SafeImg } from "@/components/safe-img";
-import { MapPin, Video } from "lucide-react";
-import { AvatarStack } from "@/components/avatar";
+import { MapPin } from "lucide-react";
+import { Avatar } from "@/components/avatar";
 import { JoinButton } from "@/components/join-button";
-import { Button } from "@/components/ui/button";
+import { SafeImg } from "@/components/safe-img";
 import { whoComesTitle } from "@/lib/event-title";
-import { formatEventWhen } from "@/lib/format";
-import { hobbyLabel } from "@/lib/hobby-categories";
+import { formatDate, formatTime } from "@/lib/format";
+import { getCategory, getSubcategory, hobbyEmoji } from "@/lib/hobby-categories";
 import { formatDistance } from "@/lib/geo";
+import { UNLIMITED_SEATS } from "@/lib/constants";
 import type { EventRow, ParticipantStatus } from "@/lib/types";
 import type { ParticipantWithProfile } from "@/lib/queries";
 import { cn } from "@/lib/utils";
@@ -20,16 +21,50 @@ export type EventCardData = {
   distanceKm?: number | null;
 };
 
+export function priceLabel(price: number | null | undefined): string {
+  return !price ? "חינם" : `₪${Number(price).toLocaleString("he-IL")}`;
+}
+
+/** Date badge on the event image: pink DD.MM with the time underneath. */
+export function DateBadge({ iso, className }: { iso: string; className?: string }) {
+  return (
+    <span className={cn("flex flex-col items-center rounded-2xl bg-surface/90 px-3 py-1.5 leading-tight shadow-soft backdrop-blur", className)}>
+      <span className="text-lg font-extrabold text-like">{formatDate(iso, { day: "2-digit", month: "2-digit" }).replace("/", ".")}</span>
+      <span className="text-xs text-muted-foreground">{formatTime(iso)}</span>
+    </span>
+  );
+}
+
+/** Image of an event, or its subcategory emoji on a soft tile when there is no image. */
+export function EventMedia({
+  event,
+  className,
+  children,
+}: {
+  event: Pick<EventRow, "image_url" | "subcategory" | "category">;
+  className?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className={cn("relative grid place-items-center overflow-hidden bg-surface-soft", className)}>
+      <span className="text-7xl" aria-hidden>
+        {hobbyEmoji(event.subcategory ?? event.category)}
+      </span>
+      <SafeImg src={event.image_url ?? undefined} className="absolute inset-0 size-full object-cover" />
+      {children}
+    </div>
+  );
+}
+
 /**
  * Event card. No organizer block and no "your event"/"from your interests" tags:
- * the organizer's photo appears only inside the attendee row.
+ * the organizer's photo appears only in the attendee row.
  */
 export function EventCard({
   data,
   viewerId,
   isGuest,
   onHide,
-  layout = "carousel",
 }: {
   data: EventCardData;
   viewerId?: string | null;
@@ -39,52 +74,62 @@ export function EventCard({
 }) {
   const { event, status, attendees = [], distanceKm } = data;
   const count = Math.max(1, data.approvedCount ?? 0);
+  const seats = event.seats ?? UNLIMITED_SEATS;
   const isOrganizer = !!viewerId && event.organizer_id === viewerId;
-  const people = attendees.map((a) => a.profile).filter(Boolean) as Array<{ id: string; name: string; avatar_url: string | null }>;
-  // Organizer first in the attendee row.
-  people.sort((a, b) => (a.id === event.organizer_id ? -1 : b.id === event.organizer_id ? 1 : 0));
+  const organizer = attendees.find((a) => a.profile_id === event.organizer_id)?.profile ?? attendees[0]?.profile;
+  const cat = getCategory(event.category);
+  const sub = getSubcategory(event.subcategory);
+  const place = event.is_online ? "אונליין" : [event.city, event.location_name].filter(Boolean).join(" · ") || "מיקום יתפרסם בקרוב";
 
   return (
-    <article className={cn("flex h-full flex-col overflow-hidden rounded-2xl bg-card shadow-soft", layout === "list" && "sm:flex-row")}>
+    <article className="flex h-full flex-col rounded-3xl bg-card p-3 shadow-soft">
       <Link to="/e/$id" params={{ id: event.id }} className="block">
-        <div className={cn("relative bg-muted", layout === "carousel" ? "aspect-[4/3]" : "aspect-[16/9]")}>
-          {event.image_url && <SafeImg src={event.image_url} alt="" loading="lazy" className="size-full object-cover" />}
-          <span className="absolute top-2 right-2 rounded-full bg-surface/90 px-2.5 py-1 text-xs font-semibold backdrop-blur">
-            {hobbyLabel(event.subcategory ?? event.category)}
+        <EventMedia event={event} className="aspect-[4/3] rounded-2xl">
+          <DateBadge iso={event.starts_at} className="absolute top-2 right-2" />
+          <span
+            className={cn(
+              "absolute top-2 left-2 rounded-full px-2.5 py-1 text-xs font-bold",
+              event.price ? "bg-surface/90 text-foreground" : "bg-success text-success-foreground",
+            )}
+          >
+            {priceLabel(event.price)}
           </span>
-        </div>
+        </EventMedia>
       </Link>
-      <div className="flex flex-1 flex-col gap-2 p-3">
+
+      <div className="mt-1 flex flex-1 flex-col gap-1.5 px-1">
         <Link to="/e/$id" params={{ id: event.id }} className="block">
-          <p className="text-xs font-semibold text-event">{formatEventWhen(event.starts_at)}</p>
-          <h3 className="mt-0.5 line-clamp-2 font-bold leading-snug">{whoComesTitle(event.title)}</h3>
+          <h3 className="truncate text-lg font-bold">{whoComesTitle(event.title)}</h3>
           {!isGuest && (
-            <p className="mt-1 flex items-center gap-1 truncate text-xs text-muted-foreground">
-              {event.is_online ? <Video className="size-3.5 shrink-0" /> : <MapPin className="size-3.5 shrink-0" />}
-              <span className="truncate">
-                {event.is_online ? "אונליין" : (event.location_name ?? event.city ?? "")}
+            <>
+              <p className="mt-0.5 flex items-center gap-1 truncate text-sm">
+                <MapPin className="size-4 shrink-0 text-primary" />
+                <span className="truncate">{[cat?.label, sub?.label].filter(Boolean).join(" · ")}</span>
+              </p>
+              <p className="truncate pe-5 text-sm text-muted-foreground">
+                {place}
                 {distanceKm != null && ` · ${formatDistance(distanceKm)}`}
-              </span>
-            </p>
+              </p>
+            </>
           )}
         </Link>
         {!isGuest && (
           <div className="flex items-center gap-2">
-            <AvatarStack people={people} />
-            <span className="text-xs text-muted-foreground">{count} משתתפים</span>
+            <Avatar src={organizer?.avatar_url} name={organizer?.name} size={30} />
+            <span className="text-sm font-bold" dir="ltr">
+              {seats < UNLIMITED_SEATS ? `${count}/${seats}` : count}
+            </span>
+            <span className="rounded-full border border-border px-2.5 py-0.5 text-xs text-muted-foreground">
+              גיל: {event.min_age ?? 18}-{event.max_age ?? 99}
+            </span>
           </div>
         )}
-        <div className="mt-auto space-y-1 pt-1">
-          <JoinButton event={event} status={status} />
+        <div className="mt-auto flex items-center gap-2 pt-1">
+          <JoinButton event={event} status={status} size="default" className="flex-1" />
           {onHide && !isOrganizer && !isGuest && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-full text-xs"
-              onClick={() => onHide(event.id)}
-            >
+            <button className="shrink-0 px-1 text-sm text-muted-foreground hover:text-foreground" onClick={() => onHide(event.id)}>
               הסר
-            </Button>
+            </button>
           )}
         </div>
       </div>
