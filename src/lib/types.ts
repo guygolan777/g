@@ -16,6 +16,10 @@ export type Profile = {
   hobbies?: string[];
   traits?: string[];
   dating_enabled?: boolean;
+  /** Private profile: strangers see only name, main photo and age. */
+  is_private?: boolean;
+  /** From profile_cards: may I see the whole profile (false → the private fields come back empty). */
+  full_access?: boolean;
   onboarded?: boolean;
   banned_at?: string | null;
   created_at?: string;

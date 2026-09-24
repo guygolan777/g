@@ -203,6 +203,83 @@ do $$ begin
 end $$;
 rollback;
 
+-- Private profile (Shira): strangers see only name/photo/age; follow = request; hidden from attendee lists.
+begin;
+update public.profiles set is_private = true, dating_enabled = false where id = '00000000-0000-4000-a000-000000000003';
+update public.profiles set dating_enabled = false where id = '00000000-0000-4000-a000-000000000009';
+insert into public.event_participants (event_id, profile_id, status)
+  values ('20000000-0000-4000-a000-000000000001', '00000000-0000-4000-a000-000000000003', 'approved')
+  on conflict (event_id, profile_id) do update set status = 'approved';
+set local role authenticated;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000009'); -- Yoni: a stranger
+do $$
+declare _c record;
+begin
+  select * into _c from public.profile_cards where id = '00000000-0000-4000-a000-000000000003';
+  if _c.name is null or _c.birth_year is null then raise exception 'FAIL: private profile hides its name/age'; end if;
+  if _c.full_access or _c.bio <> '' or _c.city is not null or cardinality(_c.photos) > 0 or cardinality(_c.hobbies) > 0 then
+    raise exception 'FAIL: private profile details visible to a stranger';
+  end if;
+  begin perform bio from public.profiles limit 1; raise exception 'FAIL: bio readable from profiles directly';
+  exception when insufficient_privilege then null; end;
+  if exists (select 1 from public.event_participants where profile_id = '00000000-0000-4000-a000-000000000003' and event_id = '20000000-0000-4000-a000-000000000001') then
+    raise exception 'FAIL: private profile listed as an attendee to a stranger';
+  end if;
+  if not exists (select 1 from public.event_approved_counts(array['20000000-0000-4000-a000-000000000001'::uuid]) c where c.approved >= 2) then
+    raise exception 'FAIL: attendee count leaves out the private attendee';
+  end if;
+  if exists (select 1 from public.follows where following_id = '00000000-0000-4000-a000-000000000003') then
+    raise exception 'FAIL: private profile''s followers listed to a stranger';
+  end if;
+  insert into public.follows (follower_id, following_id) values (auth.uid(), '00000000-0000-4000-a000-000000000003');
+  if (select approved from public.follows where follower_id = auth.uid() and following_id = '00000000-0000-4000-a000-000000000003') then
+    raise exception 'FAIL: following a private profile was approved without asking';
+  end if;
+  if (select full_access from public.profile_cards where id = '00000000-0000-4000-a000-000000000003') then
+    raise exception 'FAIL: a pending request unlocks the profile';
+  end if;
+  begin
+    update public.follows set approved = true where follower_id = auth.uid() and following_id = '00000000-0000-4000-a000-000000000003';
+    if found then raise exception 'FAIL: requester approved their own request'; end if;
+  exception when insufficient_privilege or check_violation then null; end;
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000001'); -- Noa: an approved follower + the organizer
+do $$ begin
+  if not (select full_access from public.profile_cards where id = '00000000-0000-4000-a000-000000000003') then
+    raise exception 'FAIL: approved follower can''t see the private profile';
+  end if;
+  if not exists (select 1 from public.event_participants where profile_id = '00000000-0000-4000-a000-000000000003' and event_id = '20000000-0000-4000-a000-000000000001') then
+    raise exception 'FAIL: organizer can''t see a private attendee';
+  end if;
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000003'); -- Shira approves Yoni
+do $$ begin
+  if not exists (select 1 from public.notifications where type = 'follow_request' and actor_id = '00000000-0000-4000-a000-000000000009') then
+    raise exception 'FAIL: no follow request notification';
+  end if;
+  update public.follows set approved = true where follower_id = '00000000-0000-4000-a000-000000000009' and following_id = auth.uid();
+  if exists (select 1 from public.notifications where type = 'follow_request' and actor_id = '00000000-0000-4000-a000-000000000009') then
+    raise exception 'FAIL: request notification left after approving';
+  end if;
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000009');
+do $$ begin
+  if not (select full_access from public.profile_cards where id = '00000000-0000-4000-a000-000000000003') then
+    raise exception 'FAIL: approved request doesn''t unlock the profile';
+  end if;
+  if not exists (select 1 from public.notifications where type = 'follow_accepted') then raise exception 'FAIL: no approval notification'; end if;
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000004'); -- Tamar requests, then Shira goes public
+insert into public.follows (follower_id, following_id) values ('00000000-0000-4000-a000-000000000004', '00000000-0000-4000-a000-000000000003');
+select pg_temp.as_user('00000000-0000-4000-a000-000000000003');
+update public.profiles set is_private = false where id = '00000000-0000-4000-a000-000000000003';
+do $$ begin
+  if not (select approved from public.follows where follower_id = '00000000-0000-4000-a000-000000000004' and following_id = auth.uid()) then
+    raise exception 'FAIL: going public didn''t approve waiting requests';
+  end if;
+end $$;
+rollback;
+
 -- Date invites: sender creates, a DM + notification appear, only the recipient answers.
 begin;
 set local role authenticated; select pg_temp.as_user('00000000-0000-4000-a000-000000000006');

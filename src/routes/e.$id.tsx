@@ -210,7 +210,12 @@ function MemberEvent({ event, viewerId }: { event: EventRow; viewerId: string })
   const myStatus = isOrganizer ? "approved" : myRow?.status;
   const approved = (parts.data ?? []).filter((p) => p.status === "approved" && !blocked?.has(p.profile_id));
   const pending = (parts.data ?? []).filter((p) => p.status === "pending");
-  const count = Math.max(1, approved.length);
+  // Attendees with a private profile aren't listed to strangers but still count.
+  const total = useQuery({
+    queryKey: ["event-approved-counts", event.id],
+    queryFn: async () => ((await supabase.rpc("event_approved_counts", { ids: [event.id] })).data?.[0]?.approved as number | undefined) ?? 0,
+  });
+  const count = Math.max(1, approved.length, total.data ?? 0);
   const seats = event.seats ?? UNLIMITED_SEATS;
 
   const meeting = useQuery({

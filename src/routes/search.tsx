@@ -10,7 +10,7 @@ import { EventCard } from "@/components/event-card";
 import { useAuth } from "@/hooks/use-auth";
 import { useEventFeed } from "@/hooks/use-event-feed";
 import { supabase } from "@/lib/supabase";
-import { PROFILE_COLUMNS } from "@/lib/constants";
+import { PROFILE_COLUMNS, PROFILE_VIEW } from "@/lib/constants";
 import { useBlockedIds, useCommunities } from "@/lib/queries";
 import { withoutBlocked } from "@/lib/blocks";
 import { hobbyLabel } from "@/lib/hobby-categories";
@@ -49,7 +49,7 @@ function SearchPage() {
     queryFn: async () => {
       const term = q.trim().replace(/[%,()]/g, "");
       const { data } = await supabase
-        .from("profiles")
+        .from(PROFILE_VIEW)
         .select(PROFILE_COLUMNS)
         .or(`name.ilike.%${term}%,city.ilike.%${term}%`)
         .eq("onboarded", true)

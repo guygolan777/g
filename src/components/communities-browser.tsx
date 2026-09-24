@@ -42,16 +42,14 @@ export function useCommunityMembership() {
     queryKey: ["community-membership", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const [{ data: members }, { data: requests }] = await Promise.all([
-        supabase.from("community_members").select("community_id, profile_id, role"),
+      // Counts come from the server so members with a private profile are counted too.
+      const [{ data: totals }, { data: members }, { data: requests }] = await Promise.all([
+        supabase.rpc("guest_community_counts"),
+        supabase.from("community_members").select("community_id, role").eq("profile_id", user!.id),
         supabase.from("community_join_requests").select("community_id").eq("profile_id", user!.id).eq("status", "pending"),
       ]);
-      const counts = new Map<string, number>();
-      const mine = new Map<string, string>();
-      for (const m of (members ?? []) as Array<{ community_id: string; profile_id: string; role: string }>) {
-        counts.set(m.community_id, (counts.get(m.community_id) ?? 0) + 1);
-        if (m.profile_id === user!.id) mine.set(m.community_id, m.role);
-      }
+      const counts = new Map(((totals ?? []) as Array<{ community_id: string; members: number }>).map((r) => [r.community_id, r.members]));
+      const mine = new Map(((members ?? []) as Array<{ community_id: string; role: string }>).map((m) => [m.community_id, m.role]));
       return { counts, mine, pending: new Set((requests ?? []).map((r) => r.community_id as string)) };
     },
   });

@@ -16,7 +16,7 @@ export function PersonRow({ person, note }: { person: Profile; note?: string }) 
           {[age ? `${age}` : null, person.city, note].filter(Boolean).join(" · ")}
         </p>
       </div>
-      <FollowButton profileId={person.id} />
+      <FollowButton profileId={person.id} isPrivate={!!person.is_private && !person.full_access} />
     </Link>
   );
 }
@@ -31,7 +31,7 @@ export function PersonCard({ person, followingLabel, className }: { person: Prof
     >
       <Avatar src={person.avatar_url} name={person.name} size={84} />
       <p className="w-full truncate font-bold">{person.name}</p>
-      <FollowButton profileId={person.id} followingLabel={followingLabel} className="h-9 w-full min-w-0 px-2" />
+      <FollowButton profileId={person.id} isPrivate={!!person.is_private && !person.full_access} followingLabel={followingLabel} className="h-9 w-full min-w-0 px-2" />
     </Link>
   );
 }

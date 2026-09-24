@@ -7,7 +7,7 @@ import { Link } from "@tanstack/react-router";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
-import { PROFILE_COLUMNS } from "@/lib/constants";
+import { PROFILE_COLUMNS, PROFILE_VIEW } from "@/lib/constants";
 import { useBlockedIds, useMyGraph } from "@/lib/queries";
 import { withoutBlocked } from "@/lib/blocks";
 import { categoryOf } from "@/lib/hobby-categories";
@@ -27,7 +27,7 @@ export function PeopleTab() {
     enabled: !!user,
     queryFn: async () => {
       const [{ data: people }, { data: near }] = await Promise.all([
-        supabase.from("profiles").select(PROFILE_COLUMNS).eq("onboarded", true).is("banned_at", null).neq("id", user!.id).limit(300),
+        supabase.from(PROFILE_VIEW).select(PROFILE_COLUMNS).eq("onboarded", true).is("banned_at", null).neq("id", user!.id).limit(300),
         supabase.rpc("nearby_profiles", { radius_km: 30 }),
       ]);
       return {

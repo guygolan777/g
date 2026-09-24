@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
 import { supabase } from "./supabase";
 import { channelName } from "./realtime";
-import { EVENT_COLUMNS, EVENT_GUEST_COLUMNS, PROFILE_COLUMNS, PROFILE_MINI } from "./constants";
+import { EVENT_COLUMNS, EVENT_GUEST_COLUMNS, PROFILE_COLUMNS, PROFILE_VIEW, PROFILE_MINI } from "./constants";
 import { fetchBlockedIds, withoutBlocked } from "./blocks";
 import { useAuth } from "@/hooks/use-auth";
 import type { Community, EventRow, Participant, ParticipantStatus, Profile } from "./types";
@@ -78,6 +78,15 @@ export function useParticipants(eventIds: string[]) {
       return out;
     },
   });
+  // Attendees with a private profile aren't listed to strangers, but they still count.
+  const totals = useQuery({
+    queryKey: ["event-approved-counts", [...eventIds].sort().join(",")],
+    enabled: !isGuest && !!user && eventIds.length > 0,
+    queryFn: async () => {
+      const { data } = await supabase.rpc("event_approved_counts", { ids: eventIds });
+      return new Map(((data ?? []) as Array<{ event_id: string; approved: number }>).map((r) => [r.event_id, r.approved]));
+    },
+  });
   const derived = React.useMemo(() => {
     const approvedCounts = new Map<string, number>();
     const pendingCounts = new Map<string, number>();
@@ -94,8 +103,9 @@ export function useParticipants(eventIds: string[]) {
         pendingCounts.set(p.event_id, (pendingCounts.get(p.event_id) ?? 0) + 1);
       }
     }
+    for (const [id, n] of totals.data ?? []) approvedCounts.set(id, Math.max(n, approvedCounts.get(id) ?? 0));
     return { approvedCounts, pendingCounts, attendees, attendeeProfiles, myStatus };
-  }, [q.data, user?.id]);
+  }, [q.data, totals.data, user?.id]);
   return { ...q, ...derived };
 }
 
@@ -108,11 +118,14 @@ export function useMyGraph() {
     queryFn: async () => {
       const uid = user!.id;
       const [a, b] = await Promise.all([
-        supabase.from("follows").select("following_id").eq("follower_id", uid),
-        supabase.from("follows").select("follower_id").eq("following_id", uid),
+        supabase.from("follows").select("following_id, approved").eq("follower_id", uid),
+        supabase.from("follows").select("follower_id").eq("following_id", uid).eq("approved", true),
       ]);
+      const mine = (a.data ?? []) as Array<{ following_id: string; approved: boolean }>;
       return {
-        following: new Set((a.data ?? []).map((r) => r.following_id as string)),
+        following: new Set(mine.filter((r) => r.approved).map((r) => r.following_id)),
+        // follow requests I sent to private profiles, still waiting
+        requested: new Set(mine.filter((r) => !r.approved).map((r) => r.following_id)),
         followers: new Set((b.data ?? []).map((r) => r.follower_id as string)),
       };
     },
@@ -120,6 +133,7 @@ export function useMyGraph() {
   return {
     ...q,
     following: q.data?.following ?? new Set<string>(),
+    requested: q.data?.requested ?? new Set<string>(),
     followers: q.data?.followers ?? new Set<string>(),
   };
 }
@@ -149,7 +163,7 @@ export function useProfiles(ids: string[]) {
     queryKey: ["profiles", key.join(",")],
     enabled: key.length > 0,
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select(PROFILE_COLUMNS).in("id", key);
+      const { data } = await supabase.from(PROFILE_VIEW).select(PROFILE_COLUMNS).in("id", key);
       return new Map(((data ?? []) as Profile[]).map((p) => [p.id, p]));
     },
   });

@@ -11,7 +11,7 @@ import { SafeImg } from "@/components/safe-img";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
-import { EVENT_COLUMNS, PROFILE_COLUMNS } from "@/lib/constants";
+import { EVENT_COLUMNS, PROFILE_COLUMNS, PROFILE_VIEW } from "@/lib/constants";
 import { useBlockedIds, useMyCommunities } from "@/lib/queries";
 import { withoutBlocked } from "@/lib/blocks";
 import { ageFromBirthYear, formatDate, formatTime } from "@/lib/format";
@@ -33,13 +33,19 @@ export function useProfileGraph(profileId: string) {
   const q = useQuery({
     queryKey: ["profile-graph", profileId],
     queryFn: async () => {
+      // Approved follows only (pending requests aren't followers yet); profiles through the view.
       const [a, b] = await Promise.all([
-        supabase.from("follows").select(`following:profiles!follows_following_id_fkey(${PROFILE_COLUMNS})`).eq("follower_id", profileId),
-        supabase.from("follows").select(`follower:profiles!follows_follower_id_fkey(${PROFILE_COLUMNS})`).eq("following_id", profileId),
+        supabase.from("follows").select("following_id").eq("follower_id", profileId).eq("approved", true),
+        supabase.from("follows").select("follower_id").eq("following_id", profileId).eq("approved", true),
       ]);
+      const followingIds = (a.data ?? []).map((r) => r.following_id as string);
+      const followerIds = (b.data ?? []).map((r) => r.follower_id as string);
+      const all = [...new Set([...followingIds, ...followerIds])];
+      const { data: ps } = all.length ? await supabase.from(PROFILE_VIEW).select(PROFILE_COLUMNS).in("id", all) : { data: [] };
+      const byId = new Map(((ps ?? []) as Profile[]).map((p) => [p.id, p]));
       return {
-        following: ((a.data ?? []) as unknown as Array<{ following: Profile | null }>).map((r) => r.following).filter(Boolean) as Profile[],
-        followers: ((b.data ?? []) as unknown as Array<{ follower: Profile | null }>).map((r) => r.follower).filter(Boolean) as Profile[],
+        following: followingIds.flatMap((id) => byId.get(id) ?? []),
+        followers: followerIds.flatMap((id) => byId.get(id) ?? []),
       };
     },
   });
@@ -305,7 +311,18 @@ export function ProfileView({
   actions?: React.ReactNode;
   initialFilter?: EventFilter;
 }) {
+  // Private profile I'm not approved for: name, main photo and age only.
+  const locked = !isMe && !!profile.is_private && !profile.full_access;
   const graph = useProfileGraph(profile.id);
+  // Counts include people whose own profile is private (hidden from the lists).
+  const followCounts = useQuery({
+    queryKey: ["follow-counts", profile.id],
+    enabled: !locked,
+    queryFn: async () => {
+      const { data } = await supabase.rpc("follow_counts", { _id: profile.id });
+      return ((data ?? [])[0] as { followers: number; following: number } | undefined) ?? null;
+    },
+  });
   const events = useProfileEvents(profile.id, isMe);
   const { data: communities = [] } = useMyCommunities(profile.id);
   const { data: counts = new Map<string, number>() } = useCommunityEventCounts();
@@ -353,6 +370,20 @@ export function ProfileView({
     </Link>
   ) : undefined;
 
+  if (locked) {
+    return (
+      <div className="mx-auto max-w-md">
+        <MediaCard profile={profile} isMe={false} />
+        {actions && <div className="mt-3">{actions}</div>}
+        <div className="mt-6 flex flex-col items-center rounded-3xl bg-surface-soft px-6 py-8 text-center">
+          <span className="grid size-14 place-items-center rounded-full bg-surface text-2xl">🔒</span>
+          <p className="mt-3 text-lg font-bold">הפרופיל פרטי</p>
+          <p className="mt-1 text-sm text-muted-foreground">שלחו בקשת מעקב — אחרי אישור יוצגו התמונות, האירועים והקהילות.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="lg:grid lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)] lg:items-start lg:gap-8">
       <div className="lg:sticky lg:top-4">
@@ -361,8 +392,8 @@ export function ProfileView({
       <div className="mt-4 flex">
         {stat(upcoming.filter((e) => e.role !== "pending").length + past.length, "אירועים")}
         {stat(communities.length, "קהילות")}
-        {stat(graph.followers.length, "עוקבים", () => followersRef.current?.scrollIntoView({ behavior: "smooth" }))}
-        {stat(graph.following.length, "עוקב/ת", () => followingRef.current?.scrollIntoView({ behavior: "smooth" }))}
+        {stat(followCounts.data?.followers ?? graph.followers.length, "עוקבים", () => followersRef.current?.scrollIntoView({ behavior: "smooth" }))}
+        {stat(followCounts.data?.following ?? graph.following.length, "עוקב/ת", () => followingRef.current?.scrollIntoView({ behavior: "smooth" }))}
       </div>
       {actions && <div className="mt-3">{actions}</div>}
       </div>

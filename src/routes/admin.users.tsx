@@ -24,7 +24,7 @@ function Users() {
   const users = useQuery({
     queryKey: ["admin-users", q],
     queryFn: async () => {
-      let query = supabase.from("profiles").select("id, name, avatar_url, city, banned_at, created_at").order("created_at", { ascending: false }).limit(100);
+      let query = supabase.from("profile_cards").select("id, name, avatar_url, city, banned_at, created_at").order("created_at", { ascending: false }).limit(100);
       if (q.trim()) query = query.or(`name.ilike.${likeTerm(q)},city.ilike.${likeTerm(q)}`);
       const { data } = await query;
       return (data ?? []) as Row[];

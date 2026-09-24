@@ -14,7 +14,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { AGE_TOP, DISTANCE_UNLIMITED, PrefsSheet } from "@/components/dating-prefs";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
-import { PROFILE_COLUMNS } from "@/lib/constants";
+import { PROFILE_COLUMNS, PROFILE_VIEW } from "@/lib/constants";
 import { useBlockedIds } from "@/lib/queries";
 import { withoutBlocked } from "@/lib/blocks";
 import { ageFromBirthYear } from "@/lib/format";
@@ -71,7 +71,7 @@ function useMatches(uid?: string) {
       const { data } = await supabase.from("dates").select("profile_a, profile_b, created_at").order("created_at", { ascending: false });
       const ids = (data ?? []).map((d) => (d.profile_a === uid ? d.profile_b : d.profile_a) as string);
       if (!ids.length) return [];
-      const { data: ps } = await supabase.from("profiles").select(PROFILE_COLUMNS).in("id", ids);
+      const { data: ps } = await supabase.from(PROFILE_VIEW).select(PROFILE_COLUMNS).in("id", ids);
       return (ps ?? []) as Profile[];
     },
   });
@@ -84,11 +84,15 @@ function useLiked(uid?: string) {
     queryFn: async () => {
       const { data } = await supabase
         .from("romantic_likes")
-        .select(`liked_id, created_at, liked:profiles!romantic_likes_liked_id_fkey(${PROFILE_COLUMNS})`)
+        .select("liked_id, created_at")
         .eq("liker_id", uid!)
         .eq("action", "like")
         .order("created_at", { ascending: false });
-      return ((data ?? []) as unknown as Array<{ liked: Profile | null }>).map((r) => r.liked).filter(Boolean) as Profile[];
+      const ids = (data ?? []).map((r) => r.liked_id as string);
+      if (!ids.length) return [];
+      const { data: ps } = await supabase.from(PROFILE_VIEW).select(PROFILE_COLUMNS).in("id", ids);
+      const byId = new Map(((ps ?? []) as Profile[]).map((p) => [p.id, p]));
+      return ids.flatMap((id) => byId.get(id) ?? []);
     },
   });
 }
@@ -134,7 +138,7 @@ function Dating() {
     queryFn: async (): Promise<Candidate[]> => {
       const year = new Date().getFullYear();
       let q = supabase
-        .from("profiles")
+        .from(PROFILE_VIEW)
         .select(PROFILE_COLUMNS)
         .eq("dating_enabled", true)
         .eq("onboarded", true)

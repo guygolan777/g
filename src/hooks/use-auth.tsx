@@ -1,7 +1,7 @@
 import * as React from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-import { PROFILE_COLUMNS } from "@/lib/constants";
+import { PROFILE_COLUMNS, PROFILE_VIEW } from "@/lib/constants";
 import type { Profile, ProfileSettings } from "@/lib/types";
 import { invalidateBlocked } from "@/lib/blocks";
 
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     const [{ data: p }, { data: s }] = await Promise.all([
-      supabase.from("profiles").select(PROFILE_COLUMNS).eq("id", uid).maybeSingle(),
+      supabase.from(PROFILE_VIEW).select(PROFILE_COLUMNS).eq("id", uid).maybeSingle(),
       supabase.rpc("my_profile_settings"),
     ]);
     setProfile((p as Profile | null) ?? null);

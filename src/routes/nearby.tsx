@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { useEventFeed } from "@/hooks/use-event-feed";
-import { PROFILE_COLUMNS } from "@/lib/constants";
+import { PROFILE_COLUMNS, PROFILE_VIEW } from "@/lib/constants";
 import { ageFromBirthYear } from "@/lib/format";
 import { hobbyEmoji } from "@/lib/hobby-categories";
 import { useUpdateLocation } from "@/lib/location";
@@ -135,7 +135,7 @@ function NearbyPeople({ km }: { km: number }) {
       const rows = ((near ?? []) as Array<{ profile_id: string; distance_km: number }>).slice(0, 60);
       if (!rows.length) return [];
       const { data: people } = await supabase
-        .from("profiles")
+        .from(PROFILE_VIEW)
         .select(PROFILE_COLUMNS)
         .in("id", rows.map((r) => r.profile_id))
         .eq("onboarded", true)

@@ -12,7 +12,7 @@ import { Dialog, DialogTrigger, SheetContent } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
 import { BLOCKED_MESSAGE, fetchBlockedIds, invalidateBlocked } from "@/lib/blocks";
-import { PROFILE_COLUMNS } from "@/lib/constants";
+import { PROFILE_COLUMNS, PROFILE_VIEW } from "@/lib/constants";
 import { GuestTeaser } from "@/components/guest";
 import { hapticTap } from "@/lib/native";
 import { seo } from "@/lib/seo";
@@ -38,7 +38,7 @@ function ProfilePage() {
     enabled: ready && !isGuest,
     queryFn: async () => {
       const [{ data }, blocked] = await Promise.all([
-        supabase.from("profiles").select(PROFILE_COLUMNS).eq("id", id).maybeSingle(),
+        supabase.from(PROFILE_VIEW).select(PROFILE_COLUMNS).eq("id", id).maybeSingle(),
         fetchBlockedIds(true),
       ]);
       return { profile: data as unknown as Profile | null, blocked: blocked.has(id) };
@@ -81,7 +81,7 @@ function ProfilePage() {
         isMe={false}
         actions={
           <div className="flex gap-2">
-            <FollowButton profileId={p.id} size="default" className="flex-1" />
+            <FollowButton profileId={p.id} isPrivate={!!p.is_private && !p.full_access} size="default" className="flex-1" />
             <Button asChild variant="outline" className="flex-1">
               <Link to="/chat/$id" params={{ id: p.id }}>
                 <MessageCircle /> הודעה

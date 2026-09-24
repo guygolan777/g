@@ -7,9 +7,11 @@ export const EVENT_MIN_AGE = 16;
 export const APP_NAME = "mibale";
 export const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined) || "https://mibale.app";
 
-/** Columns other members may read (sensitive columns are not granted). */
+/** Full profiles are read from this view — private profiles come back with their details empty. */
+export const PROFILE_VIEW = "profile_cards";
+/** Columns other members may read from PROFILE_VIEW (sensitive columns are not exposed). */
 export const PROFILE_COLUMNS =
-  "id, name, avatar_url, photos, bio, gender, birth_year, city, hobbies, traits, dating_enabled, onboarded, banned_at, created_at";
+  "id, name, avatar_url, photos, bio, gender, birth_year, city, hobbies, traits, dating_enabled, is_private, full_access, onboarded, banned_at, created_at";
 /** Columns guests (anon) may read. */
 export const PROFILE_GUEST_COLUMNS = "id, name, avatar_url";
 export const PROFILE_MINI = "id, name, avatar_url";
