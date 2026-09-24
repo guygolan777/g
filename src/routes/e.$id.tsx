@@ -146,7 +146,7 @@ function GuestEvent({ event }: { event: EventRow }) {
       </div>
       <div className="-mt-6 rounded-t-3xl bg-background pt-5 md:mt-0">
         <div className="flex flex-wrap gap-2">
-          <Badge variant="event">{hobbyLabel(event.subcategory ?? event.category)}</Badge>
+          {hobbyLabel(event.subcategory ?? event.category) && <Badge variant="event">{hobbyLabel(event.subcategory ?? event.category)}</Badge>}
           <Badge variant={event.price ? "muted" : "success"}>{priceLabel(event.price)}</Badge>
         </div>
         <h1 className="mt-2 text-2xl font-bold">{whoComesTitle(event.title)}</h1>
@@ -302,7 +302,7 @@ function MemberEvent({ event, viewerId }: { event: EventRow; viewerId: string })
       <div className="relative -mt-6 rounded-t-3xl bg-background pt-5 md:mt-0">
         <div className="flex items-start justify-between gap-2">
           <div className="flex flex-wrap gap-2">
-            <Badge variant="event">{hobbyLabel(event.subcategory ?? event.category)}</Badge>
+            {hobbyLabel(event.subcategory ?? event.category) && <Badge variant="event">{hobbyLabel(event.subcategory ?? event.category)}</Badge>}
             <Badge variant={event.price ? "muted" : "success"}>{priceLabel(event.price)}</Badge>
           </div>
           <div className="flex gap-1">

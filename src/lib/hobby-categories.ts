@@ -64,8 +64,11 @@ export function categoryOf(hobbyId: string): string {
 }
 
 /** Human label for a category or subcategory id, optionally with emoji. */
+/** Category of an event with a free-text title ("מי בא לאכול פלאפל?") — no activity, no label. */
+export const CUSTOM_CATEGORY = "other";
+
 export function hobbyLabel(id: string | null | undefined, withEmoji = true): string {
-  if (!id) return "";
+  if (!id || id === CUSTOM_CATEGORY) return "";
   const sub = subById.get(id);
   if (sub) return withEmoji ? `${sub.emoji} ${sub.label}` : sub.label;
   const c = byId.get(id);

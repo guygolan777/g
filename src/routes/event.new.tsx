@@ -13,11 +13,10 @@ import { Slider } from "@/components/ui/range";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
 import { useInvalidateEvents, useMyCommunities } from "@/lib/queries";
-import { HOBBY_CATEGORIES, getSubcategory } from "@/lib/hobby-categories";
+import { CUSTOM_CATEGORY, HOBBY_CATEGORIES, getSubcategory } from "@/lib/hobby-categories";
 import { UNLIMITED_SEATS } from "@/lib/constants";
 import { uploadMedia } from "@/lib/storage";
 import { toLocalInput } from "@/lib/format";
-import { whoComesTitle } from "@/lib/event-title";
 import { hapticTap } from "@/lib/native";
 import { seo } from "@/lib/seo";
 import type { Recurrence } from "@/lib/types";
@@ -88,9 +87,12 @@ function NewEvent() {
 
   const cat = HOBBY_CATEGORIES.find((c) => c.id === form.category) ?? HOBBY_CATEGORIES[0];
   const chosen = getSubcategory(form.subcategory);
-  const heading = form.title.trim() || chosen?.label;
+  // The heading is the editable title: picking an activity fills "מי בא ל<activity>"; editing it
+  // away from that clears the pick, so "מי בא לאכול פלאפל?" is an event with no activity card.
+  const [heading, setHeading] = React.useState(TITLE_PREFIX);
+  const customTitle = (heading.startsWith(TITLE_PREFIX) ? heading.slice(TITLE_PREFIX.length) : heading).trim();
   const unlimited = form.seats >= UNLIMITED_SEATS;
-  const ready = !!form.subcategory && (form.is_online ? /^https?:\/\//.test(form.meeting_url.trim()) : form.location_name.trim().length > 1);
+  const ready = (!!form.subcategory || customTitle.length > 1) && (form.is_online ? /^https?:\/\//.test(form.meeting_url.trim()) : form.location_name.trim().length > 1);
 
   function startsAt(): string {
     if (when === "custom") return form.starts_at;
@@ -114,7 +116,9 @@ function NewEvent() {
       const start = startsAt();
       const values: EventFormValues = {
         ...form,
-        title: form.title.trim() || sub?.label || cat.label,
+        title: customTitle || sub?.label || cat.label,
+        // A free-text title without a picked activity isn't filed under the open tab's category.
+        category: sub ? form.category : CUSTOM_CATEGORY,
         starts_at: start,
         ends_at: form.ends_at && form.ends_at > start ? form.ends_at : "",
         price: paid ? form.price : 0,
@@ -142,15 +146,22 @@ function NewEvent() {
     <Page withNav={false} size="narrow">
       <PageHeader title="יצירת הזמנה חדשה" back />
 
-      {/* מי בא ל.. */}
-      {/* The heading is the event title — it follows the chosen activity (or the custom title). */}
-      <p className="mt-2 truncate text-2xl font-bold">{heading ? whoComesTitle(heading) : "מי בא ל.."}</p>
+      <TitleInput
+        value={heading}
+        onChange={(v) => {
+          setHeading(v);
+          if (chosen && v !== TITLE_PREFIX + chosen.label) set("subcategory", null);
+        }}
+      />
       <div className="-mx-4 mt-3 flex gap-5 overflow-x-auto border-b border-border px-4 scrollbar-none">
         {HOBBY_CATEGORIES.map((c) => (
           <button
             key={c.id}
             type="button"
-            onClick={() => setForm((f) => ({ ...f, category: c.id, subcategory: null }))}
+            onClick={() => {
+              if (chosen && heading === TITLE_PREFIX + chosen.label) setHeading(TITLE_PREFIX);
+              setForm((f) => ({ ...f, category: c.id, subcategory: null }));
+            }}
             className={cn(
               "shrink-0 border-b-[3px] pb-2 text-lg whitespace-nowrap transition",
               form.category === c.id ? "border-primary font-bold text-foreground" : "border-transparent text-muted-foreground",
@@ -166,7 +177,10 @@ function NewEvent() {
           <button
             key={s.id}
             type="button"
-            onClick={() => set("subcategory", s.id)}
+            onClick={() => {
+              set("subcategory", s.id);
+              setHeading(TITLE_PREFIX + s.label);
+            }}
             style={{ width: "calc((100% - 3 * 0.75rem) / 3.5)" }}
             className={cn(
               "flex aspect-[4/5] shrink-0 snap-start flex-col items-center justify-center gap-3 rounded-3xl bg-card shadow-soft transition active:scale-95",
@@ -236,13 +250,6 @@ function NewEvent() {
       {more && (
         <div className="mt-6 space-y-8">
           <div className="space-y-3">
-            <input
-              value={form.title}
-              maxLength={120}
-              onChange={(e) => set("title", e.target.value)}
-              placeholder="הוספת כותרת"
-              className="w-full border-s-4 border-primary bg-transparent ps-3 text-3xl font-bold outline-none placeholder:text-muted-foreground"
-            />
             <Textarea className="rounded-3xl border-0 bg-surface-soft" placeholder="הוספת תיאור" value={form.description} onChange={(e) => set("description", e.target.value)} />
           </div>
 
@@ -446,8 +453,54 @@ function NewEvent() {
         {saving ? "מפרסמים…" : "פרסום"}
       </Button>
       <p className="mt-3 text-center text-sm text-muted-foreground">
-        {!form.subcategory ? "בחרו מה עושים ואיפה — וזהו." : `${summary}.`}
+        {!form.subcategory && !customTitle ? "בחרו מה עושים (או כתבו בכותרת) ואיפה — וזהו." : `${summary}.`}
       </p>
     </Page>
+  );
+}
+
+const TITLE_PREFIX = "מי בא ל";
+
+/**
+ * The event title as a big editable heading. A blinking caret sits at the end of the text while it
+ * isn't focused, so it reads as "you can type here"; focusing puts the real caret at the end.
+ */
+function TitleInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const mirror = React.useRef<HTMLSpanElement>(null);
+  const box = React.useRef<HTMLDivElement>(null);
+  const [focused, setFocused] = React.useState(false);
+  const [end, setEnd] = React.useState(0);
+  React.useLayoutEffect(() => {
+    const w = mirror.current?.offsetWidth ?? 0;
+    setEnd(Math.min(w, (box.current?.offsetWidth ?? w) - 2));
+  }, [value]);
+  return (
+    <div ref={box} className="relative mt-2">
+      <input
+        value={value}
+        maxLength={120}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={(e) => {
+          setFocused(true);
+          const el = e.currentTarget;
+          requestAnimationFrame(() => el.setSelectionRange(el.value.length, el.value.length));
+        }}
+        onBlur={() => setFocused(false)}
+        placeholder="מי בא ל..."
+        aria-label="כותרת האירוע"
+        enterKeyHint="done"
+        className="w-full bg-transparent text-2xl font-bold caret-primary outline-none placeholder:text-muted-foreground"
+      />
+      <span ref={mirror} aria-hidden className="invisible absolute top-0 right-0 text-2xl font-bold whitespace-pre">
+        {value}
+      </span>
+      {!focused && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute top-1/2 h-7 w-0.5 -translate-y-1/2 animate-caret bg-foreground"
+          style={{ right: end + 2 }}
+        />
+      )}
+    </div>
   );
 }
