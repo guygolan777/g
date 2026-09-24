@@ -77,6 +77,8 @@ function NewEvent() {
     ...emptyEventForm(),
     category: HOBBY_CATEGORIES[0].id,
     community_id: community ?? null,
+    // End time is optional here: no hidden default (it came from the full form's 19:00 start).
+    ends_at: "",
   }));
   const [when, setWhen] = React.useState<When>("now");
   const [more, setMore] = React.useState(false);
