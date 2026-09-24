@@ -17,6 +17,7 @@ import { HOBBY_CATEGORIES, getSubcategory } from "@/lib/hobby-categories";
 import { UNLIMITED_SEATS } from "@/lib/constants";
 import { uploadMedia } from "@/lib/storage";
 import { toLocalInput } from "@/lib/format";
+import { whoComesTitle } from "@/lib/event-title";
 import { hapticTap } from "@/lib/native";
 import { seo } from "@/lib/seo";
 import type { Recurrence } from "@/lib/types";
@@ -86,6 +87,8 @@ function NewEvent() {
   const set = <K extends keyof EventFormValues>(k: K, v: EventFormValues[K]) => setForm((f) => ({ ...f, [k]: v }));
 
   const cat = HOBBY_CATEGORIES.find((c) => c.id === form.category) ?? HOBBY_CATEGORIES[0];
+  const chosen = getSubcategory(form.subcategory);
+  const heading = form.title.trim() || chosen?.label;
   const unlimited = form.seats >= UNLIMITED_SEATS;
   const ready = !!form.subcategory && (form.is_online ? /^https?:\/\//.test(form.meeting_url.trim()) : form.location_name.trim().length > 1);
 
@@ -140,7 +143,8 @@ function NewEvent() {
       <PageHeader title="יצירת הזמנה חדשה" back />
 
       {/* מי בא ל.. */}
-      <p className="mt-2 text-2xl font-bold">מי בא ל..</p>
+      {/* The heading is the event title — it follows the chosen activity (or the custom title). */}
+      <p className="mt-2 truncate text-2xl font-bold">{heading ? whoComesTitle(heading) : "מי בא ל.."}</p>
       <div className="-mx-4 mt-3 flex gap-5 overflow-x-auto border-b border-border px-4 scrollbar-none">
         {HOBBY_CATEGORIES.map((c) => (
           <button
@@ -156,14 +160,16 @@ function NewEvent() {
           </button>
         ))}
       </div>
-      <div className="mt-4 grid grid-cols-3 gap-3">
+      {/* Carousel: three and a half cards in view, so it's clear there's more to swipe. */}
+      <div key={cat.id} className="-mx-4 mt-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 scrollbar-none">
         {cat.subs.map((s) => (
           <button
             key={s.id}
             type="button"
             onClick={() => set("subcategory", s.id)}
+            style={{ width: "calc((100% - 3 * 0.75rem) / 3.5)" }}
             className={cn(
-              "flex aspect-[4/5] flex-col items-center justify-center gap-3 rounded-3xl bg-card shadow-soft transition active:scale-95",
+              "flex aspect-[4/5] shrink-0 snap-start flex-col items-center justify-center gap-3 rounded-3xl bg-card shadow-soft transition active:scale-95",
               form.subcategory === s.id ? "ring-[3px] ring-primary" : "ring-1 ring-border",
             )}
           >
