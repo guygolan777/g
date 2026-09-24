@@ -17,6 +17,7 @@ import { geocode } from "@/lib/geocode";
 import { toLocalInput } from "@/lib/format";
 import { whoComesTitle } from "@/lib/event-title";
 import type { AudienceGender, EventRow, Recurrence } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 export type EventFormValues = {
   title: string;
@@ -43,7 +44,6 @@ export type EventFormValues = {
   /** Bit / PayBox / payment page (https) — shown only to people who asked to join. */
   payment_link: string;
   max_distance_km: number | null;
-  also_story: boolean;
 };
 
 export function emptyEventForm(): EventFormValues {
@@ -75,7 +75,6 @@ export function emptyEventForm(): EventFormValues {
     price: 0,
     payment_link: "",
     max_distance_km: null,
-    also_story: false,
   };
 }
 
@@ -366,15 +365,7 @@ export function EventForm({
         </div>
       </details>
 
-      {mode === "create" && (
-        <div className="flex items-center justify-between rounded-2xl bg-like-soft p-4">
-          <div>
-            <p className="font-semibold">לפרסם גם כסטורי</p>
-            <p className="text-xs text-muted-foreground">עם כפתור הצטרפות ישיר</p>
-          </div>
-          <Switch checked={value.also_story} onCheckedChange={(c) => set("also_story", c)} />
-        </div>
-      )}
+      {mode === "create" && <StoryNote />}
     </div>
   );
 }
@@ -390,5 +381,14 @@ export function PaymentLinkField({ value, onChange, className }: { value: string
         באירוע בתשלום כל הצטרפות ממתינה לאישור שלך — אשרו אחרי שהתשלום התקבל, והכרטיס יישלח אוטומטית. הקישור מוצג רק למי שביקש להצטרף.
       </p>
     </div>
+  );
+}
+
+/** Every new event is published as a story automatically — this just says so. */
+export function StoryNote({ className }: { className?: string }) {
+  return (
+    <p className={cn("rounded-2xl bg-sky-100 p-4 text-sm text-sky-900 dark:bg-sky-950 dark:text-sky-100", className)}>
+      <b>✨ האירוע יפורסם גם כסטורי</b> — עד 72 שעות, עד תחילת האירוע או עד שיתמלאו המקומות (המוקדם מביניהם).
+    </p>
   );
 }

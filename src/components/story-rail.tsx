@@ -58,14 +58,14 @@ export function StoryRail({ romantic = false }: { romantic?: boolean }) {
     return (
       <div className="-mx-4 flex gap-3 overflow-x-auto px-4 py-2 scrollbar-none">
         <Link to="/signup" className="flex w-20 shrink-0 flex-col items-center gap-1">
-          <span className="grid size-[76px] place-items-center rounded-full bg-gradient-ring p-[3px]">
+          <span className="grid size-[76px] place-items-center rounded-full bg-gradient-ring-event p-[3px]">
             <span className="grid size-full place-items-center rounded-full bg-surface text-2xl">✨</span>
           </span>
           <span className="w-full truncate text-center text-xs text-muted-foreground">הצטרפו</span>
         </Link>
         {["bg-event-soft", "bg-like-soft", "bg-partner-soft", "bg-teal-soft"].map((c) => (
           <Link key={c} to="/signup" className="flex w-20 shrink-0 flex-col items-center gap-1" aria-label="סטוריז לחברים">
-            <span className="grid size-[76px] place-items-center rounded-full bg-gradient-ring p-[3px]">
+            <span className="grid size-[76px] place-items-center rounded-full bg-gradient-ring-event p-[3px]">
               <span className={`size-full rounded-full blur-[2px] ${c}`} />
             </span>
             <span className="text-xs text-muted-foreground">🔒</span>
@@ -78,7 +78,12 @@ export function StoryRail({ romantic = false }: { romantic?: boolean }) {
   return (
     <div className="-mx-4 flex gap-3 overflow-x-auto px-4 py-2 scrollbar-none">
       {!hasMine && (
-        <Link to="/story/new" search={romantic ? { romantic: "1" } : {}} className="flex w-20 shrink-0 flex-col items-center gap-1">
+        <Link
+          to={romantic ? "/story/new" : "/event/new"}
+          search={romantic ? { romantic: "1" } : {}}
+          className="flex w-20 shrink-0 flex-col items-center gap-1"
+          aria-label={romantic ? "סטורי רומנטי חדש" : "אירוע חדש"}
+        >
           <div className="relative">
             <Avatar src={profile?.avatar_url} name={profile?.name} size={76} />
             <span className="absolute -bottom-0.5 -left-0.5 grid size-7 place-items-center rounded-full bg-gradient-brand text-brand-foreground ring-2 ring-surface">
@@ -94,7 +99,7 @@ export function StoryRail({ romantic = false }: { romantic?: boolean }) {
         const a = g[0].author;
         return (
           <Link key={g[0].author_id} to="/story/$id" params={{ id: first.id }} search={romantic ? { romantic: "1" } : {}} className="flex w-20 shrink-0 flex-col items-center gap-1">
-            <Avatar src={a?.avatar_url} name={a?.name} size={76} ring={unseen} className={unseen ? "" : "opacity-80"} />
+            <Avatar src={a?.avatar_url} name={a?.name} size={76} ring={unseen ? (romantic ? "romantic" : "event") : false} className={unseen ? "" : "opacity-80"} />
             <span className="w-full truncate text-center text-xs">
               {g[0].author_id === user.id ? "את/ה" : (a?.name?.split(" ")[0] ?? "")}
             </span>

@@ -142,11 +142,9 @@ begin
   on conflict do nothing;
 
   -- ---------- stories ----------
-  insert into public.stories (author_id, event_id, media_url, media_type, caption) values
-    (_ids[1], '20000000-0000-4000-a000-000000000001', 'https://picsum.photos/seed/mibale-s1/720/1280', 'image', 'מחר בבוקר רצים! מי בא?'),
-    (_ids[6], '20000000-0000-4000-a000-000000000011', 'https://picsum.photos/seed/mibale-s2/720/1280', 'image', 'נשארו מקומות למיטאפ'),
-    (_ids[8], null, 'https://picsum.photos/seed/mibale-s3/720/1280', 'image', 'הזריחה של הבוקר 🌅'),
-    (_ids[3], null, 'https://picsum.photos/seed/mibale-s4/720/1280', 'image', 'סט הצילומים של היום');
+  -- Every event gets its story automatically (events_story_sync); give a couple of them captions.
+  update public.stories set caption = 'מחר בבוקר רצים! מי בא?' where event_id = '20000000-0000-4000-a000-000000000001';
+  update public.stories set caption = 'נשארו מקומות למיטאפ' where event_id = '20000000-0000-4000-a000-000000000011';
 
   -- ---------- a few direct messages ----------
   insert into public.direct_messages (sender_id, recipient_id, body, created_at) values

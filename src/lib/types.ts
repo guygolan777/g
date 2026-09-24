@@ -89,7 +89,7 @@ export type Story = {
   id: string;
   author_id: string;
   event_id: string | null;
-  media_url: string;
+  media_url: string | null;
   media_type: "image" | "video";
   caption: string;
   is_romantic?: boolean;

@@ -27,7 +27,7 @@ import { GuestTeaser } from "@/components/guest";
 import { useGuestStats } from "@/lib/guest";
 
 export const Route = createFileRoute("/likes")({
-  head: () => seo({ title: "לייקים והתאמות", description: "הצד הרומנטי של mibale: סווינג, מי שחיבבתם והתאמות הדדיות." }),
+  head: () => seo({ title: "מי בא לדייט?", description: "הצד הרומנטי של mibale: סווינג, מי שחיבבתם והתאמות הדדיות." }),
   component: LikesRoute,
 });
 
@@ -47,7 +47,7 @@ function GuestDating() {
   return (
     <Page size="narrow">
       <header className="py-3">
-        <h1 className="text-2xl font-bold">לייקים והתאמות</h1>
+        <h1 className="text-2xl font-bold">מי בא לדייט?</h1>
         <p className="text-sm text-muted-foreground">הצד הרומנטי של mibale</p>
       </header>
       <GuestTeaser
@@ -225,7 +225,7 @@ function Dating() {
           <ChevronRight className="size-6" />
         </button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">לייקים והתאמות</h1>
+          <h1 className="text-2xl font-bold">מי בא לדייט?</h1>
           <p className="text-sm text-muted-foreground">הצד הרומנטי שלכם</p>
         </div>
         <Link to="/me">

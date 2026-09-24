@@ -1,8 +1,6 @@
-import * as React from "react";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Bell, CalendarDays, Compass, Heart, Home, MapPin, MessageCircle, Plus, Search, Settings, User } from "lucide-react";
 import { Avatar } from "@/components/avatar";
-import { QuickCreateSheet } from "@/components/quick-create";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useUnreadCounts } from "@/lib/queries";
@@ -21,7 +19,6 @@ export function DesktopSidebar() {
   const { user, profile, isGuest } = useAuth();
   const unread = useUnreadCounts();
   const navigate = useNavigate();
-  const [open, setOpen] = React.useState(false);
   if (!useSidebarVisible()) return null;
 
   const items: Array<{ to: string; label: string; Icon: typeof Home; badge?: number; member?: boolean; match?: string[] }> = [
@@ -29,7 +26,7 @@ export function DesktopSidebar() {
     { to: "/discover", label: "גילוי אירועים", Icon: Compass },
     { to: "/search", label: "חיפוש", Icon: Search },
     { to: "/nearby", label: "קרוב אליי", Icon: MapPin, member: true },
-    { to: "/likes", label: "לייקים והתאמות", Icon: Heart, member: true },
+    { to: "/likes", label: "מי בא לדייט?", Icon: Heart, member: true },
     { to: "/chat", label: "הודעות", Icon: MessageCircle, badge: unread.messages, member: true },
     { to: "/notifications", label: "התראות", Icon: Bell, badge: unread.notifications, member: true },
     { to: "/calendar", label: "היומן שלי", Icon: CalendarDays, member: true },
@@ -63,8 +60,8 @@ export function DesktopSidebar() {
             );
           })}
       </nav>
-      <Button variant="brand" size="lg" className="mt-6" onClick={() => (isGuest ? void navigate({ to: "/signup" }) : setOpen(true))}>
-        <Plus /> {isGuest ? "הצטרפות חינם" : "יצירה"}
+      <Button variant="brand" size="lg" className="mt-6" onClick={() => (isGuest ? void navigate({ to: "/signup" }) : navigate({ to: "/event/new" }))}>
+        <Plus /> {isGuest ? "הצטרפות חינם" : "אירוע חדש"}
       </Button>
       <div className="mt-auto">
         {user ? (
@@ -78,7 +75,6 @@ export function DesktopSidebar() {
           </Button>
         )}
       </div>
-      <QuickCreateSheet open={open} onOpenChange={setOpen} />
     </aside>
   );
 }

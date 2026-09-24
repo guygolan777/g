@@ -213,23 +213,28 @@ begin
 end;
 $$;
 
--- ---------- stories (kept for a week so the demo stays lively) ----------
-insert into public.stories (author_id, event_id, media_url, media_type, caption, is_romantic, expires_at)
-select v.author::uuid, v.event::uuid, v.media, 'image', v.caption, v.romantic, now() + interval '7 days'
+-- ---------- stories ----------
+-- Event stories are created automatically for every new event (events_story_sync); add captions to a few.
+update public.stories s set caption = v.caption
 from (values
-  ('00000000-0000-4000-b000-000000000001', '20000000-0000-4000-b000-000000000001', 'https://picsum.photos/seed/mibale-ds1/720/1280', 'מחר פילאטיס בשקיעה, מי בא? 🌅', false),
-  ('00000000-0000-4000-b000-000000000011', '20000000-0000-4000-b000-000000000011', 'https://picsum.photos/seed/mibale-ds2/720/1280', 'חסרים שני שחקנים לשישי ⚽', false),
-  ('00000000-0000-4000-b000-000000000002', null, 'https://picsum.photos/seed/mibale-ds3/720/1280', 'הנוף מהכרמל הבוקר', false),
-  ('00000000-0000-4000-b000-000000000018', '20000000-0000-4000-b000-000000000018', 'https://picsum.photos/seed/mibale-ds4/720/1280', 'מכוונים גיטרות לג׳אם 🎸', false),
-  ('00000000-0000-4000-b000-000000000008', '20000000-0000-4000-b000-000000000008', 'https://picsum.photos/seed/mibale-ds5/720/1280', 'הטרריומים מוכנים לסדנה', false),
-  ('00000000-0000-4000-b000-000000000019', null, 'https://picsum.photos/seed/mibale-ds6/720/1280', 'הג׳יפ חזר מהמוסך, יוצאים לשטח', false),
-  ('00000000-0000-4000-b000-000000000006', '20000000-0000-4000-b000-000000000006', 'https://picsum.photos/seed/mibale-ds7/720/1280', 'הכלבים האלה מחכים למשפחה 🐶', false),
-  ('00000000-0000-4000-b000-000000000005', null, 'https://picsum.photos/seed/mibale-dr1/720/1280', 'מחפשת פרטנר לבצ׳אטה… ולקפה אחרי 💃', true),
-  ('00000000-0000-4000-b000-000000000013', null, 'https://picsum.photos/seed/mibale-dr2/720/1280', 'מי מצטרפת לזריחה בכרמל? ☕', true),
-  ('00000000-0000-4000-b000-000000000003', null, 'https://picsum.photos/seed/mibale-dr3/720/1280', 'מחפשת מישהו שיפתור איתי חידות 🧩', true),
-  ('00000000-0000-4000-b000-000000000015', null, 'https://picsum.photos/seed/mibale-dr4/720/1280', 'שקיעה בסירונית, חסרה רק את 🌊', true),
-  ('00000000-0000-4000-b000-000000000010', null, 'https://picsum.photos/seed/mibale-dr5/720/1280', 'שולחן שבת מחכה לאורחים 🕯️', true)
-) as v(author, event, media, caption, romantic)
+  ('20000000-0000-4000-b000-000000000001', 'מחר פילאטיס בשקיעה, מי בא? 🌅'),
+  ('20000000-0000-4000-b000-000000000011', 'חסרים שני שחקנים לשישי ⚽'),
+  ('20000000-0000-4000-b000-000000000018', 'מכוונים גיטרות לג׳אם 🎸'),
+  ('20000000-0000-4000-b000-000000000008', 'הטרריומים מוכנים לסדנה'),
+  ('20000000-0000-4000-b000-000000000006', 'הכלבים האלה מחכים למשפחה 🐶')
+) as v(event, caption)
+where s.event_id = v.event::uuid and not s.is_romantic;
+
+-- Romantic stories are classic photo stories, only in the dating area (kept for a week so the demo stays lively).
+insert into public.stories (author_id, media_url, media_type, caption, is_romantic, expires_at)
+select v.author::uuid, v.media, 'image', v.caption, true, now() + interval '7 days'
+from (values
+  ('00000000-0000-4000-b000-000000000005', 'https://picsum.photos/seed/mibale-dr1/720/1280', 'מחפשת פרטנר לבצ׳אטה… ולקפה אחרי 💃'),
+  ('00000000-0000-4000-b000-000000000013', 'https://picsum.photos/seed/mibale-dr2/720/1280', 'מי מצטרפת לזריחה בכרמל? ☕'),
+  ('00000000-0000-4000-b000-000000000003', 'https://picsum.photos/seed/mibale-dr3/720/1280', 'מחפשת מישהו שיפתור איתי חידות 🧩'),
+  ('00000000-0000-4000-b000-000000000015', 'https://picsum.photos/seed/mibale-dr4/720/1280', 'שקיעה בסירונית, חסרה רק את 🌊'),
+  ('00000000-0000-4000-b000-000000000010', 'https://picsum.photos/seed/mibale-dr5/720/1280', 'שולחן שבת מחכה לאורחים 🕯️')
+) as v(author, media, caption)
 where not exists (select 1 from public.stories s where s.author_id = v.author::uuid and s.caption = v.caption);
 
 -- ---------- a few conversations ----------

@@ -286,4 +286,36 @@ do $$ begin
 end $$;
 rollback;
 
+-- Stories are events: auto-created with the event, gone when full; clients can post only romantic stories.
+begin;
+set local role authenticated;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000001');
+do $$
+declare _e uuid;
+begin
+  insert into public.events (organizer_id, title, category, starts_at, seats, is_online)
+  values (auth.uid(), 'בדיקת סטורי', 'fun', now() + interval '5 days', 2, true) returning id into _e;
+  if not exists (select 1 from public.stories where event_id = _e and expires_at <= now() + interval '72 hours 1 minute') then
+    raise exception 'FAIL: no auto story (72h cap) for new event'; end if;
+  update public.events set starts_at = now() + interval '3 hours' where id = _e;
+  if not exists (select 1 from public.stories where event_id = _e and expires_at <= now() + interval '3 hours 1 minute') then
+    raise exception 'FAIL: story expiry not capped at event start'; end if;
+  begin
+    insert into public.stories (author_id, media_url, caption) values (auth.uid(), 'https://x/y.jpg', 'standalone');
+    raise exception 'FAIL: standalone story allowed';
+  exception when insufficient_privilege then null; end;
+  perform set_config('mibale.test_event', _e::text, true);
+end $$;
+-- Someone else fills the last seat (2 seats: organizer + 1) → story hidden from others.
+reset role;
+insert into public.event_participants (event_id, profile_id, status)
+values (current_setting('mibale.test_event')::uuid, '00000000-0000-4000-a000-000000000005', 'approved');
+set local role authenticated;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000007');
+do $$ begin
+  if exists (select 1 from public.stories where event_id = current_setting('mibale.test_event')::uuid) then
+    raise exception 'FAIL: full event story still visible'; end if;
+end $$;
+rollback;
+
 select 'RLS tests passed' as result;

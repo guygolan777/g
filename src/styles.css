@@ -73,6 +73,9 @@
 
   --gradient-brand: linear-gradient(120deg, oklch(0.66 0.19 250), oklch(0.6 0.21 295) 55%, oklch(0.66 0.25 350));
   --gradient-ring: linear-gradient(45deg, oklch(0.84 0.16 85), oklch(0.72 0.2 30) 50%, oklch(0.66 0.25 350));
+  /* Story rings: events = light blue, romantic (dating area) = pink */
+  --gradient-ring-event: linear-gradient(45deg, oklch(0.86 0.1 215), oklch(0.72 0.15 230) 55%, oklch(0.64 0.17 245));
+  --gradient-ring-romantic: linear-gradient(45deg, oklch(0.82 0.12 350), oklch(0.68 0.23 355) 55%, oklch(0.6 0.24 340));
   --gradient-scrim: linear-gradient(to top, oklch(0.12 0.02 260 / 0.85), oklch(0.12 0.02 260 / 0) 70%);
 
   --shadow-soft: 0 1px 2px oklch(0.2 0.02 260 / 0.04), 0 6px 20px -6px oklch(0.2 0.02 260 / 0.12);
@@ -220,6 +223,12 @@
 
 @utility bg-gradient-brand {
   background-image: var(--gradient-brand);
+}
+@utility bg-gradient-ring-event {
+  background-image: var(--gradient-ring-event);
+}
+@utility bg-gradient-ring-romantic {
+  background-image: var(--gradient-ring-romantic);
 }
 @utility bg-gradient-ring {
   background-image: var(--gradient-ring);

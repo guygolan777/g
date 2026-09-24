@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { CalendarDays, ChevronDown, ChevronUp, Clock, DollarSign, ImagePlus, MapPin, Ticket, Users } from "lucide-react";
 import { Page, PageHeader } from "@/components/app-shell";
 import { RequireAuth } from "@/components/gates";
-import { emptyEventForm, formToPayload, type EventFormValues, PaymentLinkField } from "@/components/event-form";
+import { emptyEventForm, formToPayload, type EventFormValues, PaymentLinkField, StoryNote } from "@/components/event-form";
 import { SafeImg } from "@/components/safe-img";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Textarea } from "@/components/ui/input";
@@ -124,15 +124,6 @@ function NewEvent() {
         .select("id")
         .single();
       if (error) throw error;
-      if (form.also_story && payload.image_url) {
-        await supabase.from("stories").insert({
-          author_id: user!.id,
-          event_id: data.id,
-          media_url: payload.image_url,
-          media_type: "image",
-          caption: payload.title,
-        });
-      }
       void hapticTap("success");
       toast.success("🎉 ההזמנה פורסמה!");
       invalidate();
@@ -277,12 +268,6 @@ function NewEvent() {
                 }
               }}
             />
-            {form.image_url && (
-              <label className="mt-3 flex items-center justify-between rounded-2xl bg-like-soft p-4">
-                <span className="font-semibold">לפרסם גם כסטורי</span>
-                <Switch checked={form.also_story} onCheckedChange={(c) => set("also_story", c)} />
-              </label>
-            )}
           </div>
 
           <div>
@@ -450,7 +435,8 @@ function NewEvent() {
         </div>
       )}
 
-      <Button variant="brand" size="lg" className="mt-8 h-14 w-full text-lg" disabled={!ready || saving} onClick={() => void publish()}>
+      <StoryNote className="mt-8" />
+      <Button variant="brand" size="lg" className="mt-3 h-14 w-full text-lg" disabled={!ready || saving} onClick={() => void publish()}>
         {saving ? "מפרסמים…" : "פרסום"}
       </Button>
       <p className="mt-3 text-center text-sm text-muted-foreground">

@@ -1,24 +1,26 @@
 import * as React from "react";
 import { SafeImg } from "@/components/safe-img";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ImagePlus } from "lucide-react";
 import { Page, PageHeader } from "@/components/app-shell";
 import { RequireAuth } from "@/components/gates";
 import { Button } from "@/components/ui/button";
-import { Input, Select } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
-import { useMyParticipations } from "@/lib/queries";
 import { supabase } from "@/lib/supabase";
 import { uploadMedia } from "@/lib/storage";
-import { whoComesTitle } from "@/lib/event-title";
 import { seo } from "@/lib/seo";
 
 export const Route = createFileRoute("/story/new")({
-  validateSearch: (s: Record<string, unknown>): { romantic?: "1" } => ({ romantic: s.romantic === "1" ? "1" : undefined }),
-  head: () => seo({ title: "סטורי חדש", description: "שתפו תמונה או סרטון לסטורי — אפשר גם לצרף אירוע עם כפתור הצטרפות." }),
+  validateSearch: (s: Record<string, unknown>): { romantic?: "1" } => ({ romantic: String(s.romantic) === "1" ? "1" : undefined }),
+  // Outside the dating area every story is an event — creating one means creating an event.
+  beforeLoad: ({ search }) => {
+    if (search.romantic !== "1") throw redirect({ to: "/event/new", replace: true });
+  },
+  head: () => seo({ title: "סטורי רומנטי", description: "שתפו תמונה או סרטון בסטורי הרומנטי — גלוי רק במצב היכרויות." }),
   component: () => (
     <RequireAuth>
       <NewStory />
@@ -28,19 +30,14 @@ export const Route = createFileRoute("/story/new")({
 
 function NewStory() {
   const { user } = useAuth();
-  const { romantic } = Route.useSearch();
-  const isRomantic = romantic === "1";
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { data: parts = [] } = useMyParticipations();
   const fileRef = React.useRef<HTMLInputElement>(null);
   const [file, setFile] = React.useState<File | null>(null);
   const [preview, setPreview] = React.useState<string | null>(null);
   const [caption, setCaption] = React.useState("");
-  const [eventId, setEventId] = React.useState("");
   const [busy, setBusy] = React.useState(false);
 
-  const myEvents = parts.filter((p) => p.status === "approved" && p.event && new Date(p.event.starts_at) > new Date());
   const isVideo = file?.type.startsWith("video/");
 
   async function publish() {
@@ -53,13 +50,12 @@ function NewStory() {
         media_url: url,
         media_type: isVideo ? "video" : "image",
         caption: caption.trim(),
-        event_id: isRomantic ? null : eventId || null,
-        is_romantic: isRomantic,
+        is_romantic: true,
       });
       if (error) throw error;
       toast.success("הסטורי פורסם ✨");
       void qc.invalidateQueries({ queryKey: ["stories"] });
-      void navigate({ to: isRomantic ? "/likes" : "/home", replace: true });
+      void navigate({ to: "/likes", replace: true });
     } catch {
       toast.error("הפרסום נכשל");
     } finally {
@@ -69,7 +65,7 @@ function NewStory() {
 
   return (
     <Page withNav={false} size="narrow">
-      <PageHeader title={isRomantic ? "סטורי רומנטי" : "סטורי חדש"} subtitle={isRomantic ? "גלוי רק למי שמצב ההיכרויות שלו פתוח" : undefined} back />
+      <PageHeader title="סטורי רומנטי" subtitle="גלוי רק למי שמצב ההיכרויות שלו פתוח" back />
       <button
         type="button"
         onClick={() => fileRef.current?.click()}
@@ -102,18 +98,6 @@ function NewStory() {
         <Field label="כיתוב">
           <Input value={caption} maxLength={120} onChange={(e) => setCaption(e.target.value)} />
         </Field>
-        {!isRomantic && myEvents.length > 0 && (
-          <Field label="צירוף אירוע (כפתור הצטרפות בסטורי)">
-            <Select value={eventId} onChange={(e) => setEventId(e.target.value)}>
-              <option value="">ללא</option>
-              {myEvents.map((p) => (
-                <option key={p.event!.id} value={p.event!.id}>
-                  {whoComesTitle(p.event!.title)}
-                </option>
-              ))}
-            </Select>
-          </Field>
-        )}
         <Button variant="brand" size="lg" className="w-full" disabled={busy || !file} onClick={() => void publish()}>
           {busy ? "מפרסמים…" : "פרסום"}
         </Button>

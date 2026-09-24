@@ -11,7 +11,8 @@ export function Avatar({
   src?: string | null;
   name?: string | null;
   size?: number;
-  ring?: boolean;
+  /** Story ring: true = default gradient, "event" = light blue, "romantic" = pink. */
+  ring?: boolean | "event" | "romantic";
   className?: string;
 }) {
   const initial = (name ?? "?").trim().charAt(0) || "?";
@@ -24,7 +25,11 @@ export function Avatar({
   );
   return (
     <div
-      className={cn("shrink-0 rounded-full", ring ? "bg-gradient-ring p-[2.5px]" : "", className)}
+      className={cn(
+        "shrink-0 rounded-full",
+        ring === "event" ? "bg-gradient-ring-event p-[2.5px]" : ring === "romantic" ? "bg-gradient-ring-romantic p-[2.5px]" : ring ? "bg-gradient-ring p-[2.5px]" : "",
+        className,
+      )}
       style={{ width: size, height: size }}
     >
       {ring ? <div className="size-full rounded-full bg-surface p-[2px]">{inner}</div> : inner}

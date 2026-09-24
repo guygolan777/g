@@ -223,7 +223,14 @@ function StorySlide({
 
   return (
     <section data-id={story.id} className="relative size-full shrink-0 snap-center overflow-hidden bg-foreground">
-      {story.media_type === "video" ? (
+      {!story.media_url ? (
+        // Event story without a cover image: a light-blue backdrop; the caption and event card sit on top.
+        <div className="absolute inset-0 grid place-items-center bg-gradient-ring-event">
+          <span className="text-8xl drop-shadow-lg" aria-hidden>
+            🎉
+          </span>
+        </div>
+      ) : story.media_type === "video" ? (
         <video
           ref={videoRef}
           src={story.media_url}
