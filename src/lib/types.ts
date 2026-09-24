@@ -28,6 +28,8 @@ export type ProfileSettings = {
   pref_max_age: number;
   pref_gender: AudienceGender;
   pref_distance_km: number;
+  /** When romantic preferences were first set (null → ask before opening the heart). */
+  dating_prefs_at: string | null;
   notify_messages: boolean;
   notify_events: boolean;
   notify_social: boolean;

@@ -10,8 +10,8 @@ import { RequireAuth } from "@/components/gates";
 import { PhotoCarousel } from "@/components/pickers";
 import { StoryRail } from "@/components/story-rail";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, SheetContent } from "@/components/ui/dialog";
-import { DualSlider, Slider } from "@/components/ui/range";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { AGE_TOP, DISTANCE_UNLIMITED, PrefsSheet } from "@/components/dating-prefs";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
 import { PROFILE_COLUMNS } from "@/lib/constants";
@@ -22,7 +22,7 @@ import { hobbyLabel, hobbyToneClass } from "@/lib/hobby-categories";
 import { getTrait, traitToneClass } from "@/lib/traits";
 import { hapticTap } from "@/lib/native";
 import { seo } from "@/lib/seo";
-import type { AudienceGender, Profile } from "@/lib/types";
+import type { Profile } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { GuestTeaser } from "@/components/guest";
 import { useGuestStats } from "@/lib/guest";
@@ -60,8 +60,6 @@ function GuestDating() {
   );
 }
 
-const DISTANCE_UNLIMITED = 200;
-const AGE_TOP = 99;
 type Candidate = Profile & { distance: number | null };
 type Tab = "matches" | "swing" | "liked";
 
@@ -437,79 +435,3 @@ function Dating() {
   );
 }
 
-/** "העדפות רומנטיות" — private (pref_* columns are never visible to others). */
-function PrefsSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
-  const { user, settings, refreshProfile } = useAuth();
-  const qc = useQueryClient();
-  const [gender, setGender] = React.useState<AudienceGender>("all");
-  const [ages, setAges] = React.useState<[number, number]>([18, AGE_TOP]);
-  const [dist, setDist] = React.useState(DISTANCE_UNLIMITED);
-  React.useEffect(() => {
-    if (!settings || !open) return;
-    setGender(settings.pref_gender);
-    setAges([settings.pref_min_age, Math.min(AGE_TOP, settings.pref_max_age)]);
-    setDist(Math.min(DISTANCE_UNLIMITED, settings.pref_distance_km));
-  }, [settings, open]);
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <SheetContent title="העדפות רומנטיות" description="ההעדפות פרטיות ולא מוצגות לאף אחד">
-        <div className="space-y-6">
-          <div>
-            <p className="mb-2 font-bold">מגדר</p>
-            <div className="flex gap-2">
-              {(
-                [
-                  ["all", "כולם"],
-                  ["female", "נשים"],
-                  ["male", "גברים"],
-                ] as const
-              ).map(([g, l]) => (
-                <button
-                  key={g}
-                  onClick={() => setGender(g)}
-                  className={cn("h-11 rounded-full px-6 font-semibold", gender === g ? "bg-like text-like-foreground" : "bg-surface-soft text-muted-foreground")}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="mb-2 flex justify-between">
-              <p className="font-bold">גילאים</p>
-              <p className="text-muted-foreground">
-                {ages[0]}–{ages[1] >= AGE_TOP ? `${AGE_TOP}+` : ages[1]}
-              </p>
-            </div>
-            <DualSlider label="גילאים" min={18} max={AGE_TOP} value={ages} onChange={setAges} />
-          </div>
-          <div>
-            <div className="mb-2 flex justify-between">
-              <p className="font-bold">מרחק ממני</p>
-              <p className="text-muted-foreground">{dist >= DISTANCE_UNLIMITED ? "ללא הגבלה" : `עד ${dist} ק״מ`}</p>
-            </div>
-            <Slider label="מרחק ממני" min={1} max={DISTANCE_UNLIMITED} value={dist} onChange={setDist} />
-          </div>
-          <Button
-            className="w-full"
-            variant="brand"
-            size="lg"
-            onClick={async () => {
-              const { error } = await supabase
-                .from("profiles")
-                .update({ pref_gender: gender, pref_min_age: ages[0], pref_max_age: ages[1], pref_distance_km: dist })
-                .eq("id", user!.id);
-              if (error) return void toast.error("השמירה נכשלה");
-              await refreshProfile();
-              void qc.invalidateQueries({ queryKey: ["dating-candidates"] });
-              onOpenChange(false);
-            }}
-          >
-            שמירת העדפות
-          </Button>
-        </div>
-      </SheetContent>
-    </Dialog>
-  );
-}

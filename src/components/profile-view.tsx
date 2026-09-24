@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { CalendarDays, ChevronLeft, ChevronRight, Heart, Pause, Pencil, Play, Volume2, VolumeX } from "lucide-react";
 import { Section, EmptyState } from "@/components/app-shell";
 import { CommunityCard, useCommunityEventCounts, useCommunityMembership } from "@/components/communities-browser";
+import { PrefsSheet } from "@/components/dating-prefs";
 import { PersonCard } from "@/components/person-row";
 import { SafeImg } from "@/components/safe-img";
 import { Switch } from "@/components/ui/switch";
@@ -87,8 +88,9 @@ function useProfileEvents(profileId: string, isMe: boolean) {
 
 /** Photo/video carousel card with arrows, dots, and (on my profile) edit + dating toggle. */
 function MediaCard({ profile, isMe }: { profile: Profile; isMe: boolean }) {
-  const { refreshProfile } = useAuth();
+  const { refreshProfile, settings } = useAuth();
   const qc = useQueryClient();
+  const [askPrefs, setAskPrefs] = React.useState(false);
   const media = profile.photos?.length ? profile.photos : profile.avatar_url ? [profile.avatar_url] : [];
   const [idx, setIdx] = React.useState(0);
   const [playing, setPlaying] = React.useState(true);
@@ -123,6 +125,8 @@ function MediaCard({ profile, isMe }: { profile: Profile; isMe: boolean }) {
   };
 
   async function toggleDating(on: boolean) {
+    // First time: ask for romantic preferences; saving them is what opens the heart.
+    if (on && !settings?.dating_prefs_at) return void setAskPrefs(true);
     setDating(on);
     const { error } = await supabase.from("profiles").update({ dating_enabled: on }).eq("id", profile.id);
     if (error) {
@@ -136,6 +140,7 @@ function MediaCard({ profile, isMe }: { profile: Profile; isMe: boolean }) {
   }
 
   return (
+    <>
     <div
       className="relative aspect-[4/5] touch-pan-y overflow-hidden rounded-[2rem] bg-surface-soft shadow-lift select-none"
       onTouchStart={onTouchStart}
@@ -227,6 +232,20 @@ function MediaCard({ profile, isMe }: { profile: Profile; isMe: boolean }) {
         )}
       </div>
     </div>
+      {/* Outside the card: portal events still bubble through React, and the card swipes on touch. */}
+      {isMe && (
+        <PrefsSheet
+          open={askPrefs}
+          onOpenChange={setAskPrefs}
+          enableDating
+          onSaved={() => {
+            setDating(true);
+            void hapticTap("success");
+            toast.success("מצב היכרויות פתוח 💘");
+          }}
+        />
+      )}
+    </>
   );
 }
 
