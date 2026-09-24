@@ -17,6 +17,7 @@ export function useSidebarVisible() {
 export function DesktopSidebar() {
   const { pathname } = useLocation();
   const { user, profile, isGuest } = useAuth();
+  const romantic = pathname.startsWith("/likes");
   const unread = useUnreadCounts();
   const navigate = useNavigate();
   if (!useSidebarVisible()) return null;
@@ -60,8 +61,15 @@ export function DesktopSidebar() {
             );
           })}
       </nav>
-      <Button variant="brand" size="lg" className="mt-6" onClick={() => (isGuest ? void navigate({ to: "/signup" }) : navigate({ to: "/event/new" }))}>
-        <Plus /> {isGuest ? "הצטרפות חינם" : "אירוע חדש"}
+      <Button variant="brand" size="lg" className="mt-6" onClick={() =>
+          isGuest
+            ? void navigate({ to: "/signup" })
+            : romantic
+              ? navigate({ to: "/story/new", search: { romantic: "1" } })
+              : navigate({ to: "/event/new" })
+        }
+      >
+        <Plus /> {isGuest ? "הצטרפות חינם" : romantic ? "סטורי רומנטי" : "אירוע חדש"}
       </Button>
       <div className="mt-auto">
         {user ? (

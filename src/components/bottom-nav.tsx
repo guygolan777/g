@@ -15,6 +15,8 @@ export function BottomNav() {
 
   if (pathname === "/" || HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
   if (/^\/chat\/.+/.test(pathname)) return null;
+  // In the dating area the + adds a romantic story; everywhere else it opens a new event.
+  const romantic = pathname.startsWith("/likes");
 
   const item = (to: string, label: string, Icon: typeof Home, active: boolean, badge = 0) => (
     <Link
@@ -37,9 +39,15 @@ export function BottomNav() {
           {item("/likes", "מי בא לדייט?", Heart, pathname.startsWith("/likes"))}
           <div className="flex min-w-0 flex-1 justify-center">
             <button
-              onClick={() => (isGuest ? navigate({ to: "/signup" }) : navigate({ to: "/event/new" }))}
+              onClick={() =>
+                isGuest
+                  ? navigate({ to: "/signup" })
+                  : romantic
+                    ? navigate({ to: "/story/new", search: { romantic: "1" } })
+                    : navigate({ to: "/event/new" })
+              }
               className="-mt-8 grid size-16 place-items-center rounded-full bg-gradient-brand text-brand-foreground shadow-lift ring-4 ring-surface transition active:scale-95"
-              aria-label="אירוע חדש"
+              aria-label={romantic ? "סטורי רומנטי חדש" : "אירוע חדש"}
             >
               <Plus className="size-8" strokeWidth={2.6} />
             </button>

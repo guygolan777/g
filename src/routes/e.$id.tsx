@@ -430,7 +430,7 @@ function MemberEvent({ event, viewerId }: { event: EventRow; viewerId: string })
               </Button>
             )}
             {myStatus === "approved" && !ended && (
-              <InviteSheet eventId={event.id} participantIds={new Set((parts.data ?? []).map((p) => p.profile_id))} />
+              <InviteSheet event={event} participantIds={new Set((parts.data ?? []).map((p) => p.profile_id))} />
             )}
             {!isOrganizer && <ReportDialog targetType="event" targetId={event.id} />}
           </div>

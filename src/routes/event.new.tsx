@@ -5,6 +5,7 @@ import { CalendarDays, ChevronDown, ChevronUp, Clock, DollarSign, ImagePlus, Map
 import { Page, PageHeader } from "@/components/app-shell";
 import { RequireAuth } from "@/components/gates";
 import { emptyEventForm, formToPayload, type EventFormValues, PaymentLinkField, StoryNote } from "@/components/event-form";
+import { EventPublishedDialog } from "@/components/event-published";
 import { SafeImg } from "@/components/safe-img";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Textarea } from "@/components/ui/input";
@@ -17,6 +18,7 @@ import { CUSTOM_CATEGORY, HOBBY_CATEGORIES, getSubcategory } from "@/lib/hobby-c
 import { UNLIMITED_SEATS } from "@/lib/constants";
 import { uploadMedia } from "@/lib/storage";
 import { toLocalInput } from "@/lib/format";
+import { whoComesTitle } from "@/lib/event-title";
 import { hapticTap } from "@/lib/native";
 import { seo } from "@/lib/seo";
 import type { Recurrence } from "@/lib/types";
@@ -85,6 +87,7 @@ function NewEvent() {
   const [paid, setPaid] = React.useState(false);
   const [uploading, setUploading] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
+  const [published, setPublished] = React.useState<{ id: string; title: string; starts_at: string } | null>(null);
   const set = <K extends keyof EventFormValues>(k: K, v: EventFormValues[K]) => setForm((f) => ({ ...f, [k]: v }));
 
   const cat = HOBBY_CATEGORIES.find((c) => c.id === form.category) ?? HOBBY_CATEGORIES[0];
@@ -134,9 +137,9 @@ function NewEvent() {
         .single();
       if (error) throw error;
       void hapticTap("success");
-      toast.success("🎉 ההזמנה פורסמה!");
+      toast.success(`האירוע פורסם — ${whoComesTitle(values.title)}`);
       invalidate();
-      void navigate({ to: "/e/$id", params: { id: data.id as string }, replace: true });
+      setPublished({ id: data.id as string, title: values.title, starts_at: new Date(start).toISOString() });
     } catch (e) {
       toast.error((e as Error).message || "הפרסום נכשל");
     } finally {
@@ -457,6 +460,10 @@ function NewEvent() {
       <p className="mt-3 text-center text-sm text-muted-foreground">
         {!form.subcategory && !customTitle ? "בחרו מה עושים (או כתבו בכותרת) ואיפה — וזהו." : `${summary}.`}
       </p>
+      <EventPublishedDialog
+        event={published}
+        onDone={() => published && void navigate({ to: "/e/$id", params: { id: published.id }, replace: true })}
+      />
     </Page>
   );
 }
