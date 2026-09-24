@@ -89,10 +89,10 @@ export function TicketCard({ event, code, holder }: { event: EventRow; code: str
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2">
         <Button variant="outline" onClick={() => void download()}>
-          <Download /> Download Image
+          <Download /> הורדת תמונה
         </Button>
         <Button variant="brand" onClick={() => setQrOpen(true)}>
-          <QrCode /> Show QR Code
+          <QrCode /> הצגת קוד QR
         </Button>
       </div>
       <Dialog open={qrOpen} onOpenChange={setQrOpen}>
