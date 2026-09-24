@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { CalendarDays, ChevronDown, ChevronUp, Clock, DollarSign, ImagePlus, MapPin, Ticket, Users } from "lucide-react";
 import { Page, PageHeader } from "@/components/app-shell";
 import { RequireAuth } from "@/components/gates";
-import { emptyEventForm, formToPayload, type EventFormValues } from "@/components/event-form";
+import { emptyEventForm, formToPayload, type EventFormValues, PaymentLinkField } from "@/components/event-form";
 import { SafeImg } from "@/components/safe-img";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Textarea } from "@/components/ui/input";
@@ -115,6 +115,7 @@ function NewEvent() {
         starts_at: start,
         ends_at: form.ends_at && form.ends_at > start ? form.ends_at : "",
         price: paid ? form.price : 0,
+        payment_link: paid ? form.payment_link : "",
       };
       const payload = await formToPayload(values);
       const { data, error } = await supabase
@@ -405,14 +406,17 @@ function NewEvent() {
               <Switch checked={paid} onCheckedChange={setPaid} aria-label="אירוע בתשלום" />
             </div>
             {paid ? (
-              <Input
-                className="mt-3 rounded-full border-0 bg-surface-soft"
-                type="number"
-                min={1}
-                placeholder="מחיר בש״ח"
-                value={form.price || ""}
-                onChange={(e) => set("price", Math.max(0, Number(e.target.value) || 0))}
-              />
+              <>
+                <Input
+                  className="mt-3 rounded-full border-0 bg-surface-soft"
+                  type="number"
+                  min={1}
+                  placeholder="מחיר בש״ח"
+                  value={form.price || ""}
+                  onChange={(e) => set("price", Math.max(0, Number(e.target.value) || 0))}
+                />
+                <PaymentLinkField className="mt-3" value={form.payment_link} onChange={(v) => set("payment_link", v)} />
+              </>
             ) : (
               <p className="mt-2 text-sm text-muted-foreground">ההזמנה הזו חינמית להצטרפות.</p>
             )}

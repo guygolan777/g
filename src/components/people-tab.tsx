@@ -95,7 +95,7 @@ export function PeopleTab() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="חיפוש אנשים"
-          className="h-full w-full bg-transparent outline-none placeholder:text-muted-foreground"
+          className="h-full w-full min-w-0 bg-transparent outline-none placeholder:text-muted-foreground"
         />
       </label>
       <Link to="/contacts" search={{ tab: "phone" }} className="mt-4 flex items-center gap-3 rounded-3xl bg-primary-soft p-4">

@@ -40,6 +40,8 @@ export type EventFormValues = {
   max_age: number | null;
   gender_target: AudienceGender;
   price: number;
+  /** Bit / PayBox / payment page (https) — shown only to people who asked to join. */
+  payment_link: string;
   max_distance_km: number | null;
   also_story: boolean;
 };
@@ -71,6 +73,7 @@ export function emptyEventForm(): EventFormValues {
     max_age: null,
     gender_target: "all",
     price: 0,
+    payment_link: "",
     max_distance_km: null,
     also_story: false,
   };
@@ -100,6 +103,7 @@ export function eventToForm(e: EventRow, meetingUrl: string | null): EventFormVa
     max_age: e.max_age ?? null,
     gender_target: e.gender_target ?? "all",
     price: Number(e.price ?? 0),
+    payment_link: "",
     max_distance_km: e.max_distance_km ?? null,
   };
 }
@@ -114,6 +118,8 @@ export async function formToPayload(v: EventFormValues) {
   if (ends && ends < starts) throw new Error("שעת הסיום לפני ההתחלה");
   if (v.is_online && !/^https?:\/\//.test(v.meeting_url.trim())) throw new Error("נא להזין קישור מפגש תקין");
   if (!v.is_online && !v.location_name.trim()) throw new Error("נא להזין מיקום");
+  const payLink = v.payment_link.trim();
+  if (payLink && !/^https:\/\/\S+$/.test(payLink)) throw new Error("קישור התשלום צריך להתחיל ב-https://");
   let { lat, lng } = v;
   if (!v.is_online && (lat == null || lng == null)) {
     const g = await geocode([v.location_name, v.city].filter(Boolean).join(", "));
@@ -140,6 +146,8 @@ export async function formToPayload(v: EventFormValues) {
     max_age: v.max_age,
     gender_target: v.gender_target,
     price: Math.max(0, Number(v.price) || 0),
+    // Free → no link. Paid with an empty field → leave whatever is stored (the edit form can't read it back blindly).
+    ...(Number(v.price) > 0 ? (payLink ? { payment_link: payLink } : {}) : { payment_link: null }),
     max_distance_km: v.max_distance_km,
   };
 }
@@ -296,6 +304,7 @@ export function EventForm({
       <Field label="מחיר (₪, 0 = חינם)">
         <Input type="number" min={0} value={value.price} onChange={(e) => set("price", Math.max(0, Number(e.target.value) || 0))} />
       </Field>
+      {value.price > 0 && <PaymentLinkField value={value.payment_link} onChange={(v) => set("payment_link", v)} />}
 
       {mode === "create" && (
         <Field label="חזרתיות">
@@ -366,6 +375,20 @@ export function EventForm({
           <Switch checked={value.also_story} onCheckedChange={(c) => set("also_story", c)} />
         </div>
       )}
+    </div>
+  );
+}
+
+/** Where participants pay. Paid events are never auto-approved: the organizer confirms payment. */
+export function PaymentLinkField({ value, onChange, className }: { value: string; onChange: (v: string) => void; className?: string }) {
+  return (
+    <div className={className}>
+      <Field label="קישור לתשלום (Bit / PayBox / דף תשלום)">
+        <Input dir="ltr" type="url" inputMode="url" placeholder="https://" value={value} onChange={(e) => onChange(e.target.value)} />
+      </Field>
+      <p className="mt-1 text-xs text-muted-foreground">
+        באירוע בתשלום כל הצטרפות ממתינה לאישור שלך — אשרו אחרי שהתשלום התקבל, והכרטיס יישלח אוטומטית. הקישור מוצג רק למי שביקש להצטרף.
+      </p>
     </div>
   );
 }

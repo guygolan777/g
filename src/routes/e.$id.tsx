@@ -440,7 +440,7 @@ function MemberEvent({ event, viewerId }: { event: EventRow; viewerId: string })
           <Section
             title={
               <span className="flex items-center gap-2">
-                בקשות הצטרפות
+                {event.price ? "ממתינים לאישור תשלום" : "בקשות הצטרפות"}
                 {pending.length > 0 && <Badge variant="partner">{pending.length}</Badge>}
               </span>
             }
@@ -464,7 +464,7 @@ function MemberEvent({ event, viewerId }: { event: EventRow; viewerId: string })
                       <p className="text-xs text-muted-foreground">{formatRelative(p.created_at)}</p>
                     </div>
                     <Button size="sm" onClick={() => void review(p.profile_id, true)}>
-                      אישור
+                      {event.price ? "שולם — אישור" : "אישור"}
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => void review(p.profile_id, false)}>
                       דחייה

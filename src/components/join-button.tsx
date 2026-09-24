@@ -9,6 +9,10 @@ import { hapticTap } from "@/lib/native";
 import type { EventRow, ParticipantStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { rememberRedirect } from "@/lib/guest";
+import { useQuery } from "@tanstack/react-query";
+import { CreditCard } from "lucide-react";
+
+const shekel = (price: number) => `₪${Number(price).toLocaleString("he-IL")}`;
 
 const ERRORS: Record<string, string> = {
   "event full": "האירוע מלא",
@@ -28,14 +32,16 @@ export function useJoinEvent() {
   const invalidate = useInvalidateEvents();
   const [loading, setLoading] = React.useState(false);
   const join = React.useCallback(
-    async (eventId: string): Promise<ParticipantStatus | null> => {
+    async (eventId: string, price?: number | null): Promise<ParticipantStatus | null> => {
       setLoading(true);
       try {
         const { data, error } = await supabase.rpc("join_event", { _event_id: eventId });
         if (error) throw error;
         const status = data as ParticipantStatus;
         void hapticTap(status === "approved" ? "success" : "light");
-        toast.success(status === "approved" ? "🎉 נרשמת לאירוע!" : "הבקשה נשלחה למארגן");
+        toast.success(
+          status === "approved" ? "🎉 נרשמת לאירוע!" : price ? "שמרנו לך מקום — אחרי התשלום המארגן/ת יאשר/תאשר" : "הבקשה נשלחה למארגן",
+        );
         invalidate();
         return status;
       } catch (e) {
@@ -60,7 +66,7 @@ export function JoinButton({
   className,
   size = "sm",
 }: {
-  event: Pick<EventRow, "id" | "organizer_id">;
+  event: Pick<EventRow, "id" | "organizer_id"> & { price?: number | null };
   status: ParticipantStatus | undefined;
   className?: string;
   size?: "sm" | "default" | "lg";
@@ -87,6 +93,7 @@ export function JoinButton({
     );
   }
   if (local === "pending") {
+    if (event.price) return <PayNow eventId={event.id} price={event.price} size={size} className={cls} />;
     return (
       <Button size={size} variant="secondary" className={cls} disabled>
         ממתין לאישור המארגן
@@ -106,11 +113,33 @@ export function JoinButton({
           rememberRedirect(`/e/${event.id}`);
           return void navigate({ to: "/signup" });
         }
-        const s = await join(event.id);
+        const s = await join(event.id, event.price);
         if (s) setLocal(s);
       }}
     >
-      {loading ? "רגע…" : "הצטרפות"}
+      {loading ? "רגע…" : event.price ? `הצטרפות · ${shekel(event.price)}` : "הצטרפות"}
+    </Button>
+  );
+}
+
+/** Paid event, seat held: pay the organizer (their link), then they confirm and the ticket is issued. */
+function PayNow({ eventId, price, size, className }: { eventId: string; price: number; size: "sm" | "default" | "lg"; className?: string }) {
+  const link = useQuery({
+    queryKey: ["payment-link", eventId],
+    queryFn: async () => ((await supabase.rpc("event_payment_link", { _event_id: eventId })).data as string | null) ?? null,
+  });
+  if (link.data) {
+    return (
+      <Button asChild size={size} variant="brand" className={className}>
+        <a href={link.data} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
+          <CreditCard /> לתשלום {shekel(price)} · ממתין לאישור
+        </a>
+      </Button>
+    );
+  }
+  return (
+    <Button size={size} variant="secondary" className={cn(className, "h-auto min-h-8 whitespace-normal py-1.5 leading-tight")} disabled>
+      ממתין לתשלום ואישור המארגן
     </Button>
   );
 }

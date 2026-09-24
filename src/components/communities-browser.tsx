@@ -127,13 +127,13 @@ function CommunityListCard({
   const navigate = useNavigate();
   const [busy, setBusy] = React.useState(false);
   return (
-    <div className="rounded-3xl bg-card p-4 shadow-soft">
-      <div className="flex gap-3">
+    <div className="min-w-0 rounded-3xl bg-card p-4 shadow-soft">
+      <div className="flex min-w-0 gap-3">
         <Link to="/community/$id" params={{ id: community.id }}>
-          <CommunityThumb community={community} className="size-20" />
+          <CommunityThumb community={community} className="size-16 sm:size-20" />
         </Link>
         <Link to="/community/$id" params={{ id: community.id }} className="min-w-0 flex-1">
-          <p className="truncate text-lg font-bold">{community.name}</p>
+          <p className="line-clamp-2 text-base leading-snug font-bold sm:text-lg">{community.name}</p>
           <p className="truncate text-sm font-semibold text-primary">{hobbyLabel(community.hobby, false)}</p>
           {community.description && <p className="line-clamp-1 text-sm text-muted-foreground">{community.description}</p>}
           <p className="mt-1 flex items-center gap-1 truncate text-sm text-muted-foreground">
@@ -144,13 +144,13 @@ function CommunityListCard({
         </Link>
         <div className="shrink-0">
           {role ? (
-            <span className="inline-flex h-9 items-center rounded-full bg-secondary px-4 text-sm shadow-soft">הצטרפתי</span>
+            <span className="inline-flex h-9 items-center rounded-full bg-secondary px-3 text-sm shadow-soft">הצטרפתי</span>
           ) : pending ? (
             <span className="inline-flex h-9 items-center rounded-full bg-secondary px-4 text-sm">ממתין</span>
           ) : (
             <Button
               size="sm"
-              className="h-9 px-4"
+              className="h-9 px-3"
               disabled={busy}
               onClick={async () => {
                 if (!user) {
@@ -169,7 +169,7 @@ function CommunityListCard({
         </div>
       </div>
       {role && (
-        <Button asChild variant="brand" size="lg" className="mt-4 w-full">
+        <Button asChild variant="brand" size="lg" className="mt-4 w-full min-w-0">
           <Link to="/event/new" search={{ community: community.id }}>
             <CalendarPlus /> פתיחת אירוע לקהילה
           </Link>
@@ -206,23 +206,24 @@ export function CommunitiesBrowser() {
   return (
     <div>
       <div className="flex items-center gap-2">
-        <label className="flex h-12 flex-1 items-center gap-2 rounded-full bg-surface-soft px-4">
-          <Search className="size-5 text-muted-foreground" />
+        <label className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-full bg-surface-soft px-4">
+          <Search className="size-5 shrink-0 text-muted-foreground" />
           <input
+            id="community-search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="חיפוש קהילה"
-            className="h-full w-full bg-transparent outline-none placeholder:text-muted-foreground"
+            className="h-full w-full min-w-0 bg-transparent outline-none placeholder:text-muted-foreground"
           />
         </label>
-        <Button className="h-12 px-5" onClick={() => (user ? setCreating(true) : void navigate({ to: "/signup" }))}>
+        <Button className="h-12 shrink-0 px-4" onClick={() => (user ? setCreating(true) : void navigate({ to: "/signup" }))}>
           <Plus /> פתיחת קהילה
         </Button>
       </div>
       <div className="mt-3">
         <CategoryFilterRow selected={cats} onChange={setCats} />
       </div>
-      <div className="mt-4 grid gap-3 lg:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2 [&>*]:min-w-0">
         {isLoading && [0, 1, 2].map((i) => <Skeleton key={i} className="h-32 w-full rounded-3xl" />)}
         {!isLoading && list.length === 0 && <EmptyState emoji="🔎" title="לא מצאנו קהילות" text="נסו חיפוש אחר או פתחו קהילה חדשה" />}
         {list.map((c) => (

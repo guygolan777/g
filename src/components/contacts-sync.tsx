@@ -120,7 +120,7 @@ export function ContactsSync() {
         <h2 className="mb-2 text-lg font-bold">הזמנת חברים ({result.others.length})</h2>
         <label className="mb-3 flex h-11 items-center gap-2 rounded-full bg-surface-soft px-4">
           <Search className="size-4 text-muted-foreground" />
-          <input id="contact-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="חיפוש באנשי הקשר" className="h-full w-full bg-transparent outline-none" />
+          <input id="contact-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="חיפוש באנשי הקשר" className="h-full w-full min-w-0 bg-transparent outline-none" />
         </label>
         <div className="divide-y divide-border rounded-2xl bg-card shadow-soft">
           {others.map((c) => (

@@ -109,7 +109,7 @@ function Nearby() {
                 <EmptyState emoji="🗺️" title="אין אירועים ברדיוס הזה" text="נסו להרחיב את המרחק — או פתחו אירוע משלכם" />
               </div>
             ) : (
-              <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
                 {events.map((c) => (
                   <EventCard key={c.event.id} data={c} viewerId={feed.viewerId} onHide={feed.hide} layout="list" />
                 ))}

@@ -257,4 +257,33 @@ do $$ begin
 end $$;
 rollback;
 
+-- Paid events: joining never approves by itself; payment link only for requesters/organizer.
+begin;
+update public.events set price = 50, auto_approve = true, payment_link = 'https://www.bitpay.co.il/app/me/demo'
+where id = '20000000-0000-4000-a000-000000000001';
+set local role authenticated;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000009');
+do $$ begin
+  if public.event_payment_link('20000000-0000-4000-a000-000000000001') is not null then
+    raise exception 'FAIL: payment link visible before joining'; end if;
+  if public.join_event('20000000-0000-4000-a000-000000000001') <> 'pending' then
+    raise exception 'FAIL: paid auto-approve event approved without payment'; end if;
+  if public.event_payment_link('20000000-0000-4000-a000-000000000001') is null then
+    raise exception 'FAIL: requester cannot see payment link'; end if;
+  begin
+    perform payment_link from public.events limit 1;
+    raise exception 'FAIL: payment_link column readable';
+  exception when insufficient_privilege then null; end;
+end $$;
+-- Free auto-approve events still approve instantly.
+reset role;
+update public.events set price = 0 where id = '20000000-0000-4000-a000-000000000019';
+set local role authenticated;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000009');
+do $$ begin
+  if public.join_event('20000000-0000-4000-a000-000000000019') <> 'approved' then
+    raise exception 'FAIL: free auto event not approved'; end if;
+end $$;
+rollback;
+
 select 'RLS tests passed' as result;

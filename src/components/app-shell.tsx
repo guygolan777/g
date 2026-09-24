@@ -21,7 +21,7 @@ export function Page({
   return (
     <main
       className={cn(
-        "mx-auto min-h-dvh w-full max-w-lg px-4 pt-safe lg:px-8 lg:pt-4",
+        "mx-auto min-h-dvh w-full max-w-lg overflow-x-clip px-4 pt-safe lg:px-8 lg:pt-4",
         size === "wide" ? "md:max-w-3xl lg:max-w-5xl" : "md:max-w-xl",
         withNav ? "pb-28 lg:pb-10" : "pb-10",
         className,

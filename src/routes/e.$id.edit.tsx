@@ -33,16 +33,17 @@ function EditEvent() {
   const q = useQuery({
     queryKey: ["event-edit", id],
     queryFn: async () => {
-      const [{ data }, { data: meeting }] = await Promise.all([
+      const [{ data }, { data: meeting }, { data: payLink }] = await Promise.all([
         supabase.from("events").select(EVENT_COLUMNS).eq("id", id).maybeSingle(),
         supabase.rpc("event_meeting_url", { _event_id: id }),
+        supabase.rpc("event_payment_link", { _event_id: id }),
       ]);
-      return { event: data as unknown as EventRow | null, meeting: (meeting as string | null) ?? null };
+      return { event: data as unknown as EventRow | null, meeting: (meeting as string | null) ?? null, payLink: (payLink as string | null) ?? "" };
     },
   });
 
   React.useEffect(() => {
-    if (q.data?.event && !form) setForm(eventToForm(q.data.event, q.data.meeting));
+    if (q.data?.event && !form) setForm({ ...eventToForm(q.data.event, q.data.meeting), payment_link: q.data.payLink });
   }, [q.data, form]);
 
   if (q.isLoading || !form) return <CenteredSpinner />;

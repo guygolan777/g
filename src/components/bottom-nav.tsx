@@ -23,7 +23,7 @@ export function BottomNav() {
     <Link
       to={to}
       aria-label={label}
-      className={cn("relative flex flex-1 items-center justify-center py-3 transition", active ? "text-primary" : "text-muted-foreground")}
+      className={cn("relative flex min-w-0 flex-1 items-center justify-center py-3 transition", active ? "text-primary" : "text-muted-foreground")}
     >
       <span className="relative">
         <Icon className="size-7" strokeWidth={active ? 2.3 : 1.8} />
@@ -35,10 +35,10 @@ export function BottomNav() {
   return (
     <>
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 pb-safe backdrop-blur lg:hidden" dir="rtl">
-        <div className="mx-auto flex max-w-lg items-center px-2">
+        <div className="mx-auto flex w-full max-w-lg items-center px-2">
           {item("/home", "בית", Home, pathname.startsWith("/home") || pathname.startsWith("/discover"))}
           {item("/likes", "לייקים והתאמות", Heart, pathname.startsWith("/likes"))}
-          <div className="flex flex-1 justify-center">
+          <div className="flex min-w-0 flex-1 justify-center">
             <button
               onClick={() => (isGuest ? navigate({ to: "/signup" }) : setOpen(true))}
               className="-mt-8 grid size-16 place-items-center rounded-full bg-gradient-brand text-brand-foreground shadow-lift ring-4 ring-surface transition active:scale-95"
