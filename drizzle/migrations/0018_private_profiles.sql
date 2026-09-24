@@ -42,7 +42,7 @@ revoke all on function app_private.can_see_full(uuid) from public;
 grant execute on function app_private.can_see_full(uuid) to authenticated, service_role;
 
 -- Members read profiles through this view: the private columns come back empty unless allowed.
-revoke select (photos, bio, city, hobbies, traits) on public.profiles from authenticated;
+-- (Direct column reads are revoked in 0019, once every app build reads through the view.)
 
 create or replace view public.profile_cards with (security_barrier = true) as
 select p.id, p.name, p.avatar_url, p.gender, p.birth_year, p.dating_enabled, p.onboarded, p.banned_at, p.created_at,

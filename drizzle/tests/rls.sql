@@ -220,8 +220,7 @@ begin
   if _c.full_access or _c.bio <> '' or _c.city is not null or cardinality(_c.photos) > 0 or cardinality(_c.hobbies) > 0 then
     raise exception 'FAIL: private profile details visible to a stranger';
   end if;
-  begin perform bio from public.profiles limit 1; raise exception 'FAIL: bio readable from profiles directly';
-  exception when insufficient_privilege then null; end;
+  -- (direct reads of bio etc. are revoked by drizzle/pending/0019 — tested in rls-lockdown.sql)
   if exists (select 1 from public.event_participants where profile_id = '00000000-0000-4000-a000-000000000003' and event_id = '20000000-0000-4000-a000-000000000001') then
     raise exception 'FAIL: private profile listed as an attendee to a stranger';
   end if;
