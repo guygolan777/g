@@ -16,8 +16,8 @@ export function useMyLocation() {
     queryKey: ["my-location", user?.id],
     enabled: !!user,
     queryFn: async () => {
-      const { data } = await supabase.from("profile_locations").select("lat, lng").eq("profile_id", user!.id).maybeSingle();
-      return (data as { lat: number; lng: number } | null) ?? null;
+      const { data } = await supabase.from("profile_locations").select("lat, lng, city").eq("profile_id", user!.id).maybeSingle();
+      return (data as { lat: number; lng: number; city: string | null } | null) ?? null;
     },
   });
 }

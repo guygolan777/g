@@ -1,7 +1,8 @@
 import * as React from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { LocateFixed } from "lucide-react";
+import { LocateFixed, MapPin } from "lucide-react";
+import { reverseGeocodeCity } from "@/lib/geocode";
 import { OnboardingLayout } from "@/components/onboarding-layout";
 import { RequireAuth } from "@/components/gates";
 import { Button } from "@/components/ui/button";
@@ -29,16 +30,23 @@ function Step3() {
   const [coords, setCoords] = React.useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
+  const [detected, setDetected] = React.useState<string | null>(null);
 
   React.useEffect(() => setCity(profile?.city ?? ""), [profile]);
 
   async function locate() {
     setLocating(true);
     const pos = await getCurrentPosition();
-    setLocating(false);
-    if (!pos) return void toast.error("לא הצלחנו לקבל מיקום — אפשר להזין עיר ידנית");
+    if (!pos) {
+      setLocating(false);
+      return void toast.error("לא הצלחנו לקבל מיקום — אפשר להזין עיר ידנית");
+    }
     setCoords(pos);
-    toast.success("המיקום נשמר 📍");
+    const name = await reverseGeocodeCity(pos.lat, pos.lng);
+    setLocating(false);
+    setDetected(name);
+    setCity(name);
+    toast.success(`זיהינו: ${name} 📍`);
   }
 
   async function finish() {
@@ -78,10 +86,23 @@ function Step3() {
         <Field label="עיר">
           <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="למשל: תל אביב" />
         </Field>
-        <Button variant={coords ? "success" : "soft"} size="lg" className="w-full" onClick={() => void locate()} disabled={locating}>
+        <Button variant={coords ? "outline" : "soft"} size="lg" className="w-full" onClick={() => void locate()} disabled={locating}>
           <LocateFixed />
-          {coords ? "המיקום התקבל" : locating ? "מאתרים…" : "שימוש במיקום הנוכחי"}
+          {locating ? "מאתרים…" : coords ? "עדכון המיקום" : "שימוש במיקום הנוכחי"}
         </Button>
+        {coords && detected && (
+          <div className="flex items-center gap-3 rounded-2xl bg-success-soft p-4">
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-surface text-success">
+              <MapPin className="size-5" />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-bold">זיהינו: {detected}</span>
+              <span className="block text-xs text-muted-foreground">
+                המיקום נשמר רק לחישוב מרחקים. אחרים רואים רק את העיר ומרחק מעוגל.
+              </span>
+            </span>
+          </div>
+        )}
       </div>
     </OnboardingLayout>
   );

@@ -64,7 +64,7 @@ function Nearby() {
     <Page>
       <PageHeader
         title="קרוב אליי"
-        subtitle={feed.location ? `ברדיוס ${km} ק״מ ממך` : undefined}
+        subtitle={feed.location ? `${feed.location.city ? `סביב ${feed.location.city} · ` : ""}ברדיוס ${km} ק״מ` : undefined}
         back
         actions={
           feed.location && (

@@ -13,6 +13,7 @@ import { PHONE_REQUIRED, formatPhone } from "@/lib/phone";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
 import { getCurrentPosition } from "@/lib/native";
+import { reverseGeocodeCity } from "@/lib/geocode";
 import { applyTheme, getThemeMode, type ThemeMode } from "@/lib/theme";
 import { seo } from "@/lib/seo";
 import type { ProfileSettings } from "@/lib/types";
@@ -107,7 +108,8 @@ function Settings() {
                   .from("profile_locations")
                   .upsert({ profile_id: user!.id, lat: p.lat, lng: p.lng, updated_at: new Date().toISOString() });
                 if (error) return void toast.error("השמירה נכשלה");
-                toast.success("המיקום עודכן 📍");
+                const name = await reverseGeocodeCity(p.lat, p.lng);
+                toast.success(`המיקום עודכן: ${name} 📍`);
               }}
             >
               <LocateFixed /> עדכון

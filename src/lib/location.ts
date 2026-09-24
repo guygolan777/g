@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { getCurrentPosition, isNative } from "@/lib/native";
 import { supabase } from "@/lib/supabase";
+import { reverseGeocodeCity } from "@/lib/geocode";
 
 const LAST_KEY = "mibale-location-at";
 const REFRESH_MS = 30 * 60 * 1000;
@@ -23,9 +24,10 @@ export async function locationPermissionGranted(): Promise<boolean> {
 
 /** Stores the position privately (only distances are ever shown to others). */
 export async function saveMyLocation(userId: string, pos: { lat: number; lng: number }): Promise<boolean> {
+  const city = await reverseGeocodeCity(pos.lat, pos.lng);
   const { error } = await supabase
     .from("profile_locations")
-    .upsert({ profile_id: userId, lat: pos.lat, lng: pos.lng, updated_at: new Date().toISOString() });
+    .upsert({ profile_id: userId, lat: pos.lat, lng: pos.lng, city, updated_at: new Date().toISOString() });
   if (error) return false;
   try {
     localStorage.setItem(LAST_KEY, String(Date.now()));

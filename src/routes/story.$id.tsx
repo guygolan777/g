@@ -3,7 +3,7 @@ import { SafeImg } from "@/components/safe-img";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Eye, Heart, Send, Trash2, Volume2, VolumeX, X } from "lucide-react";
+import { CalendarDays, Eye, Heart, Send, Trash2, Volume2, VolumeX, X } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import { CenteredSpinner } from "@/components/app-shell";
 import { RequireAuth } from "@/components/gates";
@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
 import { channelName } from "@/lib/realtime";
 import { whoComesTitle } from "@/lib/event-title";
+import { formatDate, formatEventWhen, formatTime } from "@/lib/format";
 import { formatRelative } from "@/lib/format";
 import { hapticTap } from "@/lib/native";
 import { seo } from "@/lib/seo";
@@ -335,11 +336,19 @@ function StoryEventAction({ eventId }: { eventId: string }) {
     queryKey: ["story-event", eventId, user?.id],
     queryFn: async () => {
       const [{ data: e }, { data: p }] = await Promise.all([
-        supabase.from("events").select("id, title, organizer_id").eq("id", eventId).maybeSingle(),
+        supabase.from("events").select("id, title, organizer_id, starts_at, city, is_online, price").eq("id", eventId).maybeSingle(),
         supabase.from("event_participants").select("status").eq("event_id", eventId).eq("profile_id", user!.id).maybeSingle(),
       ]);
       setStatus((p?.status as ParticipantStatus | undefined) ?? null);
-      return e as { id: string; title: string; organizer_id: string } | null;
+      return e as {
+        id: string;
+        title: string;
+        organizer_id: string;
+        starts_at: string;
+        city: string | null;
+        is_online: boolean;
+        price: number | null;
+      } | null;
     },
   });
 
@@ -362,15 +371,15 @@ function StoryEventAction({ eventId }: { eventId: string }) {
   const shown = status === "declined" ? null : status;
 
   return (
-    <div className="space-y-1 text-center">
-      <p className="text-sm text-scrim-foreground/90">{whoComesTitle(ev.data.title)}</p>
+    <div className="space-y-2 text-center">
+      <StoryEventWhen event={ev.data} />
       {isOrganizer || shown === "approved" ? (
         <Button asChild variant="success" size="lg" className="w-full">
           <Link to="/e/$id" params={{ id: eventId }}>{isOrganizer ? "האירוע שלך — לניהול" : "אתה בפנים — לפרטי האירוע"}</Link>
         </Button>
       ) : shown === "pending" ? (
-        <Button variant="secondary" size="lg" className="w-full" disabled>
-          ממתין
+        <Button asChild variant="secondary" size="lg" className="w-full">
+          <Link to="/e/$id" params={{ id: eventId }}>{ev.data.price ? "ממתין לתשלום ואישור — לפרטים" : "ממתין לאישור המארגן"}</Link>
         </Button>
       ) : (
         <Button
@@ -379,13 +388,38 @@ function StoryEventAction({ eventId }: { eventId: string }) {
           className="w-full"
           disabled={loading}
           onClick={async () => {
-            const s = await join(eventId);
+            const s = await join(eventId, ev.data?.price);
             if (s) setStatus(s);
           }}
         >
-          הצטרפות לאירוע
+          {ev.data.price ? `הצטרפות · ₪${Number(ev.data.price).toLocaleString("he-IL")}` : "הצטרפות לאירוע"}
         </Button>
       )}
+    </div>
+  );
+}
+
+/** Event stories always say when: weekday, date and time (plus today/tomorrow), where, and the price. */
+function StoryEventWhen({ event }: { event: { title: string; starts_at: string; city: string | null; is_online: boolean; price: number | null } }) {
+  const weekday = formatDate(event.starts_at, { weekday: "long" });
+  const date = formatDate(event.starts_at, { day: "numeric", month: "numeric" });
+  const time = formatTime(event.starts_at);
+  const rel = formatEventWhen(event.starts_at).split(" · ")[0];
+  const relLabel = rel === "היום" || rel === "מחר" ? rel : null;
+  return (
+    <div className="rounded-2xl bg-overlay p-3 text-scrim-foreground backdrop-blur-md">
+      <p className="truncate text-sm font-semibold opacity-90">{whoComesTitle(event.title)}</p>
+      <p className="mt-1 flex items-center justify-center gap-2 text-xl font-extrabold">
+        <CalendarDays className="size-5 shrink-0" />
+        <span>
+          {weekday} · {date} · {time}
+        </span>
+      </p>
+      <p className="mt-1 text-sm opacity-90">
+        {relLabel && <span className="me-1 rounded-full bg-like px-2 py-0.5 text-xs font-bold text-like-foreground">{relLabel}</span>}
+        {event.is_online ? "אונליין" : (event.city ?? "")}
+        {event.price ? ` · ₪${Number(event.price).toLocaleString("he-IL")}` : " · חינם"}
+      </p>
     </div>
   );
 }
