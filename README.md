@@ -84,7 +84,8 @@ PGUSER=postgres npm run db:test   # מריץ את כל המיגרציות + seed
 - אימייל+סיסמה, Google ו-Sign in with Apple (Supabase → Authentication → Providers). Apple חובה ב-App Store כשיש התחברות חברתית אחרת.
 - הכפתורים מוצגים רק לספקים שמופיעים ב-`VITE_AUTH_PROVIDERS` (למשל `google,apple`); ריק = אימייל בלבד.
 - **טלפון חובה:** `VITE_PHONE_VERIFICATION=1` → כל חשבון מאמת נייד ב-SMS (`/onboarding/phone`), וכניסה גם עם קוד SMS (`/login-sms`).
-  דורש Supabase → Authentication → Providers → Phone (Twilio). משתמשי הדמו מקבלים מספרים פיקטיביים מאומתים.
+  דורש Supabase → Authentication → Providers → Phone (Twilio / Twilio Verify). משתמשי הדמו מקבלים מספרים פיקטיביים מאומתים.
+  `VITE_OTP_CHANNELS=whatsapp,sms` → קוד בוואטסאפ כברירת מחדל ו-SMS כגיבוי (ברירת מחדל: `sms`).
 - **אנשי קשר** (`0011_phone_contacts.sql`): רק hash של מספרים עולה לשרת (`sync_contacts`), מוצגים מי כבר ב-mibale + הזמנה בוואטסאפ,
   והתראה `contact_joined` כשאיש קשר מצטרף. באפליקציה דרך `@capacitor-community/contacts`, בווב דרך Contact Picker של Chrome באנדרואיד.
 - Redirect URLs: `https://<domain>/`, `https://<domain>/reset-password`, `https://<domain>/onboarding/profile`, `mibale://auth-callback`.

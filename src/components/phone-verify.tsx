@@ -3,13 +3,15 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/label";
-import { formatPhone, isMobile, normalizePhone } from "@/lib/phone";
+import { OTP_CHANNELS, formatPhone, isMobile, normalizePhone, type OtpChannel } from "@/lib/phone";
+import type { UserAttributes } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
 const RESEND_SECONDS = 30;
 
 export function phoneErrorMessage(msg: string | undefined): string {
   const m = (msg ?? "").toLowerCase();
+  if (m.includes("whatsapp")) return "שליחה בוואטסאפ לא זמינה כרגע — נסו ב-SMS";
   if (m.includes("already") || m.includes("exists") || m.includes("registered")) return "המספר כבר רשום בחשבון אחר";
   if (m.includes("provider") || (m.includes("sms") && m.includes("disabled")) || m.includes("unsupported")) return "שליחת SMS עדיין לא מופעלת במערכת";
   if (m.includes("expired") || m.includes("invalid") || m.includes("token")) return "הקוד שגוי או שפג תוקפו";
@@ -29,6 +31,7 @@ export function PhoneVerify({ mode, onDone, submitLabel }: { mode: "verify" | "l
   const [code, setCode] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [wait, setWait] = React.useState(0);
+  const [channel, setChannel] = React.useState<OtpChannel>(OTP_CHANNELS[0]);
 
   React.useEffect(() => {
     if (wait <= 0) return;
@@ -36,25 +39,27 @@ export function PhoneVerify({ mode, onDone, submitLabel }: { mode: "verify" | "l
     return () => clearTimeout(t);
   }, [wait]);
 
-  async function send(digits: string) {
+  async function send(digits: string, via: OtpChannel) {
     setBusy(true);
     const { error } =
       mode === "verify"
-        ? await supabase.auth.updateUser({ phone: `+${digits}` })
-        : await supabase.auth.signInWithOtp({ phone: `+${digits}`, options: { shouldCreateUser: false } });
+        ? // GoTrue accepts `channel` on user update too (phone change); the JS type just doesn't list it.
+          await supabase.auth.updateUser({ phone: `+${digits}`, channel: via } as UserAttributes)
+        : await supabase.auth.signInWithOtp({ phone: `+${digits}`, options: { shouldCreateUser: false, channel: via } });
     setBusy(false);
     if (error) return void toast.error(phoneErrorMessage(error.message));
+    setChannel(via);
     setPhone(digits);
     setWait(RESEND_SECONDS);
-    toast.success(`שלחנו קוד ל-${formatPhone(digits)}`);
+    toast.success(`שלחנו קוד ${via === "whatsapp" ? "בוואטסאפ" : "ב-SMS"} ל-${formatPhone(digits)}`);
   }
 
-  async function submitPhone(e: React.FormEvent) {
+  async function submitPhone(e: React.FormEvent, via: OtpChannel = OTP_CHANNELS[0]) {
     e.preventDefault();
     const digits = normalizePhone(raw);
     if (!digits) return void toast.error("מספר הטלפון לא תקין");
-    if (!isMobile(digits)) return void toast.error("צריך מספר נייד כדי לקבל SMS");
-    await send(digits);
+    if (!isMobile(digits)) return void toast.error("צריך מספר נייד כדי לקבל קוד");
+    await send(digits, via);
   }
 
   async function submitCode(e: React.FormEvent) {
@@ -86,8 +91,13 @@ export function PhoneVerify({ mode, onDone, submitLabel }: { mode: "verify" | "l
           />
         </Field>
         <Button type="submit" variant="brand" size="lg" className="w-full" disabled={busy}>
-          {busy ? "שולחים…" : "שליחת קוד ב-SMS"}
+          {busy ? "שולחים…" : channelLabel(OTP_CHANNELS[0])}
         </Button>
+        {OTP_CHANNELS.slice(1).map((c) => (
+          <Button key={c} type="button" variant="ghost" className="w-full" disabled={busy} onClick={(e) => void submitPhone(e, c)}>
+            או {channelLabel(c).replace("שליחת קוד ", "")}
+          </Button>
+        ))}
       </form>
     );
   }
@@ -95,7 +105,7 @@ export function PhoneVerify({ mode, onDone, submitLabel }: { mode: "verify" | "l
   return (
     <form onSubmit={submitCode} className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        הקלידו את הקוד שנשלח ל-<b dir="ltr">{formatPhone(phone)}</b>
+        הקלידו את הקוד שנשלח {channel === "whatsapp" ? "בוואטסאפ" : "ב-SMS"} ל-<b dir="ltr">{formatPhone(phone)}</b>
       </p>
       <Field label="קוד אימות">
         <Input
@@ -118,10 +128,24 @@ export function PhoneVerify({ mode, onDone, submitLabel }: { mode: "verify" | "l
         <button type="button" className="text-muted-foreground" onClick={() => (setPhone(null), setCode(""))}>
           שינוי מספר
         </button>
-        <button type="button" className="font-semibold text-primary disabled:text-muted-foreground" disabled={wait > 0 || busy} onClick={() => void send(phone)}>
-          {wait > 0 ? `שליחה חוזרת בעוד ${wait}` : "שליחת קוד חדש"}
-        </button>
+        <span className="flex gap-3">
+          {OTP_CHANNELS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              className="font-semibold text-primary disabled:text-muted-foreground"
+              disabled={wait > 0 || busy}
+              onClick={() => void send(phone, c)}
+            >
+              {wait > 0 && c === channel ? `שליחה חוזרת בעוד ${wait}` : c === channel ? "שליחה חוזרת" : c === "whatsapp" ? "בוואטסאפ" : "ב-SMS"}
+            </button>
+          ))}
+        </span>
       </div>
     </form>
   );
+}
+
+function channelLabel(c: OtpChannel): string {
+  return c === "whatsapp" ? "שליחת קוד בוואטסאפ" : "שליחת קוד ב-SMS";
 }

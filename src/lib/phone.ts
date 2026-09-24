@@ -4,6 +4,16 @@
  */
 export const PHONE_REQUIRED = import.meta.env.VITE_PHONE_VERIFICATION === "1";
 
+export type OtpChannel = "whatsapp" | "sms";
+/** Channels enabled in Supabase/Twilio, first = default. VITE_OTP_CHANNELS="whatsapp,sms"; default SMS only. */
+export const OTP_CHANNELS: OtpChannel[] = (() => {
+  const list = ((import.meta.env.VITE_OTP_CHANNELS as string | undefined) ?? "sms")
+    .split(",")
+    .map((c) => c.trim().toLowerCase())
+    .filter((c): c is OtpChannel => c === "whatsapp" || c === "sms");
+  return list.length ? [...new Set(list)] : ["sms"];
+})();
+
 /** Israeli-first normalization: 050-1234567 / +972 50 123 4567 / 00972… → 972501234567. Null if it isn't a phone. */
 export function normalizePhone(input: string, defaultCountry = "972"): string | null {
   let d = input.replace(/[^\d+]/g, "");
