@@ -31,6 +31,7 @@ jobs:
       VITE_SITE_URL: ${{ secrets.VITE_SITE_URL }}
       VITE_PHONE_VERIFICATION: ${{ secrets.VITE_PHONE_VERIFICATION }}
       VITE_OTP_CHANNELS: ${{ secrets.VITE_OTP_CHANNELS }}
+      VITE_GOOGLE_MAPS_KEY: ${{ secrets.VITE_GOOGLE_MAPS_KEY }}
       VITE_AUTH_PROVIDERS: ${{ secrets.VITE_AUTH_PROVIDERS }}
       VITE_PUSH_ENABLED: ${{ secrets.GOOGLE_SERVICES_JSON != '' && '1' || '' }}
       MIBALE_VERSION_CODE: ${{ github.run_number }}

@@ -5,6 +5,7 @@ import { CalendarDays, ChevronDown, ChevronUp, Clock, DollarSign, ImagePlus, Map
 import { Page, PageHeader } from "@/components/app-shell";
 import { RequireAuth } from "@/components/gates";
 import { emptyEventForm, formToPayload, type EventFormValues, PaymentLinkField } from "@/components/event-form";
+import { AddressInput } from "@/components/address-input";
 import { EventPublishedDialog } from "@/components/event-published";
 import { SafeImg } from "@/components/safe-img";
 import { Button } from "@/components/ui/button";
@@ -238,12 +239,16 @@ function NewEvent() {
       {form.is_online ? (
         <Input className="mt-3 rounded-full border-0 bg-surface-soft" dir="ltr" placeholder="https://" value={form.meeting_url} onChange={(e) => set("meeting_url", e.target.value)} />
       ) : (
-        <Input
-          className="mt-3 rounded-full border-0 bg-surface-soft"
-          placeholder="לדוגמה: פארק הירקון"
-          value={form.location_name}
-          onChange={(e) => setForm((f) => ({ ...f, location_name: e.target.value, lat: null, lng: null }))}
-        />
+        <div className="mt-3">
+          <AddressInput
+            className="rounded-full border-0 bg-surface-soft"
+            placeholder="לדוגמה: פארק הירקון"
+            value={form.location_name}
+            verified={form.lat != null}
+            onChange={(t) => setForm((f) => ({ ...f, location_name: t, lat: null, lng: null }))}
+            onPick={(pl) => setForm((f) => ({ ...f, location_name: pl.label, city: pl.city ?? f.city, lat: pl.lat, lng: pl.lng }))}
+          />
+        </div>
       )}
 
       {/* עוד פרטים */}

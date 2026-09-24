@@ -13,6 +13,7 @@ import { HOBBY_CATEGORIES } from "@/lib/hobby-categories";
 import { UNLIMITED_SEATS } from "@/lib/constants";
 import { uploadMedia } from "@/lib/storage";
 import { getCurrentPosition } from "@/lib/native";
+import { AddressInput } from "@/components/address-input";
 import { geocode } from "@/lib/geocode";
 import { toLocalInput } from "@/lib/format";
 import { whoComesTitle } from "@/lib/event-title";
@@ -257,7 +258,13 @@ export function EventForm({
       ) : (
         <div className="space-y-3">
           <Field label="מיקום">
-            <Input value={value.location_name} onChange={(e) => onChange({ ...value, location_name: e.target.value, lat: null, lng: null })} placeholder="שם המקום או כתובת" />
+            <AddressInput
+              value={value.location_name}
+              verified={value.lat != null}
+              onChange={(t) => onChange({ ...value, location_name: t, lat: null, lng: null })}
+              onPick={(pl) => onChange({ ...value, location_name: pl.label, city: pl.city ?? value.city, lat: pl.lat, lng: pl.lng })}
+              placeholder="שם המקום או כתובת"
+            />
           </Field>
           <Field label="עיר">
             <Input value={value.city} onChange={(e) => onChange({ ...value, city: e.target.value, lat: null, lng: null })} />
