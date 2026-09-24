@@ -150,11 +150,14 @@ function Dating() {
         supabase.from("romantic_likes").select("liked_id").eq("liker_id", user!.id),
         supabase.rpc("nearby_profiles", { radius_km: unlimited ? 20000 : settings!.pref_distance_km }),
       ]);
+      // Mutual: keep only people whose own preferences fit me too.
+      const { data: fits } = await supabase.rpc("mutual_fits", { ids: ((people ?? []) as Profile[]).map((p) => p.id) });
+      const mutual = new Set((fits ?? []) as string[]);
       const done = new Set((swiped ?? []).map((s) => s.liked_id as string));
       const nearMap = new Map(((near ?? []) as Array<{ profile_id: string; distance_km: number }>).map((n) => [n.profile_id, n.distance_km]));
       const hasLocation = (near ?? []).length > 0;
       return ((people ?? []) as Profile[])
-        .filter((p) => !done.has(p.id) && (unlimited || !hasLocation || nearMap.has(p.id)))
+        .filter((p) => mutual.has(p.id) && !done.has(p.id) && (unlimited || !hasLocation || nearMap.has(p.id)))
         .map((p) => ({ ...p, distance: nearMap.get(p.id) ?? null }));
     },
   });

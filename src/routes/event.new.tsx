@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { CalendarDays, ChevronDown, ChevronUp, Clock, DollarSign, ImagePlus, MapPin, Ticket, Users } from "lucide-react";
 import { Page, PageHeader } from "@/components/app-shell";
 import { RequireAuth } from "@/components/gates";
-import { emptyEventForm, formToPayload, type EventFormValues, PaymentLinkField, StoryNote } from "@/components/event-form";
+import { emptyEventForm, formToPayload, type EventFormValues, PaymentLinkField } from "@/components/event-form";
 import { EventPublishedDialog } from "@/components/event-published";
 import { SafeImg } from "@/components/safe-img";
 import { Button } from "@/components/ui/button";
@@ -453,8 +453,7 @@ function NewEvent() {
         </div>
       )}
 
-      <StoryNote className="mt-8" />
-      <Button variant="brand" size="lg" className="mt-3 h-14 w-full text-lg" disabled={!ready || saving} onClick={() => void publish()}>
+      <Button variant="brand" size="lg" className="mt-8 h-14 w-full text-lg" disabled={!ready || saving} onClick={() => void publish()}>
         {saving ? "מפרסמים…" : "פרסום"}
       </Button>
       <p className="mt-3 text-center text-sm text-muted-foreground">

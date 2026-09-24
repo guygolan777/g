@@ -127,6 +127,65 @@ do $$ begin
 end $$;
 rollback;
 
+-- Romantic stories reach only people who fit the author's preferences (Maya: men 18–99, any distance).
+begin;
+update public.profiles set dating_enabled = true where id in ('00000000-0000-4000-a000-000000000001', '00000000-0000-4000-a000-000000000006');
+update public.profiles set pref_gender = 'male', pref_min_age = 18, pref_max_age = 99, pref_distance_km = 200 where id = '00000000-0000-4000-a000-000000000002';
+set local role authenticated;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000001'); -- Noa, a woman
+do $$ begin
+  if exists (select 1 from public.stories where is_romantic and author_id = '00000000-0000-4000-a000-000000000002') then
+    raise exception 'FAIL: romantic story shown outside the author''s gender preference';
+  end if;
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000006'); -- Daniel, a man born 1994
+do $$ begin
+  if not exists (select 1 from public.stories where is_romantic and author_id = '00000000-0000-4000-a000-000000000002') then
+    raise exception 'FAIL: romantic story hidden from someone who fits the preferences';
+  end if;
+end $$;
+reset role;
+update public.profiles set pref_max_age = 25 where id = '00000000-0000-4000-a000-000000000002';
+set local role authenticated; select pg_temp.as_user('00000000-0000-4000-a000-000000000006');
+do $$ begin
+  if exists (select 1 from public.stories where is_romantic and author_id = '00000000-0000-4000-a000-000000000002') then
+    raise exception 'FAIL: romantic story shown outside the author''s age range';
+  end if;
+end $$;
+rollback;
+
+-- Mutual: a woman looking for men and a woman looking for women never see each other.
+begin;
+update public.profiles set dating_enabled = true, pref_gender = 'male', pref_min_age = 18, pref_max_age = 99, pref_distance_km = 200
+  where id = '00000000-0000-4000-a000-000000000001'; -- Noa
+update public.profiles set dating_enabled = true, pref_gender = 'female', pref_min_age = 18, pref_max_age = 99, pref_distance_km = 200
+  where id = '00000000-0000-4000-a000-000000000002'; -- Maya
+insert into public.stories (author_id, media_url, media_type, caption, is_romantic)
+  values ('00000000-0000-4000-a000-000000000001', 'https://example.com/n.jpg', 'image', 'noa', true);
+set local role authenticated;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000001');
+do $$ begin
+  if exists (select 1 from public.stories where is_romantic and author_id = '00000000-0000-4000-a000-000000000002') then
+    raise exception 'FAIL: Noa (wants men) sees Maya''s romantic story';
+  end if;
+  if exists (select 1 from public.mutual_fits(array['00000000-0000-4000-a000-000000000002'::uuid])) then
+    raise exception 'FAIL: Maya in Noa''s swing';
+  end if;
+  if not exists (select 1 from public.mutual_fits(array['00000000-0000-4000-a000-000000000006'::uuid])) then
+    raise exception 'FAIL: Daniel (man, wants women) missing from Noa''s swing';
+  end if;
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000002');
+do $$ begin
+  if exists (select 1 from public.stories where is_romantic and author_id = '00000000-0000-4000-a000-000000000001') then
+    raise exception 'FAIL: Maya (wants women) sees Noa''s story though Noa wants men';
+  end if;
+  if exists (select 1 from public.mutual_fits(array['00000000-0000-4000-a000-000000000001'::uuid])) then
+    raise exception 'FAIL: Noa in Maya''s swing';
+  end if;
+end $$;
+rollback;
+
 -- Date invites: sender creates, a DM + notification appear, only the recipient answers.
 begin;
 set local role authenticated; select pg_temp.as_user('00000000-0000-4000-a000-000000000006');

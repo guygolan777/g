@@ -17,7 +17,6 @@ import { geocode } from "@/lib/geocode";
 import { toLocalInput } from "@/lib/format";
 import { whoComesTitle } from "@/lib/event-title";
 import type { AudienceGender, EventRow, Recurrence } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 export type EventFormValues = {
   title: string;
@@ -365,7 +364,6 @@ export function EventForm({
         </div>
       </details>
 
-      {mode === "create" && <StoryNote />}
     </div>
   );
 }
@@ -384,11 +382,3 @@ export function PaymentLinkField({ value, onChange, className }: { value: string
   );
 }
 
-/** Every new event is published as a story automatically — this just says so. */
-export function StoryNote({ className }: { className?: string }) {
-  return (
-    <p className={cn("rounded-2xl bg-sky-100 p-4 text-sm text-sky-900 dark:bg-sky-950 dark:text-sky-100", className)}>
-      <b>✨ האירוע יפורסם גם כסטורי</b> — עד 72 שעות, עד תחילת האירוע או עד שיתמלאו המקומות (המוקדם מביניהם).
-    </p>
-  );
-}
