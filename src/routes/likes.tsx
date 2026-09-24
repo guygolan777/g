@@ -164,6 +164,12 @@ function Dating() {
 
   const list = withoutBlocked(candidates.data ?? [], bl, (p) => p.id);
   const current = list[0];
+  // Empty swing: say how many are hidden by preferences (a count only — never who or where).
+  const hidden = useQuery({
+    queryKey: ["dating-candidates", "hidden", user?.id, candidatesKey.slice(2)],
+    enabled: dating && !!settings && tab === "swing" && !candidates.isLoading && !current,
+    queryFn: async () => ((await supabase.rpc("dating_hidden_count")).data as number | null) ?? 0,
+  });
 
   async function swipe(action: "like" | "pass") {
     if (!current) return;
@@ -312,7 +318,11 @@ function Dating() {
             <EmptyState
               emoji="🌙"
               title="אין כרגע פרופילים חדשים"
-              text="נסו להרחיב את טווח הגילאים או המרחק"
+              text={
+                hidden.data
+                  ? `${hidden.data} ${hidden.data === 1 ? "אדם נוסף במצב היכרויות מחוץ" : "אנשים נוספים במצב היכרויות מחוץ"} להעדפות — שלך או שלהם. אפשר להרחיב את טווח הגילאים או המרחק.`
+                  : "נסו להרחיב את טווח הגילאים או המרחק"
+              }
               action={
                 <div className="flex gap-2">
                   <Button variant="soft" onClick={() => setPrefsOpen(true)}>

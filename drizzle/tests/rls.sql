@@ -186,6 +186,23 @@ do $$ begin
 end $$;
 rollback;
 
+-- Empty swing: a count of people hidden by preferences (mine or theirs); new profiles default to no distance limit.
+begin;
+update public.profiles set dating_enabled = true, pref_min_age = 18, pref_max_age = 18
+  where id = '00000000-0000-4000-a000-000000000001'; -- Noa: nobody fits an 18–18 range
+set local role authenticated; select pg_temp.as_user('00000000-0000-4000-a000-000000000001');
+do $$ begin
+  if coalesce(public.dating_hidden_count(), 0) = 0 then raise exception 'FAIL: hidden count is 0 with an impossible age range'; end if;
+end $$;
+reset role;
+do $$ begin
+  if (select column_default from information_schema.columns
+      where table_schema = 'public' and table_name = 'profiles' and column_name = 'pref_distance_km') <> '200' then
+    raise exception 'FAIL: pref_distance_km default is not 200 (unlimited)';
+  end if;
+end $$;
+rollback;
+
 -- Date invites: sender creates, a DM + notification appear, only the recipient answers.
 begin;
 set local role authenticated; select pg_temp.as_user('00000000-0000-4000-a000-000000000006');
