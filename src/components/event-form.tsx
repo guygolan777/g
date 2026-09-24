@@ -10,7 +10,7 @@ import { Chip } from "@/components/chip";
 import { useAuth } from "@/hooks/use-auth";
 import { useMyCommunities } from "@/lib/queries";
 import { HOBBY_CATEGORIES } from "@/lib/hobby-categories";
-import { UNLIMITED_SEATS } from "@/lib/constants";
+import { EVENT_MIN_AGE, PAID_EVENTS_ENABLED, UNLIMITED_SEATS } from "@/lib/constants";
 import { uploadMedia } from "@/lib/storage";
 import { getCurrentPosition } from "@/lib/native";
 import { AddressInput } from "@/components/address-input";
@@ -307,8 +307,15 @@ export function EventForm({
       </div>
 
       <Field label="מחיר (₪, 0 = חינם)">
-        <Input type="number" min={0} value={value.price} onChange={(e) => set("price", Math.max(0, Number(e.target.value) || 0))} />
+        <Input
+          type="number"
+          min={0}
+          value={value.price}
+          disabled={!PAID_EVENTS_ENABLED}
+          onChange={(e) => set("price", Math.max(0, Number(e.target.value) || 0))}
+        />
       </Field>
+      {!PAID_EVENTS_ENABLED && <p className="-mt-2 text-xs text-muted-foreground">בשלב זה אפשר לפתוח רק אירועים חינמיים.</p>}
       {value.price > 0 && <PaymentLinkField value={value.payment_link} onChange={(v) => set("payment_link", v)} />}
 
       {mode === "create" && (
@@ -362,10 +369,10 @@ export function EventForm({
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="גיל מינימלי">
-              <Input type="number" min={18} value={value.min_age ?? ""} onChange={(e) => set("min_age", e.target.value ? Number(e.target.value) : null)} />
+              <Input type="number" min={EVENT_MIN_AGE} placeholder={String(EVENT_MIN_AGE)} value={value.min_age ?? ""} onChange={(e) => set("min_age", e.target.value ? Number(e.target.value) : null)} />
             </Field>
             <Field label="גיל מקסימלי">
-              <Input type="number" min={18} value={value.max_age ?? ""} onChange={(e) => set("max_age", e.target.value ? Number(e.target.value) : null)} />
+              <Input type="number" min={EVENT_MIN_AGE} value={value.max_age ?? ""} onChange={(e) => set("max_age", e.target.value ? Number(e.target.value) : null)} />
             </Field>
           </div>
         </div>

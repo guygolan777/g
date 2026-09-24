@@ -1,5 +1,9 @@
 export const UNLIMITED_SEATS = 9999;
 export const MAX_PROFILE_PHOTOS = 6;
+/** Paid events are switched off for now — only free events can be opened. */
+export const PAID_EVENTS_ENABLED = false;
+/** Youngest age an event can be aimed at. */
+export const EVENT_MIN_AGE = 16;
 export const APP_NAME = "mibale";
 export const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined) || "https://mibale.app";
 

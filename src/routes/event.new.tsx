@@ -16,7 +16,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
 import { useInvalidateEvents, useMyCommunities } from "@/lib/queries";
 import { CUSTOM_CATEGORY, HOBBY_CATEGORIES, getSubcategory } from "@/lib/hobby-categories";
-import { UNLIMITED_SEATS } from "@/lib/constants";
+import { EVENT_MIN_AGE, PAID_EVENTS_ENABLED, UNLIMITED_SEATS } from "@/lib/constants";
 import { uploadMedia } from "@/lib/storage";
 import { toLocalInput } from "@/lib/format";
 import { whoComesTitle } from "@/lib/event-title";
@@ -381,15 +381,15 @@ function NewEvent() {
             <div className="grid grid-cols-2 gap-2">
               <Input
                 type="number"
-                min={18}
-                placeholder="18"
+                min={EVENT_MIN_AGE}
+                placeholder={String(EVENT_MIN_AGE)}
                 className="rounded-full border-0 bg-surface-soft"
                 value={form.min_age ?? ""}
                 onChange={(e) => set("min_age", e.target.value ? Number(e.target.value) : null)}
               />
               <Input
                 type="number"
-                min={18}
+                min={EVENT_MIN_AGE}
                 placeholder="99"
                 className="rounded-full border-0 bg-surface-soft"
                 value={form.max_age ?? ""}
@@ -411,7 +411,7 @@ function NewEvent() {
           <div>
             <div className="flex items-center justify-between">
               <SectionTitle Icon={DollarSign}>מחיר</SectionTitle>
-              <Switch checked={paid} onCheckedChange={setPaid} aria-label="אירוע בתשלום" />
+              <Switch checked={paid} onCheckedChange={setPaid} disabled={!PAID_EVENTS_ENABLED} aria-label="אירוע בתשלום" />
             </div>
             {paid ? (
               <>
@@ -426,7 +426,9 @@ function NewEvent() {
                 <PaymentLinkField className="mt-3" value={form.payment_link} onChange={(v) => set("payment_link", v)} />
               </>
             ) : (
-              <p className="mt-2 text-sm text-muted-foreground">ההזמנה הזו חינמית להצטרפות.</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {PAID_EVENTS_ENABLED ? "ההזמנה הזו חינמית להצטרפות." : "ההזמנה הזו חינמית להצטרפות. בשלב זה אפשר לפתוח רק אירועים חינמיים."}
+              </p>
             )}
           </div>
 
