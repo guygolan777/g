@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ChevronRight, Heart, Info, MessageSquare, SlidersHorizontal, Undo2, X } from "lucide-react";
 import { EmptyState, Page } from "@/components/app-shell";
 import { Avatar } from "@/components/avatar";
+import { LocationButton } from "@/components/location-button";
 import { RequireAuth } from "@/components/gates";
 import { PhotoCarousel } from "@/components/pickers";
 import { StoryRail } from "@/components/story-rail";
@@ -224,10 +225,11 @@ function Dating() {
         <button onClick={() => window.history.back()} className="grid size-12 place-items-center rounded-full bg-surface-soft" aria-label="חזרה">
           <ChevronRight className="size-6" />
         </button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold">מי בא לדייט?</h1>
-          <p className="text-sm text-muted-foreground">הצד הרומנטי שלכם</p>
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate text-2xl font-bold">מי בא לדייט?</h1>
+          <p className="truncate text-sm text-muted-foreground">הצד הרומנטי שלכם</p>
         </div>
+        <LocationButton />
         <Link to="/me">
           <Avatar src={profile?.avatar_url} name={profile?.name} size={52} />
         </Link>

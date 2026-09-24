@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { getCurrentPosition, isNative } from "@/lib/native";
 import { supabase } from "@/lib/supabase";
-import { reverseGeocodeCity } from "@/lib/geocode";
+import { geocode, reverseGeocodeCity } from "@/lib/geocode";
 
 const LAST_KEY = "mibale-location-at";
 const REFRESH_MS = 30 * 60 * 1000;
@@ -23,14 +23,15 @@ export async function locationPermissionGranted(): Promise<boolean> {
 }
 
 /** Stores the position privately (only distances are ever shown to others). */
-export async function saveMyLocation(userId: string, pos: { lat: number; lng: number }): Promise<boolean> {
-  const city = await reverseGeocodeCity(pos.lat, pos.lng);
+export async function saveMyLocation(userId: string, pos: { lat: number; lng: number }, knownCity?: string, holdMs = 0): Promise<boolean> {
+  const city = knownCity ?? (await reverseGeocodeCity(pos.lat, pos.lng));
   const { error } = await supabase
     .from("profile_locations")
     .upsert({ profile_id: userId, lat: pos.lat, lng: pos.lng, city, updated_at: new Date().toISOString() });
   if (error) return false;
   try {
-    localStorage.setItem(LAST_KEY, String(Date.now()));
+    // holdMs pushes the next silent GPS refresh back, so a hand-picked city isn't overwritten right away.
+    localStorage.setItem(LAST_KEY, String(Date.now() + holdMs));
   } catch {
     /* ignore */
   }
@@ -50,6 +51,26 @@ export function useUpdateLocation() {
     for (const queryKey of LOCATION_QUERIES) void qc.invalidateQueries({ queryKey });
     return true;
   }, [user, qc]);
+}
+
+const MANUAL_HOLD_MS = 12 * 60 * 60 * 1000;
+
+/** Sets the location to a typed place ("חיפה", "רחוב הרצל 1 ראשון לציון"). Returns the city, or null if not found. */
+export function useSetLocationByName() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return React.useCallback(
+    async (query: string): Promise<string | null> => {
+      if (!user) return null;
+      const hit = await geocode(query);
+      if (!hit) return null;
+      const city = await reverseGeocodeCity(hit.lat, hit.lng);
+      if (!(await saveMyLocation(user.id, hit, city, MANUAL_HOLD_MS))) return null;
+      for (const queryKey of LOCATION_QUERIES) void qc.invalidateQueries({ queryKey });
+      return city;
+    },
+    [user, qc],
+  );
 }
 
 /** Keeps "near me" fresh: silently re-reads the location on app open (every 30 min at most),
