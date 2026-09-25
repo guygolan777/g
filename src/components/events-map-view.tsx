@@ -1,5 +1,5 @@
 import * as React from "react";
-import { LocateFixed, X } from "lucide-react";
+import { List, LocateFixed, X } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
 import { EventMedia, priceLabel, type EventCardData } from "@/components/event-card";
@@ -49,10 +49,13 @@ export function EventsMapView({
   cards,
   center,
   isGuest,
+  onExit,
 }: {
   cards: EventCardData[];
   center: { lat: number; lng: number } | null | undefined;
   isGuest: boolean;
+  /** Back to the list — the map fills the screen, so the view toggle above it is out of reach. */
+  onExit: () => void;
 }) {
   const [mod, setMod] = React.useState<Mod | null>(null);
   const [selected, setSelected] = React.useState<string | null>(null);
@@ -85,13 +88,34 @@ export function EventsMapView({
 
   async function locate() {
     setLocating(true);
+    flyToMe.current = true;
     const ok = await update();
     setLocating(false);
     if (!ok) toast.error("לא הצלחנו לאתר מיקום — בדקו שהמיקום מופעל");
   }
+  // Frame me and the nearest events: centering on my location alone at street zoom often shows no pins at all.
+  const nearest = React.useMemo(() => {
+    const all = cards.filter((c) => c.event.lat != null && c.event.lng != null && !c.event.is_online).map((c) => [c.event.lat!, c.event.lng!] as [number, number]);
+    if (!center) return all;
+    const d = ([la, ln]: [number, number]) => (la - center.lat) ** 2 + (ln - center.lng) ** 2;
+    return [...all].sort((a, b) => d(a) - d(b)).slice(0, 6);
+  }, [cards, center]);
+  const framed = React.useRef(false);
+  const flyToMe = React.useRef(false);
   React.useEffect(() => {
-    if (map && center) map.flyTo([center.lat, center.lng], 12, { duration: 0.6 });
+    if (map && center && flyToMe.current) {
+      flyToMe.current = false;
+      map.flyTo([center.lat, center.lng], 12, { duration: 0.6 });
+    }
   }, [map, center]);
+  React.useEffect(() => {
+    if (!map || !mod || framed.current) return;
+    const pts: Array<[number, number]> = [...nearest, ...(center ? [[center.lat, center.lng] as [number, number]] : [])];
+    if (pts.length === 0) return;
+    framed.current = true;
+    if (pts.length === 1) map.setView(pts[0], 12);
+    else map.fitBounds(mod.L.latLngBounds(pts), { padding: [48, 48], maxZoom: 13 });
+  }, [map, mod, nearest, center]);
 
   if (!mod) return <div className="mt-4 h-[calc(100dvh-7rem)] w-full animate-pulse rounded-3xl bg-muted" />;
   const { MapContainer, TileLayer, Marker, CircleMarker } = mod.rl;
@@ -136,7 +160,14 @@ export function EventsMapView({
           <span className={cn("size-2 rounded-full bg-like", nowCount > 0 && "animate-pulse")} />
           קורה עכשיו{nowCount > 0 ? ` (${nowCount})` : ""}
         </Chip>
-        <span className="pointer-events-auto rounded-full bg-surface/90 px-3 py-1.5 text-sm shadow-soft backdrop-blur">{pins.length} אירועים על המפה</span>
+        <button
+          type="button"
+          onClick={onExit}
+          className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-sm font-semibold shadow-soft"
+        >
+          <List className="size-4" /> רשימה
+        </button>
+        <span className="pointer-events-auto hidden rounded-full bg-surface/90 px-3 py-1.5 text-sm shadow-soft backdrop-blur sm:inline">{pins.length} אירועים על המפה</span>
       </div>
 
       {/* Locate me */}

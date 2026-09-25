@@ -63,7 +63,7 @@ export function EventsFeed() {
       <EventFilterSheet open={sheet} onOpenChange={setSheet} value={filters} onApply={setFilters} />
 
       {view === "map" && !feed.isLoading ? (
-        <EventsMapView cards={mapCards} center={feed.location} isGuest={feed.isGuest} />
+        <EventsMapView cards={mapCards} center={feed.location} isGuest={feed.isGuest} onExit={() => setView("list")} />
       ) : null}
 
       {view === "map" && !feed.isLoading ? null : feed.isLoading ? (
