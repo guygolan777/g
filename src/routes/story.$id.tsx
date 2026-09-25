@@ -3,7 +3,7 @@ import { SafeImg } from "@/components/safe-img";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CalendarDays, Eye, Heart, Send, Trash2, Volume2, VolumeX, X } from "lucide-react";
+import { CalendarDays, Eye, Send, Trash2, Volume2, VolumeX, X } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import { CenteredSpinner } from "@/components/app-shell";
 import { RequireAuth } from "@/components/gates";
@@ -16,10 +16,8 @@ import { channelName } from "@/lib/realtime";
 import { whoComesTitle } from "@/lib/event-title";
 import { formatDate, formatEventWhen, formatTime } from "@/lib/format";
 import { formatRelative } from "@/lib/format";
-import { hapticTap } from "@/lib/native";
 import { seo } from "@/lib/seo";
 import type { ParticipantStatus } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/story/$id")({
   // ?romantic=1 is parsed as a number by the router, so compare as text.
@@ -191,15 +189,6 @@ function StorySlide({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, paused, story.media_type]);
 
-  const likes = useQuery({
-    queryKey: ["story-likes", story.id, user?.id],
-    enabled: active,
-    queryFn: async () => {
-      const { data } = await supabase.from("story_likes").select("profile_id").eq("story_id", story.id);
-      const rows = (data ?? []) as Array<{ profile_id: string }>;
-      return { liked: rows.some((r) => r.profile_id === user?.id), count: rows.length };
-    },
-  });
   const views = useQuery({
     queryKey: ["story-views", story.id],
     enabled: active && isMine,
@@ -208,17 +197,6 @@ function StorySlide({
       return count ?? 0;
     },
   });
-
-  async function toggleLike() {
-    if (!user) return;
-    const liked = likes.data?.liked;
-    const { error } = liked
-      ? await supabase.from("story_likes").delete().eq("story_id", story.id).eq("profile_id", user.id)
-      : await supabase.from("story_likes").insert({ story_id: story.id, profile_id: user.id });
-    if (error) return;
-    if (!liked) void hapticTap();
-    void qc.invalidateQueries({ queryKey: ["story-likes", story.id] });
-  }
 
   async function sendReply(e: React.FormEvent) {
     e.preventDefault();
@@ -328,9 +306,6 @@ function StorySlide({
             <span className="flex items-center gap-1">
               <Eye className="size-5" /> {views.data ?? 0}
             </span>
-            <span className="flex items-center gap-1">
-              <Heart className="size-5" /> {likes.data?.count ?? 0}
-            </span>
           </div>
         ) : (
           <form onSubmit={sendReply} className="flex items-center gap-2 pb-4">
@@ -339,16 +314,12 @@ function StorySlide({
               onChange={(e) => setReply(e.target.value)}
               onFocus={() => onPause(true)}
               onBlur={() => onPause(false)}
-              placeholder="תגובה לסטורי…"
+              placeholder="תגובות"
               className="h-11 flex-1 rounded-full border border-scrim-foreground/40 bg-transparent px-4 text-scrim-foreground outline-none placeholder:text-scrim-foreground/70"
             />
-            {reply.trim() ? (
+            {reply.trim() && (
               <button type="submit" className="grid size-11 place-items-center rounded-full bg-primary text-primary-foreground" aria-label="שליחה">
                 <Send className="size-5" />
-              </button>
-            ) : (
-              <button type="button" onClick={() => void toggleLike()} className="grid size-11 place-items-center text-scrim-foreground" aria-label="לייק">
-                <Heart className={cn("size-7", likes.data?.liked && "fill-like text-like")} />
               </button>
             )}
           </form>
