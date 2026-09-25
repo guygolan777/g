@@ -6,8 +6,8 @@ import { HOBBY_CATEGORIES, hobbyLabel } from "../hobby-categories";
 
 describe("whoComesTitle", () => {
   it("prefixes once", () => {
-    expect(whoComesTitle("ריצת בוקר")).toBe("מי בא לריצת בוקר");
-    expect(whoComesTitle("מי בא לריצת בוקר")).toBe("מי בא לריצת בוקר");
+    expect(whoComesTitle("ריצת בוקר")).toBe("מי בא לריצת בוקר?");
+    expect(whoComesTitle("מי בא לריצת בוקר")).toBe("מי בא לריצת בוקר?");
   });
 });
 

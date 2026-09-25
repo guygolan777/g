@@ -2,7 +2,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "app.mibale",
-  appName: "mibale",
+  appName: "mibale?",
   webDir: process.env.CAP_WEB_DIR ?? "dist/client",
   server: {
     androidScheme: "https",

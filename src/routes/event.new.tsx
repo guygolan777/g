@@ -96,7 +96,8 @@ function NewEvent() {
   // The heading is the editable title: picking an activity fills "מי בא ל<activity>"; editing it
   // away from that clears the pick, so "מי בא לאכול פלאפל?" is an event with no activity card.
   const [heading, setHeading] = React.useState(TITLE_PREFIX);
-  const customTitle = (heading.startsWith(TITLE_PREFIX) ? heading.slice(TITLE_PREFIX.length) : heading).trim();
+  // Stored without the prefix and the question mark; whoComesTitle() adds both when displaying.
+  const customTitle = (heading.startsWith(TITLE_PREFIX) ? heading.slice(TITLE_PREFIX.length) : heading).trim().replace(/\?+$/, "").trim();
   const unlimited = form.seats >= UNLIMITED_SEATS;
   const ready = (!!form.subcategory || customTitle.length > 1) && (form.is_online ? /^https?:\/\//.test(form.meeting_url.trim()) : form.location_name.trim().length > 1);
 
@@ -156,7 +157,7 @@ function NewEvent() {
         value={heading}
         onChange={(v) => {
           setHeading(v);
-          if (chosen && v !== TITLE_PREFIX + chosen.label) set("subcategory", null);
+          if (chosen && v !== pickedTitle(chosen.label)) set("subcategory", null);
         }}
       />
       <div className="-mx-4 mt-3 flex gap-5 overflow-x-auto border-b border-border px-4 scrollbar-none">
@@ -165,7 +166,7 @@ function NewEvent() {
             key={c.id}
             type="button"
             onClick={() => {
-              if (chosen && heading === TITLE_PREFIX + chosen.label) setHeading(TITLE_PREFIX);
+              if (chosen && heading === pickedTitle(chosen.label)) setHeading(TITLE_PREFIX);
               setForm((f) => ({ ...f, category: c.id, subcategory: null }));
             }}
             className={cn(
@@ -185,7 +186,7 @@ function NewEvent() {
             type="button"
             onClick={() => {
               set("subcategory", s.id);
-              setHeading(TITLE_PREFIX + s.label);
+              setHeading(pickedTitle(s.label));
             }}
             style={{ width: "calc((100% - 3 * 0.75rem) / 3.5)" }}
             className={cn(
@@ -475,6 +476,8 @@ function NewEvent() {
 }
 
 const TITLE_PREFIX = "מי בא ל";
+/** Picking an activity fills the title as a question: "מי בא לכדורגל?". */
+const pickedTitle = (label: string) => `${TITLE_PREFIX}${label}?`;
 
 /**
  * The event title as a big editable heading. A blinking caret sits at the end of the text while it

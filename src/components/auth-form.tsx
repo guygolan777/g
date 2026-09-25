@@ -8,7 +8,7 @@ export function AuthLayout({ title, subtitle, children, footer }: { title: strin
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-6 pt-safe pb-10">
       <Link to="/" className="mt-10 font-display text-3xl font-bold text-gradient-brand">
-        mibale
+        <span dir="ltr">mibale?</span>
       </Link>
       <h1 className="mt-8 text-2xl font-bold">{title}</h1>
       {subtitle && <p className="mt-1 text-muted-foreground">{subtitle}</p>}

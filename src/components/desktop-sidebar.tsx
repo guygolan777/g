@@ -38,7 +38,7 @@ export function DesktopSidebar() {
   return (
     <aside className="fixed inset-y-0 right-0 z-40 hidden w-64 flex-col border-s border-border bg-surface px-4 py-6 lg:flex" dir="rtl">
       <Link to="/home" className="px-3 font-display text-4xl font-extrabold text-gradient-brand">
-        mibale
+        <span dir="ltr">mibale?</span>
       </Link>
       <nav className="mt-8 flex flex-col gap-1">
         {items

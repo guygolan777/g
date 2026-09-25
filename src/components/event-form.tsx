@@ -125,7 +125,7 @@ export async function formToPayload(v: EventFormValues) {
     if (g) ({ lat, lng } = g);
   }
   return {
-    title: v.title.trim().replace(/^מי בא ל/, ""),
+    title: v.title.trim().replace(/^מי בא ל/, "").replace(/\?+$/, "").trim(),
     description: v.description.trim(),
     category: v.category,
     subcategory: v.subcategory,

@@ -4,7 +4,7 @@ export const MAX_PROFILE_PHOTOS = 6;
 export const PAID_EVENTS_ENABLED = false;
 /** Youngest age an event can be aimed at. */
 export const EVENT_MIN_AGE = 16;
-export const APP_NAME = "mibale";
+export const APP_NAME = "mibale?";
 export const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined) || "https://mibale.app";
 
 /** Full profiles are read from this view — private profiles come back with their details empty. */
