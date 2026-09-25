@@ -63,7 +63,7 @@ function StoryViewer() {
       if (i < 0) return;
       if (i >= flat.length) return close();
       const el = scroller.current?.children[i] as HTMLElement | undefined;
-      el?.scrollIntoView({ behavior: "smooth", inline: "center" });
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
     },
     [flat.length, close],
   );
@@ -73,7 +73,7 @@ function StoryViewer() {
     if (isLoading || !order) return;
     const i = flat.findIndex((s) => s.id === id);
     const el = scroller.current?.children[Math.max(0, i)] as HTMLElement | undefined;
-    el?.scrollIntoView({ behavior: "instant" as ScrollBehavior, inline: "center" });
+    el?.scrollIntoView({ behavior: "instant" as ScrollBehavior, block: "center" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading, order]);
 
@@ -99,7 +99,8 @@ function StoryViewer() {
 
   return (
     <div className="fixed inset-0 z-50 bg-foreground" dir="rtl">
-      <div ref={scroller} className="flex size-full snap-x snap-mandatory overflow-x-auto scrollbar-none">
+      {/* Vertical feed: swipe up for the next story, down for the previous one. */}
+      <div ref={scroller} className="flex size-full snap-y snap-mandatory flex-col overflow-y-auto overscroll-y-contain scrollbar-none">
         {flat.map((s, i) => (
           <StorySlide
             key={s.id}
@@ -236,7 +237,7 @@ function StorySlide({
   }
 
   return (
-    <section data-id={story.id} className="relative size-full shrink-0 snap-center overflow-hidden bg-foreground">
+    <section data-id={story.id} className="relative size-full shrink-0 snap-center snap-always overflow-hidden bg-foreground">
       {!story.media_url ? (
         // Event story without a cover image: a light-blue backdrop; the caption and event card sit on top.
         <div className="absolute inset-0 grid place-items-center bg-gradient-ring-event">
@@ -277,6 +278,11 @@ function StorySlide({
         }}
         onPointerUp={() => onPause(false)}
         onPointerLeave={() => onPause(false)}
+        // a swipe turns the press into a scroll (pointercancel) — resume the timer
+        onPointerCancel={() => {
+          pressedAt.current = 0;
+          onPause(false);
+        }}
       />
 
       <div className="absolute inset-x-0 top-0 px-3 pt-safe">
