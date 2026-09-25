@@ -10,7 +10,7 @@ import { GuestStatsRow } from "@/components/guest";
 export const Route = createFileRoute("/")({
   head: () =>
     seo({
-      title: "mibale — מי בא?",
+      title: "Mibale? - מי בא ל..?",
       description: "האפליקציה החברתית שמחברת אנשים דרך אירועים, קהילות ותחביבים משותפים. מצאו מי בא איתכם.",
     }),
   component: Landing,

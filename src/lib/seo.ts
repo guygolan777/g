@@ -4,7 +4,7 @@ type SeoInput = { title: string; description: string; type?: string; image?: str
 
 /** Unique head() content for a route: title, description, OG and Twitter tags. */
 export function seo({ title, description, type = "website", image }: SeoInput) {
-  const full = title.includes(APP_NAME) ? title : `${title} · ${APP_NAME}`;
+  const full = title.toLowerCase().includes(APP_NAME) ? title : `${title} · ${APP_NAME}`;
   const meta: Array<Record<string, string>> = [
     { title: full },
     { name: "description", content: description },

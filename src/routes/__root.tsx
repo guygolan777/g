@@ -23,7 +23,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "theme-color", content: "#3b82f6" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
-      ...seo({ title: "mibale — מי בא?", description: "מוצאים אנשים, אירועים וקהילות סביב מה שאוהבים." }).meta,
+      ...seo({ title: "Mibale? - מי בא ל..?", description: "מוצאים אנשים, אירועים וקהילות סביב מה שאוהבים." }).meta,
     ],
     links: [
       { rel: "stylesheet", href: appCss },
