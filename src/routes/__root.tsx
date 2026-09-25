@@ -12,7 +12,7 @@ import { NotificationToaster } from "@/components/notification-toaster";
 import { GuestSignupBar } from "@/components/guest";
 import { ThemeScript, useThemeSync } from "@/lib/theme";
 import { seo } from "@/lib/seo";
-import { listenAuthCallback } from "@/lib/native";
+import { isNative, listenAuthCallback } from "@/lib/native";
 import { useAutoLocation } from "@/lib/location";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
@@ -45,7 +45,20 @@ function RootComponent() {
     void listenAuthCallback(() => void router.navigate({ to: "/home" }));
   }, [router]);
   React.useEffect(() => {
-    if ("serviceWorker" in navigator && import.meta.env.PROD && import.meta.env.VITE_DEMO !== "1") {
+    if (!("serviceWorker" in navigator)) return;
+    // Inside the Android app the files ship with the APK. A service worker there can't reach them
+    // (its fetches go to the network, not to the app), so it kept serving the first cached build
+    // after every update. Remove any left over from older app versions, and only register on the web.
+    if (isNative()) {
+      void navigator.serviceWorker.getRegistrations().then(async (regs) => {
+        if (!regs.length) return;
+        await Promise.all(regs.map((r) => r.unregister()));
+        if ("caches" in window) await Promise.all((await caches.keys()).map((k) => caches.delete(k)));
+        window.location.reload();
+      });
+      return;
+    }
+    if (import.meta.env.PROD && import.meta.env.VITE_DEMO !== "1") {
       void navigator.serviceWorker.register("/sw.js").catch(() => undefined);
     }
   }, []);
