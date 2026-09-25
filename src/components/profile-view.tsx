@@ -20,7 +20,7 @@ import { getTrait, traitToneClass } from "@/lib/traits";
 import { whoComesTitle } from "@/lib/event-title";
 import { hapticTap } from "@/lib/native";
 import type { EventRow, ParticipantStatus, Profile } from "@/lib/types";
-import { cn, isVideoUrl } from "@/lib/utils";
+import { VIDEO_POSTER, cn, isVideoUrl, videoFrameSrc } from "@/lib/utils";
 
 type EventFilter = "all" | "organizer" | "participant" | "pending";
 type Role = "organizer" | "participant" | "pending";
@@ -157,7 +157,8 @@ function MediaCard({ profile, isMe }: { profile: Profile; isMe: boolean }) {
         <video
           ref={videoRef}
           key={current}
-          src={current}
+          src={videoFrameSrc(current)}
+          poster={VIDEO_POSTER}
           autoPlay
           loop
           playsInline

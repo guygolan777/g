@@ -17,6 +17,7 @@ import { whoComesTitle } from "@/lib/event-title";
 import { formatDate, formatEventWhen, formatTime } from "@/lib/format";
 import { formatRelative } from "@/lib/format";
 import { seo } from "@/lib/seo";
+import { VIDEO_POSTER, videoFrameSrc } from "@/lib/utils";
 import type { ParticipantStatus } from "@/lib/types";
 
 export const Route = createFileRoute("/story/$id")({
@@ -226,7 +227,8 @@ function StorySlide({
       ) : story.media_type === "video" ? (
         <video
           ref={videoRef}
-          src={story.media_url}
+          src={videoFrameSrc(story.media_url)}
+          poster={VIDEO_POSTER}
           muted={muted}
           playsInline
           preload="metadata"

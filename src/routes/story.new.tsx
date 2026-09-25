@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
 import { uploadMedia } from "@/lib/storage";
 import { seo } from "@/lib/seo";
+import { VIDEO_POSTER } from "@/lib/utils";
 
 export const Route = createFileRoute("/story/new")({
   validateSearch: (s: Record<string, unknown>): { romantic?: "1" } => ({ romantic: String(s.romantic) === "1" ? "1" : undefined }),
@@ -73,7 +74,7 @@ function NewStory() {
       >
         {preview ? (
           isVideo ? (
-            <video src={preview} muted autoPlay loop playsInline className="absolute inset-0 size-full object-cover" />
+            <video src={preview} poster={VIDEO_POSTER} muted autoPlay loop playsInline className="absolute inset-0 size-full object-cover" />
           ) : (
             <SafeImg src={preview} alt="" className="absolute inset-0 size-full object-cover" />
           )

@@ -1,13 +1,13 @@
 import * as React from "react";
 import { SafeImg } from "@/components/safe-img";
-import { Plus, X } from "lucide-react";
+import { Play, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 import { Chip } from "@/components/chip";
 import { HOBBY_CATEGORIES } from "@/lib/hobby-categories";
 import { TRAIT_GROUPS, toggleTrait } from "@/lib/traits";
 import { MAX_PROFILE_PHOTOS } from "@/lib/constants";
 import { uploadMedia } from "@/lib/storage";
-import { cn, isVideoUrl } from "@/lib/utils";
+import { VIDEO_POSTER, cn, isVideoUrl, videoFrameSrc } from "@/lib/utils";
 
 /** Hobbies: pick categories, then refine by subcategory. */
 export function HobbyPicker({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
@@ -96,7 +96,13 @@ export function PhotoGridPicker({ userId, value, onChange }: { userId: string; v
             {url ? (
               <>
                 {isVideoUrl(url) ? (
-                  <video src={url} muted playsInline className="size-full object-cover" />
+                  <>
+                    {/* plays silently in its tile, like a moving thumbnail */}
+                    <video src={videoFrameSrc(url)} poster={VIDEO_POSTER} muted autoPlay loop playsInline preload="metadata" className="size-full object-cover" />
+                    <span className="absolute top-1.5 right-1.5 grid size-6 place-items-center rounded-full bg-foreground/60 text-background" aria-hidden>
+                      <Play className="size-3 fill-current" />
+                    </span>
+                  </>
                 ) : (
                   <SafeImg src={url} alt="" className="size-full object-cover" />
                 )}
@@ -175,7 +181,7 @@ export function PhotoCarousel({ photos, className, children }: { photos: string[
         {list.map((p, i) => (
           <div key={i} className="size-full shrink-0 snap-center">
             {p && isVideoUrl(p) ? (
-              <video src={p} autoPlay={i === idx} muted loop playsInline preload="metadata" className="size-full object-cover" />
+              <video src={videoFrameSrc(p)} poster={VIDEO_POSTER} autoPlay={i === idx} muted loop playsInline preload="metadata" className="size-full object-cover" />
             ) : p ? (
               <SafeImg src={p} alt="" className="size-full object-cover" />
             ) : (
