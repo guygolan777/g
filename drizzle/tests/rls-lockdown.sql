@@ -1,4 +1,4 @@
--- Run after drizzle/pending/0019: private columns can't be read from profiles directly.
+-- After 0019: private columns can't be read from profiles directly.
 begin;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-a000-000000000009', true);
