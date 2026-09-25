@@ -22,7 +22,8 @@ import type { ParticipantStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/story/$id")({
-  validateSearch: (s: Record<string, unknown>): { romantic?: "1" } => ({ romantic: s.romantic === "1" ? "1" : undefined }),
+  // ?romantic=1 is parsed as a number by the router, so compare as text.
+  validateSearch: (s: Record<string, unknown>): { romantic?: "1" } => ({ romantic: String(s.romantic) === "1" ? "1" : undefined }),
   head: () => seo({ title: "סטורי", description: "סטוריז מאנשים ואירועים ב-mibale." }),
   component: () => (
     <RequireAuth>
@@ -37,7 +38,18 @@ function StoryViewer() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const { romantic } = Route.useSearch();
-  const { flat, isLoading } = useActiveStories(romantic === "1");
+  const { flat: live, isLoading } = useActiveStories(romantic === "1");
+  // Keep the order the viewer opened with: marking a story seen refetches the list, which sorts
+  // unseen authors first — reordering the slides mid-viewing made it jump and skip stories.
+  const [order, setOrder] = React.useState<string[] | null>(null);
+  React.useEffect(() => {
+    if (!isLoading && order === null && live.length) setOrder(live.map((s) => s.id));
+  }, [isLoading, live, order]);
+  const flat = React.useMemo(() => {
+    if (!order) return live;
+    const byId = new Map(live.map((s) => [s.id, s]));
+    return order.flatMap((sid) => byId.get(sid) ?? []);
+  }, [live, order]);
   const scroller = React.useRef<HTMLDivElement>(null);
   const [current, setCurrent] = React.useState(id);
   const [muted, setMuted] = React.useState(true);
@@ -58,12 +70,12 @@ function StoryViewer() {
 
   // Jump to the requested story once loaded.
   React.useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || !order) return;
     const i = flat.findIndex((s) => s.id === id);
     const el = scroller.current?.children[Math.max(0, i)] as HTMLElement | undefined;
     el?.scrollIntoView({ behavior: "instant" as ScrollBehavior, inline: "center" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading]);
+  }, [isLoading, order]);
 
   // Track which slide is centered.
   React.useEffect(() => {
@@ -137,6 +149,8 @@ function StorySlide({
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const [progress, setProgress] = React.useState(0);
   const [reply, setReply] = React.useState("");
+  // Holding the screen pauses; letting go after a hold must not also skip to the next story.
+  const pressedAt = React.useRef(0);
   const isMine = story.author_id === user?.id;
   const pos = siblings.findIndex((s) => s.id === story.id);
 
@@ -252,8 +266,15 @@ function StorySlide({
       <button
         className="absolute inset-y-24 left-0 w-2/3"
         aria-label="הבא"
-        onClick={onNext}
-        onPointerDown={() => onPause(true)}
+        onClick={() => {
+          const held = pressedAt.current > 0 && Date.now() - pressedAt.current >= 300;
+          pressedAt.current = 0;
+          if (!held) onNext();
+        }}
+        onPointerDown={() => {
+          pressedAt.current = Date.now();
+          onPause(true);
+        }}
         onPointerUp={() => onPause(false)}
         onPointerLeave={() => onPause(false)}
       />
