@@ -88,6 +88,8 @@ function NewStory() {
         ref={fileRef}
         type="file"
         accept="image/*,video/*"
+        // with "multiple", Chrome on Android offers videos too (single-file shows photos only); first file wins
+        multiple
         hidden
         onChange={(e) => {
           const f = e.target.files?.[0] ?? null;

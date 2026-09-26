@@ -167,6 +167,9 @@ export function EventMediaPicker({ value, onChange, className }: { value: EventM
         ref={fileRef}
         type="file"
         accept="image/*,video/*"
+        // Chrome on Android shows only photos in the single-file picker; with "multiple" (as in the profile
+        // gallery) it offers photos and videos. Only the first chosen file is used.
+        multiple
         hidden
         onChange={(e) => {
           const f = e.target.files?.[0];
