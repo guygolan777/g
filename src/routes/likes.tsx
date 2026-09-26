@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { GuestTeaser } from "@/components/guest";
 import { useGuestStats } from "@/lib/guest";
 import { ReportDialog } from "@/components/report-dialog";
+import { selectByIds } from "@/lib/by-ids";
 
 export const Route = createFileRoute("/likes")({
   head: () => seo({ title: "מי בא לדייט?", description: "הצד הרומנטי של mibale: סווינג, מי שחיבבתם והתאמות הדדיות." }),
@@ -71,9 +72,7 @@ function useMatches(uid?: string) {
     queryFn: async () => {
       const { data } = await supabase.from("dates").select("profile_a, profile_b, created_at").order("created_at", { ascending: false });
       const ids = (data ?? []).map((d) => (d.profile_a === uid ? d.profile_b : d.profile_a) as string);
-      if (!ids.length) return [];
-      const { data: ps } = await supabase.from(PROFILE_VIEW).select(PROFILE_COLUMNS).in("id", ids);
-      return (ps ?? []) as Profile[];
+      return selectByIds<Profile>(ids, (c) => supabase.from(PROFILE_VIEW).select(PROFILE_COLUMNS).in("id", c));
     },
   });
 }
@@ -90,9 +89,8 @@ function useLiked(uid?: string) {
         .eq("action", "like")
         .order("created_at", { ascending: false });
       const ids = (data ?? []).map((r) => r.liked_id as string);
-      if (!ids.length) return [];
-      const { data: ps } = await supabase.from(PROFILE_VIEW).select(PROFILE_COLUMNS).in("id", ids);
-      const byId = new Map(((ps ?? []) as Profile[]).map((p) => [p.id, p]));
+      const ps = await selectByIds<Profile>(ids, (c) => supabase.from(PROFILE_VIEW).select(PROFILE_COLUMNS).in("id", c));
+      const byId = new Map(ps.map((p) => [p.id, p]));
       return ids.flatMap((id) => byId.get(id) ?? []);
     },
   });

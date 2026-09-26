@@ -6,6 +6,7 @@ import { EVENT_COLUMNS, EVENT_GUEST_COLUMNS, PROFILE_COLUMNS, PROFILE_VIEW, PROF
 import { fetchBlockedIds, withoutBlocked } from "./blocks";
 import { useAuth } from "@/hooks/use-auth";
 import type { Community, EventRow, Participant, ParticipantStatus, Profile } from "./types";
+import { selectByIds } from "@/lib/by-ids";
 
 export type ParticipantWithProfile = Participant & { profile: Pick<Profile, "id" | "name" | "avatar_url"> | null };
 
@@ -66,14 +67,22 @@ export function useParticipants(eventIds: string[]) {
     enabled: !isGuest && !!user && eventIds.length > 0,
     queryFn: async () => {
       const out: ParticipantWithProfile[] = [];
+      // The server returns at most 1000 rows per request, so page through each chunk (found at 500 users).
+      const PAGE = 1000;
       for (let i = 0; i < eventIds.length; i += 100) {
         const chunk = eventIds.slice(i, i + 100);
-        const { data, error } = await supabase
-          .from("event_participants")
-          .select(`event_id, profile_id, status, created_at, profile:profiles(${PROFILE_MINI})`)
-          .in("event_id", chunk);
-        if (error) throw error;
-        out.push(...((data ?? []) as unknown as ParticipantWithProfile[]));
+        for (let from = 0; ; from += PAGE) {
+          const { data, error } = await supabase
+            .from("event_participants")
+            .select(`event_id, profile_id, status, created_at, profile:profiles(${PROFILE_MINI})`)
+            .in("event_id", chunk)
+            .order("event_id")
+            .order("profile_id")
+            .range(from, from + PAGE - 1);
+          if (error) throw error;
+          out.push(...((data ?? []) as unknown as ParticipantWithProfile[]));
+          if ((data ?? []).length < PAGE) break;
+        }
       }
       return out;
     },
@@ -163,8 +172,8 @@ export function useProfiles(ids: string[]) {
     queryKey: ["profiles", key.join(",")],
     enabled: key.length > 0,
     queryFn: async () => {
-      const { data } = await supabase.from(PROFILE_VIEW).select(PROFILE_COLUMNS).in("id", key);
-      return new Map(((data ?? []) as Profile[]).map((p) => [p.id, p]));
+      const rows = await selectByIds<Profile>(key, (c) => supabase.from(PROFILE_VIEW).select(PROFILE_COLUMNS).in("id", c));
+      return new Map(rows.map((p) => [p.id, p]));
     },
   });
 }

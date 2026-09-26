@@ -17,6 +17,7 @@ import { whoComesTitle } from "@/lib/event-title";
 import { formatRelative } from "@/lib/format";
 import { seo } from "@/lib/seo";
 import type { MessageKind, Profile } from "@/lib/types";
+import { selectByIds } from "@/lib/by-ids";
 
 export const Route = createFileRoute("/chat/")({
   head: () => seo({ title: "צ׳אט", description: "הודעות אישיות, צ׳אטים של אירועים וקהילות ב-mibale." }),
@@ -38,8 +39,8 @@ function ChatList() {
       const { data } = await supabase.rpc("my_conversations");
       const rows = (data ?? []) as Conv[];
       const ids = rows.map((r) => r.partner_id);
-      const { data: ps } = ids.length ? await supabase.from("profiles").select(PROFILE_MINI).in("id", ids) : { data: [] };
-      const map = new Map(((ps ?? []) as Profile[]).map((p) => [p.id, p]));
+      const ps = await selectByIds<Profile>(ids, (c) => supabase.from("profiles").select(PROFILE_MINI).in("id", c));
+      const map = new Map(ps.map((p) => [p.id, p]));
       return rows.map((r) => ({ ...r, partner: map.get(r.partner_id) }));
     },
   });

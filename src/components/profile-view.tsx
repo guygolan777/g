@@ -21,6 +21,7 @@ import { whoComesTitle } from "@/lib/event-title";
 import { hapticTap } from "@/lib/native";
 import type { EventRow, ParticipantStatus, Profile } from "@/lib/types";
 import { VIDEO_POSTER, cn, isVideoUrl, videoFrameSrc } from "@/lib/utils";
+import { selectByIds } from "@/lib/by-ids";
 
 type EventFilter = "all" | "organizer" | "participant" | "pending";
 type Role = "organizer" | "participant" | "pending";
@@ -41,8 +42,8 @@ export function useProfileGraph(profileId: string) {
       const followingIds = (a.data ?? []).map((r) => r.following_id as string);
       const followerIds = (b.data ?? []).map((r) => r.follower_id as string);
       const all = [...new Set([...followingIds, ...followerIds])];
-      const { data: ps } = all.length ? await supabase.from(PROFILE_VIEW).select(PROFILE_COLUMNS).in("id", all) : { data: [] };
-      const byId = new Map(((ps ?? []) as Profile[]).map((p) => [p.id, p]));
+      const ps = await selectByIds<Profile>(all, (c) => supabase.from(PROFILE_VIEW).select(PROFILE_COLUMNS).in("id", c));
+      const byId = new Map(ps.map((p) => [p.id, p]));
       return {
         following: followingIds.flatMap((id) => byId.get(id) ?? []),
         followers: followerIds.flatMap((id) => byId.get(id) ?? []),
