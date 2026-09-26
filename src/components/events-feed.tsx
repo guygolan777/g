@@ -11,11 +11,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useEventFeed } from "@/hooks/use-event-feed";
+import { useUpdateLocation } from "@/lib/location";
+import { toast } from "sonner";
 import { buildHomeCarousels, rankEvents } from "@/lib/event-ranking";
 
 /** Home events tab: filter button + colored categories, then 5 non-overlapping carousels. */
 export function EventsFeed() {
   const feed = useEventFeed();
+  const updateLocation = useUpdateLocation();
   const { profile } = useAuth();
   const [filters, setFilters] = useEventFilters("home");
   const [sheet, setSheet] = React.useState(false);
@@ -99,20 +102,26 @@ export function EventsFeed() {
             {carousels.fromFollowing.map(card)}
           </Carousel>
           {feed.location ? (
-            <Carousel title="קרוב אליך" moreTo="/nearby">
+            <Carousel title="קרוב אליך" moreTo="/discover" moreSearch={{ section: "nearby" }}>
               {carousels.nearby.map(card)}
             </Carousel>
           ) : (
-            <Link to="/nearby" className="mt-6 flex items-center gap-3 rounded-3xl bg-teal-soft p-4">
+            <button
+              type="button"
+              onClick={async () => {
+                if (!(await updateLocation())) toast.error("לא הצלחנו לאתר מיקום — בדקו שהמיקום מופעל ושאישרתם גישה");
+              }}
+              className="mt-6 flex w-full items-center gap-3 rounded-3xl bg-teal-soft p-4 text-start"
+            >
               <span className="grid size-11 shrink-0 place-items-center rounded-full bg-surface text-teal">
                 <MapPin className="size-5" />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block font-bold">מה קורה קרוב אליך?</span>
-                <span className="block text-sm text-muted-foreground">הפעילו מיקום וגלו אירועים ואנשים בסביבה</span>
+                <span className="block text-sm text-muted-foreground">הפעילו מיקום וגלו אירועים בסביבה</span>
               </span>
               <span className="text-sm font-semibold text-teal">הפעלה</span>
-            </Link>
+            </button>
           )}
           <Carousel title="האירועים שפתחת" moreTo="/me">
             {carousels.mine.map(card)}
