@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase";
 import { uploadMedia } from "@/lib/storage";
 import { HOBBY_CATEGORIES } from "@/lib/hobby-categories";
 import type { AudienceGender } from "@/lib/types";
+import { writeError } from "@/lib/write-error";
 
 /** Community creation form (used in the "פתיחת קהילה" dialog and the /community/new route). */
 export function CommunityForm({ onCreated }: { onCreated?: () => void }) {
@@ -56,7 +57,7 @@ export function CommunityForm({ onCreated }: { onCreated?: () => void }) {
       .select("id")
       .single();
     setSaving(false);
-    if (error) return void toast.error("יצירת הקהילה נכשלה");
+    if (error) return void toast.error(writeError(error, "יצירת הקהילה נכשלה"));
     toast.success("🎉 הקהילה נפתחה");
     void qc.invalidateQueries({ queryKey: ["communities"] });
     void qc.invalidateQueries({ queryKey: ["my-communities"] });

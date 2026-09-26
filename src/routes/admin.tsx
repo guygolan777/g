@@ -5,7 +5,7 @@ import { seo } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin")({
-  head: () => seo({ title: "ניהול המערכת", description: "פאנל ניהול mibale: משתמשים, אירועים, קהילות ודיווחים." }),
+  head: () => seo({ title: "ניהול המערכת", description: "פאנל ניהול mibale: דיווחים, משתמשים, תוכן, סינון מילים ויומן פעולות." }),
   component: () => (
     <RequireStaff>
       <AdminLayout />
@@ -15,10 +15,12 @@ export const Route = createFileRoute("/admin")({
 
 const TABS = [
   { to: "/admin", label: "סקירה" },
+  { to: "/admin/reports", label: "דיווחים" },
   { to: "/admin/users", label: "משתמשים" },
   { to: "/admin/events", label: "אירועים" },
   { to: "/admin/communities", label: "קהילות" },
-  { to: "/admin/reports", label: "דיווחים" },
+  { to: "/admin/words", label: "סינון מילים" },
+  { to: "/admin/log", label: "יומן פעולות" },
 ] as const;
 
 function AdminLayout() {

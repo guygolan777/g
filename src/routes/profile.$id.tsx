@@ -145,6 +145,7 @@ function ProfileMenu({ profile }: { profile: Profile }) {
           <ReportDialog
             targetType="profile"
             targetId={profile.id}
+            blockUser={{ id: profile.id, name: profile.name }}
             trigger={
               <Button variant="outline" className="w-full">
                 דיווח על הפרופיל

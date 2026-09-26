@@ -35,8 +35,10 @@ import { Route as TicketsRouteImport } from './routes/tickets'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminCommunitiesRouteImport } from './routes/admin.communities'
 import { Route as AdminEventsRouteImport } from './routes/admin.events'
+import { Route as AdminLogRouteImport } from './routes/admin.log'
 import { Route as AdminReportsRouteImport } from './routes/admin.reports'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminWordsRouteImport } from './routes/admin.words'
 import { Route as ApiPushRouteImport } from './routes/api.push'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as ChatIdRouteImport } from './routes/chat.$id'
@@ -56,6 +58,7 @@ import { Route as ScanIdRouteImport } from './routes/scan.$id'
 import { Route as StoryIdRouteImport } from './routes/story.$id'
 import { Route as StoryNewRouteImport } from './routes/story.new'
 import { Route as TicketIdRouteImport } from './routes/ticket.$id'
+import { Route as AdminUserIdRouteImport } from './routes/admin.user.$id'
 import { Route as EIdEditRouteImport } from './routes/e.$id.edit'
 
 const IndexRoute = IndexRouteImport.update({
@@ -188,6 +191,11 @@ const AdminEventsRoute = AdminEventsRouteImport.update({
   path: '/events',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminLogRoute = AdminLogRouteImport.update({
+  id: '/log',
+  path: '/log',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminReportsRoute = AdminReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -196,6 +204,11 @@ const AdminReportsRoute = AdminReportsRouteImport.update({
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminWordsRoute = AdminWordsRouteImport.update({
+  id: '/words',
+  path: '/words',
   getParentRoute: () => AdminRoute,
 } as any)
 const ApiPushRoute = ApiPushRouteImport.update({
@@ -293,6 +306,11 @@ const TicketIdRoute = TicketIdRouteImport.update({
   path: '/ticket/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminUserIdRoute = AdminUserIdRouteImport.update({
+  id: '/user/$id',
+  path: '/user/$id',
+  getParentRoute: () => AdminRoute,
+} as any)
 const EIdEditRoute = EIdEditRouteImport.update({
   id: '/edit',
   path: '/edit',
@@ -325,8 +343,10 @@ export interface FileRoutesByFullPath {
   '/tickets': typeof TicketsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/events': typeof AdminEventsRoute
+  '/admin/log': typeof AdminLogRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/words': typeof AdminWordsRoute
   '/api/push': typeof ApiPushRoute
   '/chat/$id': typeof ChatIdRoute
   '/community/$id': typeof CommunityIdRoute
@@ -347,6 +367,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/chat/': typeof ChatIndexRoute
   '/me/': typeof MeIndexRoute
+  '/admin/user/$id': typeof AdminUserIdRoute
   '/e/$id/edit': typeof EIdEditRoute
 }
 export interface FileRoutesByTo {
@@ -373,8 +394,10 @@ export interface FileRoutesByTo {
   '/tickets': typeof TicketsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/events': typeof AdminEventsRoute
+  '/admin/log': typeof AdminLogRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/words': typeof AdminWordsRoute
   '/api/push': typeof ApiPushRoute
   '/chat/$id': typeof ChatIdRoute
   '/community/$id': typeof CommunityIdRoute
@@ -395,6 +418,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/chat': typeof ChatIndexRoute
   '/me': typeof MeIndexRoute
+  '/admin/user/$id': typeof AdminUserIdRoute
   '/e/$id/edit': typeof EIdEditRoute
 }
 export interface FileRoutesById {
@@ -424,8 +448,10 @@ export interface FileRoutesById {
   '/tickets': typeof TicketsRoute
   '/admin/communities': typeof AdminCommunitiesRoute
   '/admin/events': typeof AdminEventsRoute
+  '/admin/log': typeof AdminLogRoute
   '/admin/reports': typeof AdminReportsRoute
   '/admin/users': typeof AdminUsersRoute
+  '/admin/words': typeof AdminWordsRoute
   '/api/push': typeof ApiPushRoute
   '/chat/$id': typeof ChatIdRoute
   '/community/$id': typeof CommunityIdRoute
@@ -446,6 +472,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/chat/': typeof ChatIndexRoute
   '/me/': typeof MeIndexRoute
+  '/admin/user/$id': typeof AdminUserIdRoute
   '/e/$id/edit': typeof EIdEditRoute
 }
 export interface FileRouteTypes {
@@ -476,8 +503,10 @@ export interface FileRouteTypes {
     | '/tickets'
     | '/admin/communities'
     | '/admin/events'
+    | '/admin/log'
     | '/admin/reports'
     | '/admin/users'
+    | '/admin/words'
     | '/api/push'
     | '/chat/$id'
     | '/community/$id'
@@ -498,6 +527,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/chat/'
     | '/me/'
+    | '/admin/user/$id'
     | '/e/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -524,8 +554,10 @@ export interface FileRouteTypes {
     | '/tickets'
     | '/admin/communities'
     | '/admin/events'
+    | '/admin/log'
     | '/admin/reports'
     | '/admin/users'
+    | '/admin/words'
     | '/api/push'
     | '/chat/$id'
     | '/community/$id'
@@ -546,6 +578,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/chat'
     | '/me'
+    | '/admin/user/$id'
     | '/e/$id/edit'
   id:
     | '__root__'
@@ -574,8 +607,10 @@ export interface FileRouteTypes {
     | '/tickets'
     | '/admin/communities'
     | '/admin/events'
+    | '/admin/log'
     | '/admin/reports'
     | '/admin/users'
+    | '/admin/words'
     | '/api/push'
     | '/chat/$id'
     | '/community/$id'
@@ -596,6 +631,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/chat/'
     | '/me/'
+    | '/admin/user/$id'
     | '/e/$id/edit'
   fileRoutesById: FileRoutesById
 }
@@ -825,6 +861,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEventsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/log': {
+      id: '/admin/log'
+      path: '/log'
+      fullPath: '/admin/log'
+      preLoaderRoute: typeof AdminLogRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/reports': {
       id: '/admin/reports'
       path: '/reports'
@@ -837,6 +880,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/words': {
+      id: '/admin/words'
+      path: '/words'
+      fullPath: '/admin/words'
+      preLoaderRoute: typeof AdminWordsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/api/push': {
@@ -972,6 +1022,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TicketIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/user/$id': {
+      id: '/admin/user/$id'
+      path: '/user/$id'
+      fullPath: '/admin/user/$id'
+      preLoaderRoute: typeof AdminUserIdRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/e/$id/edit': {
       id: '/e/$id/edit'
       path: '/edit'
@@ -985,17 +1042,23 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminCommunitiesRoute: typeof AdminCommunitiesRoute
   AdminEventsRoute: typeof AdminEventsRoute
+  AdminLogRoute: typeof AdminLogRoute
   AdminReportsRoute: typeof AdminReportsRoute
   AdminUsersRoute: typeof AdminUsersRoute
+  AdminWordsRoute: typeof AdminWordsRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminUserIdRoute: typeof AdminUserIdRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminCommunitiesRoute: AdminCommunitiesRoute,
   AdminEventsRoute: AdminEventsRoute,
+  AdminLogRoute: AdminLogRoute,
   AdminReportsRoute: AdminReportsRoute,
   AdminUsersRoute: AdminUsersRoute,
+  AdminWordsRoute: AdminWordsRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminUserIdRoute: AdminUserIdRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)

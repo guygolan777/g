@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, CalendarCheck, Heart, UserPlus, Users } from "lucide-react";
+import { AlertTriangle, Bell, CalendarCheck, Heart, ShieldAlert, Trash2, UserPlus, Users } from "lucide-react";
 import { EmptyState, Page, PageHeader } from "@/components/app-shell";
 import { RequireAuth } from "@/components/gates";
 import { Avatar } from "@/components/avatar";
@@ -33,6 +33,9 @@ const ICONS: Record<string, { Icon: typeof Bell; cls: string }> = {
   date_answer: { Icon: Heart, cls: "bg-like-soft text-like" },
   follow: { Icon: UserPlus, cls: "bg-primary-soft text-primary" },
   follow_request: { Icon: UserPlus, cls: "bg-primary-soft text-primary" },
+  moderation_warning: { Icon: AlertTriangle, cls: "bg-destructive-soft text-destructive" },
+  moderation_removed: { Icon: Trash2, cls: "bg-destructive-soft text-destructive" },
+  moderation_alert: { Icon: ShieldAlert, cls: "bg-partner-soft text-partner-strong" },
   follow_accepted: { Icon: UserPlus, cls: "bg-success-soft text-success" },
   story_like: { Icon: Heart, cls: "bg-like-soft text-like" },
   match: { Icon: Heart, cls: "bg-like-soft text-like" },

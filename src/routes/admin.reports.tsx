@@ -2,84 +2,54 @@ import * as React from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Check, ChevronDown, Eye, EyeOff, Trash2, X } from "lucide-react";
 import { Chip } from "@/components/chip";
+import { Avatar } from "@/components/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
+import { ReasonSheet, SnapshotPreview, UserActions } from "@/components/moderation";
 import { supabase } from "@/lib/supabase";
 import { formatRelative } from "@/lib/format";
 import { seo } from "@/lib/seo";
-import type { Report } from "@/lib/types";
-import { setBanned } from "@/lib/admin";
+import { TARGET_LABEL, moderation, moderationError } from "@/lib/admin";
+import type { Report, ReportGroup } from "@/lib/types";
 
 export const Route = createFileRoute("/admin/reports")({
-  head: () => seo({ title: "ניהול · דיווחים", description: "טיפול בדיווחים: טופל, דחייה או השהיית משתמש." }),
+  head: () => seo({ title: "ניהול · דיווחים", description: "תור דיווחים: תוכן מדווח, הסרה, אזהרה והשהיה." }),
   component: Reports,
 });
 
-const TYPE_LABEL: Record<Report["target_type"], string> = {
-  profile: "פרופיל",
-  event: "אירוע",
-  community: "קהילה",
-  story: "סטורי",
-  message: "הודעה",
-  post: "פוסט",
-};
-
-function targetLink(r: Report): string | null {
-  switch (r.target_type) {
+function targetLink(type: Report["target_type"], id: string): string | null {
+  switch (type) {
     case "profile":
-      return `/profile/${r.target_id}`;
+      return `/profile/${id}`;
     case "event":
-      return `/e/${r.target_id}`;
+      return `/e/${id}`;
     case "community":
-      return `/community/${r.target_id}`;
+      return `/community/${id}`;
     case "story":
-      return `/story/${r.target_id}`;
+      return `/story/${id}`;
     default:
       return null;
   }
 }
 
 function Reports() {
-  const { user } = useAuth();
   const qc = useQueryClient();
   const [filter, setFilter] = React.useState<"open" | "all">("open");
   const q = useQuery({
     queryKey: ["admin-reports", filter],
     queryFn: async () => {
-      let query = supabase.from("reports").select("*, reporter:profiles!reports_reporter_id_fkey(name)").order("created_at", { ascending: false }).limit(200);
-      if (filter === "open") query = query.eq("status", "open");
-      const { data } = await query;
-      return (data ?? []) as unknown as Array<Report & { reporter: { name: string } | null }>;
+      const { data, error } = await supabase.rpc("admin_report_queue", { _status: filter });
+      if (error) throw error;
+      return (data ?? []) as ReportGroup[];
     },
   });
-
-  async function resolve(r: Report, status: "resolved" | "dismissed") {
-    const { error } = await supabase
-      .from("reports")
-      .update({ status, resolved_by: user!.id, resolved_at: new Date().toISOString() })
-      .eq("id", r.id);
-    if (error) return void toast.error("הפעולה נכשלה");
+  const refresh = () => {
     void qc.invalidateQueries({ queryKey: ["admin-reports"] });
     void qc.invalidateQueries({ queryKey: ["admin-overview"] });
-  }
-
-  async function suspendTarget(r: Report) {
-    if (!confirm("להשהות את המשתמש המדווח?")) return;
-    let userId = r.target_type === "profile" ? r.target_id : null;
-    if (r.target_type === "event") userId = (await supabase.from("events").select("organizer_id").eq("id", r.target_id).maybeSingle()).data?.organizer_id ?? null;
-    if (r.target_type === "community") userId = (await supabase.from("communities").select("founder_id").eq("id", r.target_id).maybeSingle()).data?.founder_id ?? null;
-    if (r.target_type === "story") userId = (await supabase.from("stories").select("author_id").eq("id", r.target_id).maybeSingle()).data?.author_id ?? null;
-    if (!userId) return void toast.error("לא נמצא משתמש לקשר לדיווח");
-    try {
-      await setBanned(userId, true);
-      await resolve(r, "resolved");
-      toast.success("המשתמש/ת הושהה והדיווח טופל");
-    } catch {
-      toast.error("ההשהיה נכשלה");
-    }
-  }
+    void qc.invalidateQueries({ queryKey: ["admin-user"] });
+  };
 
   return (
     <div>
@@ -91,48 +61,132 @@ function Reports() {
           הכול
         </Chip>
       </div>
-      {q.data?.length === 0 && <p className="text-sm text-muted-foreground">אין דיווחים</p>}
-      <div className="space-y-2">
-        {q.data?.map((r) => {
-          const link = targetLink(r);
-          return (
-            <div key={r.id} className="rounded-2xl bg-card p-4 shadow-soft">
-              <div className="flex items-center gap-2">
-                <Badge variant="partner">{TYPE_LABEL[r.target_type]}</Badge>
-                <span className="font-semibold">{r.reason}</span>
-                <Badge variant={r.status === "open" ? "destructive" : "muted"} className="ms-auto">
-                  {r.status === "open" ? "פתוח" : r.status === "resolved" ? "טופל" : "נדחה"}
-                </Badge>
-              </div>
-              {r.details && <p className="mt-2 text-sm">{r.details}</p>}
-              <p className="mt-1 text-xs text-muted-foreground">
-                דווח ע״י {r.reporter?.name ?? "—"} · {formatRelative(r.created_at)}
-                {link && (
-                  <>
-                    {" · "}
-                    <Link to={link} className="font-semibold text-primary">
-                      לתוכן
-                    </Link>
-                  </>
-                )}
-              </p>
-              {r.status === "open" && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" variant="success" onClick={() => void resolve(r, "resolved")}>
-                    טופל
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => void resolve(r, "dismissed")}>
-                    דחייה
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={() => void suspendTarget(r)}>
-                    השהיית משתמש
-                  </Button>
-                </div>
-              )}
-            </div>
-          );
-        })}
+      {q.data?.length === 0 && <p className="text-sm text-muted-foreground">{filter === "open" ? "אין דיווחים פתוחים 🎉" : "אין דיווחים"}</p>}
+      <div className="space-y-3">
+        {q.data?.map((g) => (
+          <ReportCard key={`${g.target_type}:${g.target_id}`} g={g} onDone={refresh} />
+        ))}
       </div>
+    </div>
+  );
+}
+
+function ReportCard({ g, onDone }: { g: ReportGroup; onDone: () => void }) {
+  const [open, setOpen] = React.useState(false);
+  const link = targetLink(g.target_type, g.target_id);
+  const isOpen = g.status === "open";
+  const act = async (fn: () => Promise<void>, ok: string) => {
+    try {
+      await fn();
+      toast.success(ok);
+      onDone();
+    } catch (e) {
+      toast.error(moderationError(e));
+    }
+  };
+  const details = useQuery({
+    queryKey: ["admin-report-details", g.target_type, g.target_id],
+    enabled: open,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("reports")
+        .select("*, reporter:profiles!reports_reporter_id_fkey(id, name)")
+        .eq("target_type", g.target_type)
+        .eq("target_id", g.target_id)
+        .order("created_at", { ascending: false });
+      return (data ?? []) as unknown as Array<Report & { reporter: { id: string; name: string } | null }>;
+    },
+  });
+
+  return (
+    <div className="rounded-2xl bg-card p-4 shadow-soft" data-testid="report-card">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="partner">{TARGET_LABEL[g.target_type]}</Badge>
+        <span className="font-semibold">{g.reasons.join(" · ")}</span>
+        {g.auto && <Badge variant="violet">סינון אוטומטי</Badge>}
+        {g.hidden && <Badge variant="destructive">מוסתר</Badge>}
+        <Badge variant={isOpen ? "destructive" : "muted"} className="ms-auto">
+          {isOpen ? `${g.reporters || g.reports} מדווחים` : g.status === "resolved" ? "טופל" : "נדחה"}
+        </Badge>
+      </div>
+
+      <div className="mt-3">
+        <SnapshotPreview snapshot={g.snapshot} />
+      </div>
+
+      <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+        {g.target_user_id ? (
+          <Link to="/admin/user/$id" params={{ id: g.target_user_id }} className="flex items-center gap-2 font-semibold text-foreground">
+            <Avatar src={g.target_user_avatar} name={g.target_user_name ?? ""} size={24} />
+            {g.target_user_name || "ללא שם"}
+          </Link>
+        ) : (
+          <span>משתמש/ת נמחק/ה</span>
+        )}
+        <span>· {formatRelative(g.last_at)}</span>
+        {link && (
+          <Link to={link} className="font-semibold text-primary">
+            · לתוכן
+          </Link>
+        )}
+        <button type="button" className="ms-auto flex items-center gap-1 font-semibold text-primary" onClick={() => setOpen((o) => !o)}>
+          פרטים <ChevronDown className={open ? "size-3.5 rotate-180" : "size-3.5"} />
+        </button>
+      </div>
+
+      {open && (
+        <ul className="mt-2 space-y-1 border-t border-border pt-2 text-sm">
+          {details.data?.map((r) => (
+            <li key={r.id}>
+              <span className="font-semibold">{r.reporter?.name ?? "סינון אוטומטי"}</span>: {r.reason}
+              {r.details && <span className="text-muted-foreground"> — {r.details}</span>}
+              <span className="text-xs text-muted-foreground"> · {formatRelative(r.created_at)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {isOpen && (
+        <div className="mt-3 flex flex-wrap gap-2 border-t border-border pt-3">
+          <Button size="sm" variant="outline" onClick={() => void act(() => moderation.resolve(g.target_type, g.target_id, "dismissed"), "הדיווח נדחה")}>
+            <X /> תקין — דחייה
+          </Button>
+          <Button size="sm" variant="success" onClick={() => void act(() => moderation.resolve(g.target_type, g.target_id, "resolved"), "סומן כטופל")}>
+            <Check /> טופל
+          </Button>
+          {(g.target_type === "story" || g.target_type === "event") && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void act(() => moderation.setHidden(g.target_type, g.target_id, !g.hidden), g.hidden ? "התוכן הוחזר" : "התוכן הוסתר")}
+            >
+              {g.hidden ? <Eye /> : <EyeOff />} {g.hidden ? "החזרה" : "הסתרה"}
+            </Button>
+          )}
+          {g.target_type !== "profile" && (
+            <ReasonSheet
+              title="הסרת התוכן"
+              description="התוכן יימחק, והמשתמש/ת יקבל/תקבל הודעה עם הסיבה. עותק נשמר ביומן."
+              confirm="הסרה"
+              required={false}
+              presets={["הפרת כללי הקהילה", "ספאם", "תוכן לא הולם", "הטרדה"]}
+              trigger={
+                <Button size="sm" variant="destructive">
+                  <Trash2 /> הסרת תוכן
+                </Button>
+              }
+              onConfirm={async (reason) => {
+                await moderation.remove(g.target_type, g.target_id, reason);
+                toast.success("התוכן הוסר");
+                onDone();
+              }}
+            />
+          )}
+          {g.target_user_id && (
+            <UserActions userId={g.target_user_id} name={g.target_user_name || "המשתמש/ת"} suspended={false} onDone={onDone} />
+          )}
+        </div>
+      )}
     </div>
   );
 }

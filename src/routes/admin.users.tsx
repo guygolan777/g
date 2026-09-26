@@ -36,15 +36,15 @@ function Users() {
       <div className="space-y-2">
         {users.data?.map((u) => (
           <div key={u.id} className="flex items-center gap-3 rounded-2xl bg-card p-3 shadow-soft">
-            <Link to="/profile/$id" params={{ id: u.id }}>
+            <Link to="/admin/user/$id" params={{ id: u.id }}>
               <Avatar src={u.avatar_url} name={u.name} size={40} />
             </Link>
-            <div className="min-w-0 flex-1">
+            <Link to="/admin/user/$id" params={{ id: u.id }} className="min-w-0 flex-1">
               <p className="truncate font-semibold">{u.name || "ללא שם"}</p>
               <p className="text-xs text-muted-foreground">
                 {u.city ?? "—"} · הצטרף/ה {formatRelative(u.created_at)}
               </p>
-            </div>
+            </Link>
             {u.banned_at && <Badge variant="destructive">מושהה</Badge>}
             <Button
               size="sm"

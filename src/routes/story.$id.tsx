@@ -3,7 +3,7 @@ import { SafeImg } from "@/components/safe-img";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { CalendarDays, Eye, Send, Trash2, Volume2, VolumeX, X } from "lucide-react";
+import { CalendarDays, Eye, Send, Trash2, Volume2, VolumeX, X, Flag } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import { CenteredSpinner } from "@/components/app-shell";
 import { RequireAuth } from "@/components/gates";
@@ -19,6 +19,8 @@ import { formatRelative } from "@/lib/format";
 import { seo } from "@/lib/seo";
 import { VIDEO_POSTER, videoFrameSrc } from "@/lib/utils";
 import type { ParticipantStatus } from "@/lib/types";
+import { writeError } from "@/lib/write-error";
+import { ReportDialog } from "@/components/report-dialog";
 
 export const Route = createFileRoute("/story/$id")({
   // ?romantic=1 is parsed as a number by the router, so compare as text.
@@ -213,7 +215,7 @@ function StorySlide({
     e.preventDefault();
     if (!reply.trim() || !user) return;
     const { error } = await supabase.from("story_replies").insert({ story_id: story.id, author_id: user.id, body: reply.trim() });
-    if (error) return void toast.error("השליחה נכשלה");
+    if (error) return void toast.error(writeError(error, "השליחה נכשלה"));
     setReply("");
     toast.success("התגובה נשלחה לצ׳אט");
   }
@@ -305,6 +307,18 @@ function StorySlide({
               <button onClick={onToggleMute} className="grid size-9 place-items-center rounded-full" aria-label={muted ? "הפעלת קול" : "השתקה"}>
                 {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
               </button>
+            )}
+            {!isMine && (
+              <ReportDialog
+                targetType="story"
+                targetId={story.id}
+                blockUser={{ id: story.author_id, name: story.author?.name ?? "" }}
+                trigger={
+                  <button className="grid size-9 place-items-center rounded-full" aria-label="דיווח">
+                    <Flag className="size-5" />
+                  </button>
+                }
+              />
             )}
             {isMine && (
               <button onClick={() => void remove()} className="grid size-9 place-items-center rounded-full" aria-label="מחיקה">

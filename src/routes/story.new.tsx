@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
 import { uploadMedia } from "@/lib/storage";
 import { seo } from "@/lib/seo";
+import { writeError } from "@/lib/write-error";
 import { VIDEO_POSTER } from "@/lib/utils";
 
 export const Route = createFileRoute("/story/new")({
@@ -57,8 +58,8 @@ function NewStory() {
       toast.success("הסטורי פורסם ✨");
       void qc.invalidateQueries({ queryKey: ["stories"] });
       void navigate({ to: "/likes", replace: true });
-    } catch {
-      toast.error("הפרסום נכשל");
+    } catch (e) {
+      toast.error(writeError(e, "הפרסום נכשל"));
     } finally {
       setBusy(false);
     }

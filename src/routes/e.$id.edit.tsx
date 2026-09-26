@@ -12,6 +12,7 @@ import { EVENT_COLUMNS } from "@/lib/constants";
 import { useInvalidateEvents } from "@/lib/queries";
 import { seo } from "@/lib/seo";
 import type { EventRow } from "@/lib/types";
+import { writeError } from "@/lib/write-error";
 
 export const Route = createFileRoute("/e/$id/edit")({
   head: () => seo({ title: "עריכת אירוע", description: "עדכון פרטי האירוע שלך ב-mibale." }),
@@ -75,7 +76,7 @@ function EditEvent() {
             invalidate();
             void navigate({ to: "/e/$id", params: { id }, replace: true });
           } catch (e) {
-            toast.error((e as Error).message || "השמירה נכשלה");
+            toast.error(writeError(e, (e as Error).message || "השמירה נכשלה"));
           } finally {
             setSaving(false);
           }

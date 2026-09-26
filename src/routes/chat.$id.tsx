@@ -6,7 +6,7 @@ import { CenteredSpinner, Page, PageHeader } from "@/components/app-shell";
 import { Avatar } from "@/components/avatar";
 import { ChatThread, type ThreadMessage } from "@/components/chat-thread";
 import { DateInviteCard, DateInviteDialog } from "@/components/date-invite";
-import { Wine } from "lucide-react";
+import { Wine, Flag } from "lucide-react";
 import type { DateInvite } from "@/lib/types";
 import { RequireAuth } from "@/components/gates";
 import { useAuth } from "@/hooks/use-auth";
@@ -17,6 +17,8 @@ import { PROFILE_MINI } from "@/lib/constants";
 import { whoComesTitle } from "@/lib/event-title";
 import { seo } from "@/lib/seo";
 import type { MessageKind, Profile } from "@/lib/types";
+import { writeError } from "@/lib/write-error";
+import { ReportDialog } from "@/components/report-dialog";
 
 type Kind = "dm" | "event" | "community";
 
@@ -155,9 +157,23 @@ function DirectChat({ partnerId }: { partnerId: string }) {
         }
         actions={
           !blocked && (
-            <button onClick={() => setInviteOpen(true)} className="grid size-12 place-items-center rounded-full bg-like-soft text-like" aria-label="הזמנה לדייט">
-              <Wine className="size-6" />
-            </button>
+            <div className="flex items-center gap-1">
+              {p && (
+                <ReportDialog
+                  targetType="profile"
+                  targetId={partnerId}
+                  blockUser={{ id: partnerId, name: p.name }}
+                  trigger={
+                    <button className="grid size-10 place-items-center rounded-full text-muted-foreground" aria-label="דיווח">
+                      <Flag className="size-5" />
+                    </button>
+                  }
+                />
+              )}
+              <button onClick={() => setInviteOpen(true)} className="grid size-12 place-items-center rounded-full bg-like-soft text-like" aria-label="הזמנה לדייט">
+                <Wine className="size-6" />
+              </button>
+            </div>
           )
         }
       />
@@ -187,7 +203,7 @@ function DirectChat({ partnerId }: { partnerId: string }) {
         onSend={async (m) => {
           const { error } = await supabase.from("direct_messages").insert({ sender_id: uid, recipient_id: partnerId, ...m });
           if (error) {
-            toast.error("ההודעה לא נשלחה");
+            toast.error(writeError(error, "ההודעה לא נשלחה"));
             return false;
           }
           void qc.invalidateQueries({ queryKey: key });
@@ -283,7 +299,7 @@ function GroupChat({ groupId, kind }: { groupId: string; kind: "event" | "commun
         onSend={async (m: { kind: MessageKind; body: string; media_url?: string | null }) => {
           const { error } = await supabase.from(TABLE[kind]).insert({ [FK[kind]]: groupId, sender_id: uid, ...m });
           if (error) {
-            toast.error("ההודעה לא נשלחה");
+            toast.error(writeError(error, "ההודעה לא נשלחה"));
             return false;
           }
           void qc.invalidateQueries({ queryKey: key });

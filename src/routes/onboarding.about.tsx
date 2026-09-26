@@ -10,6 +10,7 @@ import { Field } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabase";
 import { seo } from "@/lib/seo";
+import { writeError } from "@/lib/write-error";
 
 export const Route = createFileRoute("/onboarding/about")({
   head: () => seo({ title: "קצת עליי — תחביבים ומאפיינים", description: "ספרו על עצמכם, בחרו תחביבים ומאפייני אישיות כדי שנמצא לכם אירועים ואנשים מתאימים." }),
@@ -40,7 +41,7 @@ function Step2() {
     setSaving(true);
     const { error } = await supabase.from("profiles").update({ bio: bio.trim(), hobbies, traits }).eq("id", user!.id);
     setSaving(false);
-    if (error) return void toast.error("השמירה נכשלה");
+    if (error) return void toast.error(writeError(error, "השמירה נכשלה"));
     await refreshProfile();
     void navigate({ to: "/onboarding/location" });
   }

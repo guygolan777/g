@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { PHONE_REQUIRED } from "@/lib/phone";
+import { CONTACT_EMAIL } from "@/lib/constants";
 import { Lock, ShieldOff } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -38,8 +39,9 @@ export function GuestWall({ reason }: { reason?: string }) {
 
 /** Root-level gate: suspended accounts see only this screen. */
 export function BannedGate({ children }: { children: React.ReactNode }) {
-  const { isBanned, signOut } = useAuth();
+  const { isBanned, moderation, signOut } = useAuth();
   if (!isBanned) return <>{children}</>;
+  const until = moderation?.banned_until ? new Date(moderation.banned_until) : null;
   return (
     <Page withNav={false}>
       <div className="flex min-h-dvh flex-col items-center justify-center text-center">
@@ -47,8 +49,20 @@ export function BannedGate({ children }: { children: React.ReactNode }) {
           <ShieldOff className="size-7" />
         </div>
         <h1 className="mt-4 text-2xl font-bold">הגישה לחשבון הושהתה</h1>
-        <p className="mt-2 max-w-xs text-muted-foreground">
-          החשבון שלך הושהה בעקבות הפרה של כללי הקהילה. לפרטים ניתן לפנות לצוות mibale.
+        <p className="mt-2 max-w-xs text-muted-foreground">החשבון שלך הושהה בעקבות הפרה של כללי הקהילה.</p>
+        {moderation?.ban_reason && <p className="mt-3 max-w-xs rounded-xl bg-muted px-4 py-2 text-sm">סיבה: {moderation.ban_reason}</p>}
+        <p className="mt-3 text-sm font-semibold">
+          {until
+            ? `ההשהיה תסתיים ב-${until.toLocaleString("he-IL", { dateStyle: "medium", timeStyle: "short" })}`
+            : moderation
+              ? "ההשהיה לצמיתות"
+              : ""}
+        </p>
+        <p className="mt-3 max-w-xs text-xs text-muted-foreground">
+          חושבים שזו טעות? אפשר לערער במייל:{" "}
+          <a href={`mailto:${CONTACT_EMAIL}`} className="font-semibold text-primary" dir="ltr">
+            {CONTACT_EMAIL}
+          </a>
         </p>
         <Button className="mt-6" variant="outline" onClick={() => void signOut()}>
           התנתקות

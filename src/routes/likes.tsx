@@ -26,6 +26,7 @@ import type { Profile } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { GuestTeaser } from "@/components/guest";
 import { useGuestStats } from "@/lib/guest";
+import { ReportDialog } from "@/components/report-dialog";
 
 export const Route = createFileRoute("/likes")({
   head: () => seo({ title: "מי בא לדייט?", description: "הצד הרומנטי של mibale: סווינג, מי שחיבבתם והתאמות הדדיות." }),
@@ -394,6 +395,14 @@ function Dating() {
                 >
                   <Undo2 className="size-6" />
                 </button>
+              </div>
+              <div className="mt-3 text-center">
+                <ReportDialog
+                  targetType="profile"
+                  targetId={current.id}
+                  blockUser={{ id: current.id, name: current.name }}
+                  trigger={<button className="text-xs font-semibold text-muted-foreground">דיווח או חסימה</button>}
+                />
               </div>
 
               {current.bio && (

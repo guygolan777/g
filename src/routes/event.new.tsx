@@ -23,6 +23,7 @@ import { hapticTap } from "@/lib/native";
 import { seo } from "@/lib/seo";
 import type { Recurrence } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { writeError } from "@/lib/write-error";
 
 export const Route = createFileRoute("/event/new")({
   validateSearch: (s: Record<string, unknown>): { community?: string } => ({
@@ -140,7 +141,7 @@ function NewEvent() {
       invalidate();
       setPublished({ id: data.id as string, title: values.title, starts_at: new Date(start).toISOString() });
     } catch (e) {
-      toast.error((e as Error).message || "הפרסום נכשל");
+      toast.error(writeError(e, (e as Error).message || "הפרסום נכשל"));
     } finally {
       setSaving(false);
     }

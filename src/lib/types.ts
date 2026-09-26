@@ -149,14 +149,56 @@ export type Notification = {
 
 export type Report = {
   id: string;
-  reporter_id: string;
+  reporter_id: string | null; // null = the automatic word filter
   target_type: "profile" | "event" | "community" | "story" | "message" | "post";
   target_id: string;
   reason: string;
   details: string;
   status: "open" | "resolved" | "dismissed";
   created_at: string;
+  target_user_id?: string | null;
+  snapshot?: ReportSnapshot;
+  auto?: boolean;
 };
+
+/** What the reported item said when it was reported (kept even after it's deleted). */
+export type ReportSnapshot = {
+  table?: string;
+  name?: string;
+  bio?: string;
+  title?: string;
+  description?: string;
+  caption?: string;
+  body?: string;
+  avatar_url?: string | null;
+  image_url?: string | null;
+  video_url?: string | null;
+  media_url?: string | null;
+  media_type?: "image" | "video";
+  photos?: string[];
+  /** Reports on a person: the last messages they sent the reporter. */
+  messages_to_reporter?: Array<{ body: string; kind: string; media_url: string | null; at: string }>;
+};
+
+/** One row of the staff queue: all reports on one item. */
+export type ReportGroup = {
+  target_type: Report["target_type"];
+  target_id: string;
+  target_user_id: string | null;
+  target_user_name: string | null;
+  target_user_avatar: string | null;
+  reports: number;
+  reporters: number;
+  reasons: string[];
+  auto: boolean;
+  snapshot: ReportSnapshot;
+  hidden: boolean;
+  first_at: string;
+  last_at: string;
+  status: Report["status"];
+};
+
+export type ModerationStatus = { banned_at: string | null; banned_until: string | null; ban_reason: string };
 
 export type DateInvite = {
   id: string;

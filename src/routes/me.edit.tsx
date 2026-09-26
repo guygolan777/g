@@ -13,6 +13,7 @@ import { ageFromBirthDate } from "@/lib/format";
 import { seo } from "@/lib/seo";
 import { firstImage } from "@/lib/utils";
 import type { Gender } from "@/lib/types";
+import { writeError } from "@/lib/write-error";
 
 export const Route = createFileRoute("/me/edit")({
   head: () => seo({ title: "עריכת פרופיל", description: "עדכון תמונות, פרטים, תחביבים ומאפיינים בפרופיל ה-mibale שלך." }),
@@ -54,7 +55,7 @@ function EditProfile() {
       .update({ name: name.trim(), bio: bio.trim(), city: city.trim() || null, birth_date: birth || null, gender, hobbies, traits, photos, avatar_url: firstImage(photos) })
       .eq("id", user!.id);
     setSaving(false);
-    if (error) return void toast.error("השמירה נכשלה");
+    if (error) return void toast.error(writeError(error, "השמירה נכשלה"));
     await refreshProfile();
     toast.success("הפרופיל עודכן");
     void navigate({ to: "/me" });

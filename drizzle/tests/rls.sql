@@ -552,3 +552,161 @@ begin
   if not found then raise exception 'FAIL: owner can''t change hide_age'; end if;
 end $$;
 rollback;
+
+-- Moderation (0024): reports, auto-hide, word filter, rate limits, staff actions and roles.
+begin;
+insert into public.user_roles (user_id, role) values ('00000000-0000-4000-a000-000000000001', 'admin') on conflict do nothing;
+insert into public.user_roles (user_id, role) values ('00000000-0000-4000-a000-000000000002', 'moderator') on conflict do nothing;
+delete from public.stories where event_id = '20000000-0000-4000-a000-000000000001';
+insert into public.stories (id, author_id, event_id, media_url, caption)
+  values ('50000000-0000-4000-a000-000000000001', '00000000-0000-4000-a000-000000000004', '20000000-0000-4000-a000-000000000001', 'https://x.test/a.jpg', 'שלום');
+insert into public.moderation_words (word, action) values ('spamword', 'flag'), ('badword', 'block');
+set local role authenticated;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000009'); -- Yoni reports Tamar's story
+do $$
+declare _r record;
+begin
+  insert into public.reports (reporter_id, target_type, target_id, reason)
+    values ('00000000-0000-4000-a000-000000000008', 'story', '50000000-0000-4000-a000-000000000001', 'ספאם');
+  select * into _r from public.reports where target_id = '50000000-0000-4000-a000-000000000001';
+  if _r.reporter_id <> auth.uid() then raise exception 'FAIL: report filed in someone else''s name'; end if;
+  if _r.target_user_id <> '00000000-0000-4000-a000-000000000004' or _r.snapshot ->> 'caption' <> 'שלום' then
+    raise exception 'FAIL: report missing its owner/snapshot';
+  end if;
+  begin
+    insert into public.reports (target_type, target_id, reason) values ('story', '50000000-0000-4000-a000-000000000001', 'ספאם');
+    raise exception 'FAIL: same person reported the same story twice';
+  exception when unique_violation then null; end;
+  begin
+    insert into public.reports (target_type, target_id, reason) values ('profile', auth.uid(), 'x');
+    raise exception 'FAIL: reported yourself';
+  exception when raise_exception then
+    if sqlerrm like 'FAIL%' then raise; end if;
+  end;
+  if (select count(*) from public.moderation_actions) > 0 then raise exception 'FAIL: member reads the moderation log'; end if;
+  begin
+    perform public.admin_suspend('00000000-0000-4000-a000-000000000004', null, 'x');
+    raise exception 'FAIL: member suspended someone';
+  exception when raise_exception then
+    if sqlerrm like 'FAIL%' then raise; end if;
+  end;
+  begin
+    insert into public.moderation_words (word) values ('hello');
+    raise exception 'FAIL: member edited the word list';
+  exception when insufficient_privilege then null; end;
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000008');
+insert into public.reports (target_type, target_id, reason) values ('story', '50000000-0000-4000-a000-000000000001', 'תוכן לא הולם');
+select pg_temp.as_user('00000000-0000-4000-a000-000000000007');
+do $$ begin
+  if not exists (select 1 from public.stories where id = '50000000-0000-4000-a000-000000000001') then
+    raise exception 'FAIL: story hidden after only 2 reporters';
+  end if;
+end $$;
+insert into public.reports (target_type, target_id, reason) values ('story', '50000000-0000-4000-a000-000000000001', 'תוכן לא הולם');
+do $$ begin
+  if exists (select 1 from public.stories where id = '50000000-0000-4000-a000-000000000001') then
+    raise exception 'FAIL: story still visible after 3 reporters';
+  end if;
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000004');
+do $$ begin
+  if not exists (select 1 from public.stories where id = '50000000-0000-4000-a000-000000000001') then
+    raise exception 'FAIL: author can''t see their own hidden story';
+  end if;
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000009'); -- word filter
+do $$ begin
+  begin
+    insert into public.direct_messages (sender_id, recipient_id, body) values (auth.uid(), '00000000-0000-4000-a000-000000000006', 'you BADWORD');
+    raise exception 'FAIL: blocked word went through';
+  exception when raise_exception then
+    if sqlerrm <> 'blocked_content' then raise; end if;
+  end;
+  insert into public.direct_messages (sender_id, recipient_id, body) values (auth.uid(), '00000000-0000-4000-a000-000000000006', 'buy spamword now');
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000002'); -- Maya (moderator)
+do $$
+declare _q record;
+begin
+  if not exists (select 1 from public.reports where auto and reporter_id is null and target_user_id = '00000000-0000-4000-a000-000000000009') then
+    raise exception 'FAIL: flagged word didn''t create a system report';
+  end if;
+  select * into _q from public.admin_report_queue('open') where target_id = '50000000-0000-4000-a000-000000000001';
+  if _q.reporters <> 3 or not _q.hidden then raise exception 'FAIL: report queue wrong (% reporters, hidden %)', _q.reporters, _q.hidden; end if;
+  if not exists (select 1 from public.moderation_actions where action = 'auto_hide') then raise exception 'FAIL: auto-hide not logged'; end if;
+  if not exists (select 1 from public.notifications where recipient_id = auth.uid() and type = 'moderation_alert') then
+    raise exception 'FAIL: staff not alerted';
+  end if;
+  begin
+    perform public.admin_suspend('00000000-0000-4000-a000-000000000001', null, 'x');
+    raise exception 'FAIL: moderator suspended an admin';
+  exception when raise_exception then
+    if sqlerrm like 'FAIL%' then raise; end if;
+  end;
+  begin
+    perform public.admin_set_role('00000000-0000-4000-a000-000000000009', 'moderator');
+    raise exception 'FAIL: moderator changed roles';
+  exception when raise_exception then
+    if sqlerrm like 'FAIL%' then raise; end if;
+  end;
+  perform public.admin_suspend('00000000-0000-4000-a000-000000000009', now() + interval '1 day', 'הטרדה');
+  perform public.admin_warn('00000000-0000-4000-a000-000000000007', 'אנא שמרו על שיח מכבד');
+  -- dismissing brings the auto-hidden story back
+  perform public.admin_resolve_reports('story', '50000000-0000-4000-a000-000000000001', 'dismissed', 'בדקתי, תקין');
+  if exists (select 1 from public.reports where target_id = '50000000-0000-4000-a000-000000000001' and status = 'open') then
+    raise exception 'FAIL: reports still open after dismiss';
+  end if;
+  if (select (public.admin_user_detail('00000000-0000-4000-a000-000000000009') ->> 'banned_until') is null) then
+    raise exception 'FAIL: user detail missing the suspension';
+  end if;
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000007');
+do $$ begin
+  if not exists (select 1 from public.stories where id = '50000000-0000-4000-a000-000000000001') then
+    raise exception 'FAIL: dismissed story still hidden';
+  end if;
+  if not exists (select 1 from public.notifications where recipient_id = auth.uid() and type = 'moderation_warning') then
+    raise exception 'FAIL: warning not delivered';
+  end if;
+  -- flood limit: 20 messages a minute
+  for i in 1 .. 20 loop
+    insert into public.direct_messages (sender_id, recipient_id, body) values (auth.uid(), '00000000-0000-4000-a000-000000000006', 'hi ' || i);
+  end loop;
+  begin
+    insert into public.direct_messages (sender_id, recipient_id, body) values (auth.uid(), '00000000-0000-4000-a000-000000000006', 'one more');
+    raise exception 'FAIL: message flood not limited';
+  exception when raise_exception then
+    if sqlerrm <> 'rate_limited' then raise; end if;
+  end;
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000009'); -- suspended Yoni
+do $$
+declare _s jsonb;
+begin
+  begin
+    insert into public.direct_messages (sender_id, recipient_id, body) values (auth.uid(), '00000000-0000-4000-a000-000000000006', 'hi');
+    raise exception 'FAIL: suspended user sent a message';
+  exception when insufficient_privilege then null; end;
+  _s := public.my_moderation_status();
+  if _s ->> 'ban_reason' <> 'הטרדה' or _s ->> 'banned_until' is null then raise exception 'FAIL: suspended user can''t see why/until when'; end if;
+end $$;
+reset role;
+update public.profiles set banned_until = now() - interval '1 minute' where id = '00000000-0000-4000-a000-000000000009';
+set local role authenticated;
+do $$ begin
+  if (public.my_moderation_status() ->> 'banned_at') is not null then raise exception 'FAIL: expired suspension not lifted'; end if;
+  insert into public.direct_messages (sender_id, recipient_id, body) values (auth.uid(), '00000000-0000-4000-a000-000000000005', 'back');
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000001'); -- admin removes a story, sets a role
+do $$ begin
+  perform public.admin_remove_content('story', '50000000-0000-4000-a000-000000000001', 'הפרת כללים');
+  if exists (select 1 from public.stories where id = '50000000-0000-4000-a000-000000000001') then raise exception 'FAIL: story not removed'; end if;
+  if not exists (select 1 from public.moderation_actions where action = 'remove_content' and details ->> 'caption' = 'שלום') then
+    raise exception 'FAIL: removal not logged with the content';
+  end if;
+  perform public.admin_set_role('00000000-0000-4000-a000-000000000009', 'moderator');
+  if not app_private.is_staff('00000000-0000-4000-a000-000000000009') then raise exception 'FAIL: role not set'; end if;
+  raise notice 'moderation tests passed';
+end $$;
+rollback;
