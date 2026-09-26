@@ -140,7 +140,9 @@ export function CommunityForm({ onCreated }: { onCreated?: () => void }) {
                 ["female", "נשים בלבד"],
                 ["male", "גברים בלבד"],
               ] as const
-            ).map(([v, l]) => (
+            )
+              .filter(([v]) => v === "all" || v === profile?.gender || v === audience)
+              .map(([v, l]) => (
               <Chip key={v} active={audience === v} onClick={() => setAudience(v)}>
                 {l}
               </Chip>

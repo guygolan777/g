@@ -175,7 +175,7 @@ export function EventForm({
   onChange: (v: EventFormValues) => void;
   mode: "create" | "edit";
 }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { data: myCommunities = [] } = useMyCommunities(user?.id);
   const set = <K extends keyof EventFormValues>(k: K, v: EventFormValues[K]) => onChange({ ...value, [k]: v });
   const cat = HOBBY_CATEGORIES.find((c) => c.id === value.category);
@@ -335,7 +335,10 @@ export function EventForm({
                 ["female", "נשים"],
                 ["male", "גברים"],
               ] as const
-            ).map(([g, l]) => (
+            )
+              // a women-only event is opened by a woman, a men-only one by a man
+              .filter(([g]) => g === "all" || g === profile?.gender || g === value.gender_target)
+              .map(([g, l]) => (
               <Chip key={g} active={value.gender_target === g} onClick={() => set("gender_target", g)}>
                 {l}
               </Chip>

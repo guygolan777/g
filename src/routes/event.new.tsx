@@ -69,7 +69,7 @@ function Pill({ active, onClick, children, className }: { active: boolean; onCli
 
 /** Quick "יצירת הזמנה חדשה": what → when → where → publish, with "עוד פרטים" for the rest. */
 function NewEvent() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const navigate = useNavigate();
   const invalidate = useInvalidateEvents();
   const { community } = Route.useSearch();
@@ -344,7 +344,9 @@ function NewEvent() {
                   ["male", "גברים"],
                   ["female", "נשים"],
                 ] as const
-              ).map(([g, l]) => (
+              )
+                .filter(([g]) => g === "all" || g === profile?.gender)
+                .map(([g, l]) => (
                 <button
                   key={g}
                   type="button"

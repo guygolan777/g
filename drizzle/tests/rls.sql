@@ -710,3 +710,32 @@ do $$ begin
   raise notice 'moderation tests passed';
 end $$;
 rollback;
+
+-- Women-only / men-only (0026): opened only by someone of that gender.
+begin;
+set local role authenticated;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000006'); -- Daniel (man)
+do $$ begin
+  begin
+    insert into public.events (organizer_id, title, category, starts_at, seats, gender_target)
+      values (auth.uid(), 'נשים בלבד', 'fitness', now() + interval '2 days', 10, 'female');
+    raise exception 'FAIL: a man opened a women-only event';
+  exception when raise_exception then
+    if sqlerrm <> 'audience_own_gender' then raise; end if;
+  end;
+  begin
+    insert into public.communities (founder_id, name, hobby, audience_gender) values (auth.uid(), 'נשים בלבד', 'fitness.gym', 'female');
+    raise exception 'FAIL: a man opened a women-only community';
+  exception when raise_exception then
+    if sqlerrm <> 'audience_own_gender' then raise; end if;
+  end;
+  insert into public.events (organizer_id, title, category, starts_at, seats, gender_target)
+    values (auth.uid(), 'גברים בלבד', 'fitness', now() + interval '2 days', 10, 'male');
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000002'); -- Maya (woman)
+do $$ begin
+  insert into public.events (organizer_id, title, category, starts_at, seats, gender_target)
+    values (auth.uid(), 'נשים בלבד', 'fitness', now() + interval '2 days', 10, 'female');
+  raise notice 'audience gender tests passed';
+end $$;
+rollback;
