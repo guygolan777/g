@@ -144,8 +144,8 @@ function Dating() {
         .eq("onboarded", true)
         .is("banned_at", null)
         .neq("id", user!.id)
-        .gte("birth_year", year - settings!.pref_max_age)
-        .lte("birth_year", year - settings!.pref_min_age)
+        // people who hide their age come back without it — mutual_fits checks their real age
+        .or(`birth_year.is.null,and(birth_year.gte.${year - settings!.pref_max_age},birth_year.lte.${year - settings!.pref_min_age})`)
         .limit(100);
       if (settings!.pref_gender !== "all") q = q.eq("gender", settings!.pref_gender);
       const unlimited = settings!.pref_distance_km >= DISTANCE_UNLIMITED;

@@ -18,6 +18,9 @@ export type Profile = {
   dating_enabled?: boolean;
   /** Private profile: strangers see only name, main photo and age. */
   is_private?: boolean;
+  /** Only the owner reads these back (others always get false). */
+  hide_age?: boolean;
+  hide_city?: boolean;
   /** From profile_cards: may I see the whole profile (false → the private fields come back empty). */
   full_access?: boolean;
   onboarded?: boolean;

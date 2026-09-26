@@ -7,7 +7,9 @@ do $$ begin
   exception when insufficient_privilege then null; end;
   begin perform photos, city, hobbies, traits from public.profiles limit 1; raise exception 'FAIL: private columns readable from profiles';
   exception when insufficient_privilege then null; end;
-  perform id, name, avatar_url, birth_year from public.profiles limit 1;
+  begin perform birth_year from public.profiles limit 1; raise exception 'FAIL: birth_year readable from profiles (0023)';
+  exception when insufficient_privilege then null; end;
+  perform id, name, avatar_url from public.profiles limit 1;
   perform bio, photos, city from public.profile_cards limit 1;
   raise notice 'RLS lockdown tests passed';
 end $$;

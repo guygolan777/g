@@ -94,7 +94,7 @@ function Settings() {
 
       <Section title="פרטיות">
         <div className="divide-y divide-border rounded-2xl bg-surface shadow-soft">
-          <Row title="🔒 פרופיל פרטי" text="מי שלא אישרת יראה רק שם, תמונה ראשית וגיל. מעקב אחריך יהיה בבקשה ובאישור שלך">
+          <Row title="🔒 פרופיל פרטי" text="מי שלא אישרת יראה רק שם ותמונה ראשית. מעקב אחריך יהיה בבקשה ובאישור שלך">
             <Switch
               checked={!!profile?.is_private}
               aria-label="פרופיל פרטי"
@@ -106,6 +106,24 @@ function Settings() {
               }}
             />
           </Row>
+          {(
+            [
+              ["hide_age", "הסתרת גיל", "הגיל שלך לא יוצג לאף אחד (ההתאמות בהיכרויות עדיין לפי הגיל)"],
+              ["hide_city", "הסתרת עיר", "העיר שלך לא תוצג בפרופיל"],
+            ] as const
+          ).map(([key, title, text]) => (
+            <Row key={key} title={title} text={text}>
+              <Switch
+                checked={!!profile?.[key]}
+                aria-label={title}
+                onCheckedChange={async (c) => {
+                  const { error } = await supabase.from("profiles").update({ [key]: c }).eq("id", user!.id);
+                  if (error) return void toast.error("השמירה נכשלה");
+                  await refreshProfile();
+                }}
+              />
+            </Row>
+          ))}
           <Row title="הצגת סטטוס מחובר/ת" text="אחרים יראו מתי את/ה באונליין">
             <Switch checked={settings?.show_online ?? true} onCheckedChange={(c) => void setPref({ show_online: c })} />
           </Row>

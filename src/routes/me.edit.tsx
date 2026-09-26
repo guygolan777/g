@@ -74,7 +74,7 @@ function EditProfile() {
         <Field label="עיר">
           <Input value={city} onChange={(e) => setCity(e.target.value)} />
         </Field>
-        <Field label="תאריך לידה" hint="פרטי — רק הגיל מוצג">
+        <Field label="תאריך לידה" hint="פרטי — רק הגיל מוצג (אפשר להסתיר אותו בהגדרות)">
           <Input type="date" value={birth} onChange={(e) => setBirth(e.target.value)} />
         </Field>
         <div>

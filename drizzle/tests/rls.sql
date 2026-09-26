@@ -203,7 +203,7 @@ do $$ begin
 end $$;
 rollback;
 
--- Private profile (Shira): strangers see only name/photo/age; follow = request; hidden from attendee lists.
+-- Private profile (Shira): strangers see only name and photo (no age, 0023); follow = request; hidden from attendee lists.
 begin;
 update public.profiles set is_private = true, dating_enabled = false where id = '00000000-0000-4000-a000-000000000003';
 update public.profiles set dating_enabled = false where id = '00000000-0000-4000-a000-000000000009';
@@ -216,7 +216,8 @@ do $$
 declare _c record;
 begin
   select * into _c from public.profile_cards where id = '00000000-0000-4000-a000-000000000003';
-  if _c.name is null or _c.birth_year is null then raise exception 'FAIL: private profile hides its name/age'; end if;
+  if _c.name is null then raise exception 'FAIL: private profile hides its name'; end if;
+  if _c.birth_year is not null then raise exception 'FAIL: private profile shows its age to a stranger'; end if;
   if _c.full_access or _c.bio <> '' or _c.city is not null or cardinality(_c.photos) > 0 or cardinality(_c.hobbies) > 0 then
     raise exception 'FAIL: private profile details visible to a stranger';
   end if;
@@ -523,3 +524,31 @@ end $$;
 rollback;
 
 select 'RLS tests passed' as result;
+
+-- Hide age / city (0023): hidden from everyone but the owner; matching still uses the real age.
+begin;
+update public.profiles set hide_age = true, hide_city = true, city = 'חיפה' where id = '00000000-0000-4000-a000-000000000001';
+set local role authenticated;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000009');
+do $$
+declare _c record;
+begin
+  select * into _c from public.profile_cards where id = '00000000-0000-4000-a000-000000000001';
+  if _c.birth_year is not null or _c.city is not null then raise exception 'FAIL: hidden age/city shown to others'; end if;
+  if _c.hide_age or _c.hide_city then raise exception 'FAIL: others can read the hide switches'; end if;
+  if _c.bio is null or not _c.full_access then raise exception 'FAIL: hiding age/city hid the rest of the profile'; end if;
+  select * into _c from public.profile_cards where id = '00000000-0000-4000-a000-000000000002';
+  if _c.birth_year is null then raise exception 'FAIL: a public profile''s age is hidden'; end if;
+end $$;
+select pg_temp.as_user('00000000-0000-4000-a000-000000000001');
+do $$
+declare _c record;
+begin
+  select * into _c from public.profile_cards where id = auth.uid();
+  if _c.birth_year is null or _c.city is distinct from 'חיפה' or not _c.hide_age or not _c.hide_city then
+    raise exception 'FAIL: owner can''t see their own age/city/switches';
+  end if;
+  update public.profiles set hide_age = false where id = auth.uid();
+  if not found then raise exception 'FAIL: owner can''t change hide_age'; end if;
+end $$;
+rollback;

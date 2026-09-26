@@ -11,7 +11,7 @@ export const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined) ||
 export const PROFILE_VIEW = "profile_cards";
 /** Columns other members may read from PROFILE_VIEW (sensitive columns are not exposed). */
 export const PROFILE_COLUMNS =
-  "id, name, avatar_url, photos, bio, gender, birth_year, city, hobbies, traits, dating_enabled, is_private, full_access, onboarded, banned_at, created_at";
+  "id, name, avatar_url, photos, bio, gender, birth_year, city, hobbies, traits, dating_enabled, is_private, full_access, hide_age, hide_city, onboarded, banned_at, created_at";
 /** Columns guests (anon) may read. */
 export const PROFILE_GUEST_COLUMNS = "id, name, avatar_url";
 export const PROFILE_MINI = "id, name, avatar_url";
