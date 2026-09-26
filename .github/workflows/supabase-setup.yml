@@ -19,6 +19,10 @@ on:
         description: "Also load 20 demo users (each with an event and a community, some in dating mode)"
         type: boolean
         default: false
+      admin_email:
+        description: "Make the account with this email an admin (it must have signed up already)"
+        type: string
+        default: ""
 
 jobs:
   migrate:
@@ -29,6 +33,7 @@ jobs:
       DB: ${{ secrets.SUPABASE_DB_URL }}
       SEED: ${{ inputs.seed }}
       DEMO20: ${{ inputs.demo20 }}
+      ADMIN_EMAIL: ${{ inputs.admin_email }}
     steps:
       - uses: actions/checkout@v4
       - name: Apply migrations
@@ -68,5 +73,14 @@ jobs:
             echo "→ seed-demo20.sql"
             run_sql "$(cat drizzle/seed-demo20.sql)" >/dev/null
             echo "20 demo users loaded (password for all: mibale1234)"
+          fi
+          if [ -n "$ADMIN_EMAIL" ]; then
+            email=$(echo "$ADMIN_EMAIL" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')
+            [[ "$email" =~ ^[a-z0-9._%+-]+@[a-z0-9.-]+$ ]] || { echo "::error::Not an email address"; exit 1; }
+            found=$(run_sql "insert into public.user_roles (user_id, role) select id, 'admin' from auth.users where lower(email) = '$email' on conflict do nothing; select count(*) as n from auth.users where lower(email) = '$email';")
+            if grep -qE '(^|[^0-9])0([^0-9]|$)' <<<"$found"; then
+              echo "::error::No account with that email — sign up in the app first, then run this again"; exit 1
+            fi
+            echo "Admin role granted to $email 🛡️ (open the app → Settings → ניהול המערכת)"
           fi
           echo "Database is ready ✅"
