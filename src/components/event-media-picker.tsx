@@ -1,6 +1,6 @@
 import * as React from "react";
 import { toast } from "sonner";
-import { ImagePlus, Move, Play, X } from "lucide-react";
+import { ImagePlus, Play, X } from "lucide-react";
 import { SafeImg } from "@/components/safe-img";
 import { useAuth } from "@/hooks/use-auth";
 import { uploadMedia } from "@/lib/storage";
@@ -90,6 +90,7 @@ export function EventMediaPicker({
   const { user } = useAuth();
   const mainRef = React.useRef<HTMLInputElement>(null);
   const storyRef = React.useRef<HTMLInputElement>(null);
+  const bothRef = React.useRef<HTMLInputElement>(null);
   const [busy, setBusy] = React.useState<string | null>(null);
   const has = !!(value.image_url || value.video_url);
   const ownStory = !!(value.story_image_url || value.story_video_url);
@@ -119,11 +120,12 @@ export function EventMediaPicker({
     return { image: await uploadMedia(user.id, file, "events"), video: null };
   }
 
-  async function pick(file: File, target: "main" | "story") {
+  async function pick(file: File, target: "main" | "story" | "both") {
     try {
       const up = await upload(file);
       if (!up) return;
       if (target === "main") onChange({ image_url: up.image, video_url: up.video, media_position: null });
+      else if (target === "both") onChange({ image_url: up.image, video_url: up.video, media_position: null, story_image_url: null, story_video_url: null });
       else onChange({ story_image_url: up.image, story_video_url: up.video });
     } catch {
       toast.error("ההעלאה נכשלה, נסו שוב");
@@ -169,7 +171,7 @@ export function EventMediaPicker({
       {!has ? (
         <button
           type="button"
-          onClick={() => mainRef.current?.click()}
+          onClick={() => bothRef.current?.click()}
           disabled={!!busy}
           className="grid aspect-[16/9] w-full place-items-center rounded-3xl border-2 border-dashed border-border bg-surface-soft text-muted-foreground"
         >
@@ -216,31 +218,31 @@ export function EventMediaPicker({
                     <Play className="size-3.5 fill-current" />
                   </span>
                 )}
-                <span className="pointer-events-none absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-foreground/60 px-2 py-0.5 text-[11px] text-background">
-                  <Move className="size-3" /> גררו
-                </span>
               </div>
-              <figcaption className="mt-1 text-center text-xs text-muted-foreground">בפיד</figcaption>
+              <figcaption className="mt-1.5 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                תצוגה בפיד
+                <button type="button" disabled={!!busy} onClick={() => mainRef.current?.click()} className="font-semibold text-primary">
+                  החלף
+                </button>
+              </figcaption>
             </figure>
             <figure className="min-w-0 flex-[1.4]">
               <div className="relative aspect-[9/16] overflow-hidden rounded-2xl bg-foreground">
                 {story.image && <SafeImg src={story.image} alt="" className="absolute inset-0 size-full scale-110 object-cover opacity-70 blur-xl" />}
                 {media(story, "contain")}
               </div>
-              <figcaption className="mt-1 text-center text-xs text-muted-foreground">בסטורי</figcaption>
-              <button
-                type="button"
-                disabled={!!busy}
-                onClick={() => (ownStory ? onChange({ story_image_url: null, story_video_url: null }) : storyRef.current?.click())}
-                className="mt-1 w-full text-center text-xs font-semibold text-primary"
-              >
-                {ownStory ? "כמו בפיד" : "החלפה לסטורי"}
-              </button>
+              <figcaption className="mt-1.5 flex items-center justify-center gap-2 text-sm whitespace-nowrap text-muted-foreground">
+                תצוגה בסטורי
+                <button type="button" disabled={!!busy} onClick={() => storyRef.current?.click()} className="font-semibold text-primary">
+                  החלף
+                </button>
+              </figcaption>
             </figure>
           </div>
+          {busy && <p className="mt-2 text-center text-sm text-muted-foreground">{busy}</p>}
           <div className="mt-2 flex items-center gap-2">
-            <button type="button" disabled={!!busy} onClick={() => mainRef.current?.click()} className="h-9 rounded-full bg-surface-soft px-4 text-sm font-semibold">
-              {busy ?? "החלפה"}
+            <button type="button" disabled={!!busy} onClick={() => bothRef.current?.click()} className="h-9 rounded-full bg-surface-soft px-4 text-sm font-semibold">
+              החלף את שניהם
             </button>
             <button
               type="button"
@@ -248,7 +250,7 @@ export function EventMediaPicker({
               onClick={() => onChange({ image_url: null, video_url: null, story_image_url: null, story_video_url: null, media_position: null })}
               className="flex h-9 items-center gap-1 rounded-full px-3 text-sm text-muted-foreground"
             >
-              <X className="size-4" /> הסרה
+              <X className="size-4" /> הסר את שניהם
             </button>
           </div>
         </>
@@ -257,6 +259,7 @@ export function EventMediaPicker({
         [
           [mainRef, "main"],
           [storyRef, "story"],
+          [bothRef, "both"],
         ] as const
       ).map(([ref, target]) => (
         <input
@@ -268,7 +271,7 @@ export function EventMediaPicker({
           // photos and videos. Only the first chosen file is used.
           multiple
           hidden
-          aria-label={target === "main" ? "תמונה או סרטון לאירוע" : "תמונה או סרטון לסטורי"}
+          aria-label={target === "story" ? "תמונה או סרטון לסטורי" : target === "main" ? "תמונה או סרטון לפיד" : "תמונה או סרטון לאירוע"}
           onChange={(e) => {
             const f = e.target.files?.[0];
             e.target.value = "";
