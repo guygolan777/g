@@ -2,12 +2,14 @@
  * Personality traits — the one central list used by onboarding and profile editing.
  */
 export type Trait = { id: string; label: string; emoji: string };
-export type TraitGroup = { id: string; label: string; single?: boolean; traits: Trait[] };
+/** single: one choice in the whole group; exclusive: sets of traits in the group that rule each other out. */
+export type TraitGroup = { id: string; label: string; single?: boolean; exclusive?: string[][]; traits: Trait[] };
 
 export const TRAIT_GROUPS: TraitGroup[] = [
   {
     id: "status",
     label: "מצב אישי",
+    exclusive: [["single", "relationship", "married", "divorced"]],
     traits: [
       { id: "single", label: "רווק/ה", emoji: "✨" },
       { id: "relationship", label: "בזוגיות", emoji: "💑" },
@@ -19,6 +21,10 @@ export const TRAIT_GROUPS: TraitGroup[] = [
   {
     id: "habits",
     label: "הרגלים",
+    exclusive: [
+      ["smoker", "non_smoker"],
+      ["vegetarian", "vegan"],
+    ],
     traits: [
       { id: "smoker", label: "מעשן/ת", emoji: "🚬" },
       { id: "non_smoker", label: "לא מעשן/ת", emoji: "🚭" },
@@ -110,10 +116,11 @@ export function traitToneClass(id: string): string {
   return GROUP_TONES[(idx < 0 ? 0 : idx) % GROUP_TONES.length];
 }
 
-/** Toggle a trait, respecting single-choice groups. */
+/** Toggle a trait, respecting single-choice groups and traits that rule each other out (single vs. married). */
 export function toggleTrait(current: string[], id: string): string[] {
   if (current.includes(id)) return current.filter((t) => t !== id);
   const group = groupByTrait.get(id);
-  const next = group?.single ? current.filter((t) => groupByTrait.get(t)?.id !== group.id) : current;
+  const rivals = new Set(group?.exclusive?.filter((set) => set.includes(id)).flat());
+  const next = current.filter((t) => (group?.single ? groupByTrait.get(t)?.id !== group.id : !rivals.has(t)));
   return [...next, id];
 }
