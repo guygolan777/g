@@ -1,6 +1,6 @@
 import type * as React from "react";
 import { Link } from "@tanstack/react-router";
-import { MapPin } from "lucide-react";
+import { MapPin, Play } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import { JoinButton } from "@/components/join-button";
 import { SafeImg } from "@/components/safe-img";
@@ -35,13 +35,13 @@ export function DateBadge({ iso, className }: { iso: string; className?: string 
   );
 }
 
-/** Image of an event, or its subcategory emoji on a soft tile when there is no image. */
+/** Image of an event (a video event shows its still frame + ▶), or its subcategory emoji when there is none. */
 export function EventMedia({
   event,
   className,
   children,
 }: {
-  event: Pick<EventRow, "image_url" | "subcategory" | "category">;
+  event: Pick<EventRow, "image_url" | "subcategory" | "category"> & { video_url?: string | null };
   className?: string;
   children?: React.ReactNode;
 }) {
@@ -51,6 +51,11 @@ export function EventMedia({
         {hobbyEmoji(event.subcategory ?? event.category)}
       </span>
       <SafeImg src={event.image_url ?? undefined} className="absolute inset-0 size-full object-cover" />
+      {event.video_url && (
+        <span className="absolute right-2 bottom-2 grid size-8 place-items-center rounded-full bg-foreground/60 text-background" aria-label="סרטון">
+          <Play className="size-4 fill-current" />
+        </span>
+      )}
       {children}
     </div>
   );

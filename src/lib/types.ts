@@ -50,6 +50,7 @@ export type EventRow = {
   category: string;
   subcategory: string | null;
   image_url: string | null;
+  video_url?: string | null;
   starts_at: string;
   ends_at: string | null;
   is_online?: boolean;

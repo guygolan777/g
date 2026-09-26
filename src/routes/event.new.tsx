@@ -6,8 +6,8 @@ import { Page, PageHeader } from "@/components/app-shell";
 import { RequireAuth } from "@/components/gates";
 import { emptyEventForm, formToPayload, type EventFormValues, PaymentLinkField } from "@/components/event-form";
 import { AddressInput } from "@/components/address-input";
+import { EventMediaPicker } from "@/components/event-media-picker";
 import { EventPublishedDialog } from "@/components/event-published";
-import { SafeImg } from "@/components/safe-img";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -17,7 +17,6 @@ import { supabase } from "@/lib/supabase";
 import { useInvalidateEvents, useMyCommunities } from "@/lib/queries";
 import { CUSTOM_CATEGORY, HOBBY_CATEGORIES, getSubcategory } from "@/lib/hobby-categories";
 import { EVENT_MIN_AGE, PAID_EVENTS_ENABLED, UNLIMITED_SEATS } from "@/lib/constants";
-import { uploadMedia } from "@/lib/storage";
 import { toLocalInput } from "@/lib/format";
 import { whoComesTitle } from "@/lib/event-title";
 import { hapticTap } from "@/lib/native";
@@ -74,7 +73,6 @@ function NewEvent() {
   const invalidate = useInvalidateEvents();
   const { community } = Route.useSearch();
   const { data: myCommunities = [] } = useMyCommunities(user?.id);
-  const fileRef = React.useRef<HTMLInputElement>(null);
 
   const [form, setForm] = React.useState<EventFormValues>(() => ({
     ...emptyEventForm(),
@@ -86,7 +84,6 @@ function NewEvent() {
   const [when, setWhen] = React.useState<When>("now");
   const [more, setMore] = React.useState(false);
   const [paid, setPaid] = React.useState(false);
-  const [uploading, setUploading] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [published, setPublished] = React.useState<{ id: string; title: string; starts_at: string } | null>(null);
   const set = <K extends keyof EventFormValues>(k: K, v: EventFormValues[K]) => setForm((f) => ({ ...f, [k]: v }));
@@ -266,31 +263,10 @@ function NewEvent() {
 
           <div>
             <SectionTitle Icon={ImagePlus}>מדיה</SectionTitle>
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="relative mt-3 grid aspect-[16/9] w-full place-items-center overflow-hidden rounded-3xl border-2 border-dashed border-border text-4xl text-muted-foreground"
-            >
-              {uploading ? "…" : "+"}
-              <SafeImg src={form.image_url ?? undefined} className="absolute inset-0 size-full object-cover" />
-            </button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={async (e) => {
-                const f = e.target.files?.[0];
-                if (!f || !user) return;
-                setUploading(true);
-                try {
-                  set("image_url", await uploadMedia(user.id, f, "events"));
-                } catch {
-                  toast.error("העלאת התמונה נכשלה");
-                } finally {
-                  setUploading(false);
-                }
-              }}
+            <EventMediaPicker
+              className="mt-3"
+              value={{ image_url: form.image_url, video_url: form.video_url }}
+              onChange={(m) => setForm((f) => ({ ...f, ...m }))}
             />
           </div>
 

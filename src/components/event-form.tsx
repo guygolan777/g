@@ -1,6 +1,4 @@
-import * as React from "react";
-import { SafeImg } from "@/components/safe-img";
-import { ImagePlus, LocateFixed } from "lucide-react";
+import { LocateFixed } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Textarea } from "@/components/ui/input";
@@ -11,9 +9,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { useMyCommunities } from "@/lib/queries";
 import { HOBBY_CATEGORIES } from "@/lib/hobby-categories";
 import { EVENT_MIN_AGE, PAID_EVENTS_ENABLED, UNLIMITED_SEATS } from "@/lib/constants";
-import { uploadMedia } from "@/lib/storage";
 import { getCurrentPosition } from "@/lib/native";
 import { AddressInput } from "@/components/address-input";
+import { EventMediaPicker } from "@/components/event-media-picker";
 import { geocode } from "@/lib/geocode";
 import { toLocalInput } from "@/lib/format";
 import { whoComesTitle } from "@/lib/event-title";
@@ -25,6 +23,8 @@ export type EventFormValues = {
   category: string;
   subcategory: string | null;
   image_url: string | null;
+  /** Short clip (≤30 s); image_url then holds its first frame. */
+  video_url: string | null;
   starts_at: string;
   ends_at: string;
   is_online: boolean;
@@ -57,6 +57,7 @@ export function emptyEventForm(): EventFormValues {
     category: "",
     subcategory: null,
     image_url: null,
+    video_url: null,
     starts_at: toLocalInput(start.toISOString()),
     ends_at: toLocalInput(end.toISOString()),
     is_online: false,
@@ -86,6 +87,7 @@ export function eventToForm(e: EventRow, meetingUrl: string | null): EventFormVa
     category: e.category,
     subcategory: e.subcategory,
     image_url: e.image_url,
+    video_url: e.video_url ?? null,
     starts_at: toLocalInput(e.starts_at),
     ends_at: toLocalInput(e.ends_at),
     is_online: !!e.is_online,
@@ -130,6 +132,7 @@ export async function formToPayload(v: EventFormValues) {
     category: v.category,
     subcategory: v.subcategory,
     image_url: v.image_url,
+    video_url: v.video_url,
     starts_at: starts.toISOString(),
     ends_at: ends?.toISOString() ?? null,
     is_online: v.is_online,
@@ -162,46 +165,13 @@ export function EventForm({
 }) {
   const { user } = useAuth();
   const { data: myCommunities = [] } = useMyCommunities(user?.id);
-  const [uploading, setUploading] = React.useState(false);
-  const fileRef = React.useRef<HTMLInputElement>(null);
   const set = <K extends keyof EventFormValues>(k: K, v: EventFormValues[K]) => onChange({ ...value, [k]: v });
   const cat = HOBBY_CATEGORIES.find((c) => c.id === value.category);
   const unlimited = value.seats >= UNLIMITED_SEATS;
 
   return (
     <div className="space-y-5">
-      <button
-        type="button"
-        onClick={() => fileRef.current?.click()}
-        className="relative grid aspect-[16/9] w-full place-items-center overflow-hidden rounded-2xl border-2 border-dashed border-border bg-surface-soft"
-      >
-        {value.image_url ? (
-          <SafeImg src={value.image_url} alt="" className="absolute inset-0 size-full object-cover" />
-        ) : (
-          <span className="flex flex-col items-center gap-1 text-muted-foreground">
-            <ImagePlus className="size-7" />
-            {uploading ? "מעלים…" : "הוספת תמונה"}
-          </span>
-        )}
-      </button>
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/*"
-        hidden
-        onChange={async (e) => {
-          const f = e.target.files?.[0];
-          if (!f || !user) return;
-          setUploading(true);
-          try {
-            set("image_url", await uploadMedia(user.id, f, "events"));
-          } catch {
-            toast.error("העלאת התמונה נכשלה");
-          } finally {
-            setUploading(false);
-          }
-        }}
-      />
+      <EventMediaPicker value={{ image_url: value.image_url, video_url: value.video_url }} onChange={(m) => onChange({ ...value, ...m })} />
 
       <Field label="כותרת" hint={value.title ? `יוצג כ: ${whoComesTitle(value.title)}` : "למשל: ריצת בוקר בפארק"}>
         <div className="flex items-center gap-2">

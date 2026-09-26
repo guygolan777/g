@@ -279,6 +279,30 @@ do $$ begin
 end $$;
 rollback;
 
+-- Event video: the event's story plays the video; image_url stays the still frame.
+begin;
+set local role authenticated; select pg_temp.as_user('00000000-0000-4000-a000-000000000001');
+do $$
+declare _id uuid;
+begin
+  insert into public.events (organizer_id, title, category, starts_at, is_online, location_name, seats, image_url, video_url)
+  values (auth.uid(), 'וידאו', 'ball', now() + interval '2 days', false, 'x', 10,
+          'https://example.com/frame.jpg', 'https://example.com/clip.mp4')
+  returning id into _id;
+  if not exists (select 1 from public.stories where event_id = _id and media_type = 'video' and media_url = 'https://example.com/clip.mp4') then
+    raise exception 'FAIL: video event story is not the video';
+  end if;
+  update public.events set video_url = null where id = _id;
+  if not exists (select 1 from public.stories where event_id = _id and media_type = 'image' and media_url = 'https://example.com/frame.jpg') then
+    raise exception 'FAIL: removing the video didn''t fall back to the picture';
+  end if;
+  begin
+    update public.events set video_url = 'javascript:alert(1)' where id = _id;
+    raise exception 'FAIL: non-web video url accepted';
+  exception when check_violation then null; end;
+end $$;
+rollback;
+
 -- Date invites: sender creates, a DM + notification appear, only the recipient answers.
 begin;
 set local role authenticated; select pg_temp.as_user('00000000-0000-4000-a000-000000000006');

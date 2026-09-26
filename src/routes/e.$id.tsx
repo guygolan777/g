@@ -19,6 +19,8 @@ import {
   Trash2,
   Users,
   Video,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { CenteredSpinner, EmptyState, Page, Section } from "@/components/app-shell";
 import { Avatar } from "@/components/avatar";
@@ -43,7 +45,7 @@ import { useBlockedIds, useInvalidateEvents } from "@/lib/queries";
 import { getEventOg } from "@/lib/server/og";
 import { seo } from "@/lib/seo";
 import type { EventRow, ParticipantStatus, Profile } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { VIDEO_POSTER, cn, videoFrameSrc } from "@/lib/utils";
 
 export const Route = createFileRoute("/e/$id")({
   loader: async ({ params }) => {
@@ -109,9 +111,33 @@ function EventPage() {
 
 function Hero({ event }: { event: EventRow }) {
   const navigate = useNavigate();
+  const [muted, setMuted] = React.useState(true);
   return (
     <div className="relative -mx-4 aspect-[4/3] overflow-hidden bg-muted md:mx-0 md:mt-2 md:aspect-[16/9] md:rounded-3xl">
-      {event.image_url && <SafeImg src={event.image_url} alt="" className="size-full object-cover" />}
+      {event.video_url ? (
+        // plays silently in a loop; the still frame shows until it loads
+        <>
+          <video
+            src={videoFrameSrc(event.video_url)}
+            poster={event.image_url ?? VIDEO_POSTER}
+            muted={muted}
+            autoPlay
+            loop
+            playsInline
+            preload="metadata"
+            className="size-full object-cover"
+          />
+          <button
+            onClick={() => setMuted((m) => !m)}
+            className="absolute bottom-10 left-4 grid size-10 place-items-center rounded-full bg-surface/90 shadow-soft backdrop-blur"
+            aria-label={muted ? "הפעלת קול" : "השתקה"}
+          >
+            {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
+          </button>
+        </>
+      ) : (
+        event.image_url && <SafeImg src={event.image_url} alt="" className="size-full object-cover" />
+      )}
       <button
         onClick={() => (window.history.length > 1 ? window.history.back() : void navigate({ to: "/home" }))}
         className="absolute top-4 right-4 grid size-10 place-items-center rounded-full bg-surface/90 shadow-soft backdrop-blur"

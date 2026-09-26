@@ -152,6 +152,7 @@ function StorySlide({
   // Holding the screen pauses; letting go after a hold must not also skip to the next story.
   const pressedAt = React.useRef(0);
   const isMine = story.author_id === user?.id;
+  const backdrop = story.media_type === "video" ? story.event?.image_url : story.media_url;
   const pos = siblings.findIndex((s) => s.id === story.id);
 
   // Mark as viewed.
@@ -225,6 +226,8 @@ function StorySlide({
           </span>
         </div>
       ) : story.media_type === "video" ? (
+        <>
+        {backdrop && <SafeImg src={backdrop} alt="" className="absolute inset-0 size-full scale-110 object-cover opacity-60 blur-2xl" />}
         <video
           ref={videoRef}
           src={videoFrameSrc(story.media_url)}
@@ -236,8 +239,13 @@ function StorySlide({
           onTimeUpdate={(e) => active && setProgress(e.currentTarget.currentTime / (e.currentTarget.duration || 1))}
           onEnded={() => active && onNext()}
         />
+        </>
       ) : (
-        <SafeImg src={story.media_url} alt="" className="absolute inset-0 size-full object-contain" />
+        <>
+          {/* the same picture, blurred, fills the screen instead of black bars */}
+          <SafeImg src={story.media_url} alt="" className="absolute inset-0 size-full scale-110 object-cover opacity-60 blur-2xl" />
+          <SafeImg src={story.media_url} alt="" className="absolute inset-0 size-full object-contain" />
+        </>
       )}
       <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-foreground/70 to-transparent" />
       <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-scrim" />
