@@ -124,7 +124,14 @@ export function EventMediaPicker({
     try {
       const up = await upload(file);
       if (!up) return;
-      if (target === "main") onChange({ image_url: up.image, video_url: up.video, media_position: null });
+      if (target === "main")
+        // Replacing the feed media keeps what the story showed until now (it followed the feed).
+        onChange({
+          image_url: up.image,
+          video_url: up.video,
+          media_position: null,
+          ...(ownStory ? {} : { story_image_url: value.image_url, story_video_url: value.video_url }),
+        });
       else if (target === "both") onChange({ image_url: up.image, video_url: up.video, media_position: null, story_image_url: null, story_video_url: null });
       else onChange({ story_image_url: up.image, story_video_url: up.video });
     } catch {
