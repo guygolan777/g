@@ -265,7 +265,7 @@ function NewEvent() {
             <SectionTitle Icon={ImagePlus}>מדיה</SectionTitle>
             <EventMediaPicker
               className="mt-3"
-              value={{ image_url: form.image_url, video_url: form.video_url }}
+              value={form}
               onChange={(m) => setForm((f) => ({ ...f, ...m }))}
             />
           </div>

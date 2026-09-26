@@ -126,6 +126,7 @@ function Hero({ event }: { event: EventRow }) {
             playsInline
             preload="metadata"
             className="size-full object-cover"
+            style={event.media_position ? { objectPosition: event.media_position } : undefined}
           />
           <button
             onClick={() => setMuted((m) => !m)}
@@ -136,7 +137,14 @@ function Hero({ event }: { event: EventRow }) {
           </button>
         </>
       ) : (
-        event.image_url && <SafeImg src={event.image_url} alt="" className="size-full object-cover" />
+        event.image_url && (
+          <SafeImg
+            src={event.image_url}
+            alt=""
+            className="size-full object-cover"
+            style={event.media_position ? { objectPosition: event.media_position } : undefined}
+          />
+        )
       )}
       <button
         onClick={() => (window.history.length > 1 ? window.history.back() : void navigate({ to: "/home" }))}

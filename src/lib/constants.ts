@@ -18,10 +18,10 @@ export const PROFILE_MINI = "id, name, avatar_url";
 
 /** Event columns for members (meeting_url is only reachable through event_meeting_url()). */
 export const EVENT_COLUMNS =
-  "id, organizer_id, community_id, title, description, category, subcategory, image_url, video_url, starts_at, ends_at, is_online, location_name, city, lat, lng, seats, auto_approve, recurrence, recurrence_parent_id, min_age, max_age, gender_target, price, max_distance_km, created_at";
+  "id, organizer_id, community_id, title, description, category, subcategory, image_url, video_url, story_image_url, story_video_url, media_position, starts_at, ends_at, is_online, location_name, city, lat, lng, seats, auto_approve, recurrence, recurrence_parent_id, min_age, max_age, gender_target, price, max_distance_km, created_at";
 /** Event columns for guests: name, image, date and time only. */
 export const EVENT_GUEST_COLUMNS: string =
-  "id, community_id, title, description, image_url, starts_at, ends_at, category, subcategory, price, city, seats, is_online";
+  "id, community_id, title, description, image_url, starts_at, ends_at, category, subcategory, price, city, seats, is_online, media_position";
 
 /** Public contact for privacy / deletion requests (shown on /privacy, /terms, /delete-account). */
 export const CONTACT_EMAIL = (import.meta.env.VITE_CONTACT_EMAIL as string | undefined) ?? "support@mibale.app";

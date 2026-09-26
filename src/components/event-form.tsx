@@ -25,6 +25,9 @@ export type EventFormValues = {
   image_url: string | null;
   /** Short clip (≤30 s); image_url then holds its first frame. */
   video_url: string | null;
+  story_image_url: string | null;
+  story_video_url: string | null;
+  media_position: string | null;
   starts_at: string;
   ends_at: string;
   is_online: boolean;
@@ -58,6 +61,9 @@ export function emptyEventForm(): EventFormValues {
     subcategory: null,
     image_url: null,
     video_url: null,
+    story_image_url: null,
+    story_video_url: null,
+    media_position: null,
     starts_at: toLocalInput(start.toISOString()),
     ends_at: toLocalInput(end.toISOString()),
     is_online: false,
@@ -88,6 +94,9 @@ export function eventToForm(e: EventRow, meetingUrl: string | null): EventFormVa
     subcategory: e.subcategory,
     image_url: e.image_url,
     video_url: e.video_url ?? null,
+    story_image_url: e.story_image_url ?? null,
+    story_video_url: e.story_video_url ?? null,
+    media_position: e.media_position ?? null,
     starts_at: toLocalInput(e.starts_at),
     ends_at: toLocalInput(e.ends_at),
     is_online: !!e.is_online,
@@ -133,6 +142,9 @@ export async function formToPayload(v: EventFormValues) {
     subcategory: v.subcategory,
     image_url: v.image_url,
     video_url: v.video_url,
+    story_image_url: v.story_image_url,
+    story_video_url: v.story_video_url,
+    media_position: v.media_position,
     starts_at: starts.toISOString(),
     ends_at: ends?.toISOString() ?? null,
     is_online: v.is_online,
@@ -171,7 +183,7 @@ export function EventForm({
 
   return (
     <div className="space-y-5">
-      <EventMediaPicker value={{ image_url: value.image_url, video_url: value.video_url }} onChange={(m) => onChange({ ...value, ...m })} />
+      <EventMediaPicker value={value} onChange={(m) => onChange({ ...value, ...m })} />
 
       <Field label="כותרת" hint={value.title ? `יוצג כ: ${whoComesTitle(value.title)}` : "למשל: ריצת בוקר בפארק"}>
         <div className="flex items-center gap-2">

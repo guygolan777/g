@@ -13,7 +13,7 @@ import type { Profile, Story } from "@/lib/types";
 export type StoryWithAuthor = Story & {
   author: Pick<Profile, "id" | "name" | "avatar_url"> | null;
   /** Event stories: the event's still picture (a video story's first frame) for the blurred backdrop. */
-  event?: { image_url: string | null } | null;
+  event?: { image_url: string | null; story_image_url: string | null; story_video_url: string | null } | null;
 };
 
 export function useActiveStories(romantic = false) {
@@ -26,7 +26,7 @@ export function useActiveStories(romantic = false) {
       const [{ data: stories }, { data: views }] = await Promise.all([
         supabase
           .from("stories")
-          .select(`*, author:profiles!stories_author_id_fkey(${PROFILE_MINI}), event:events(image_url)`)
+          .select(`*, author:profiles!stories_author_id_fkey(${PROFILE_MINI}), event:events(image_url, story_image_url, story_video_url)`)
           .gt("expires_at", new Date().toISOString())
           .eq("is_romantic", romantic)
           .order("created_at", { ascending: true }),

@@ -152,7 +152,16 @@ function StorySlide({
   // Holding the screen pauses; letting go after a hold must not also skip to the next story.
   const pressedAt = React.useRef(0);
   const isMine = story.author_id === user?.id;
-  const backdrop = story.media_type === "video" ? story.event?.image_url : story.media_url;
+  // A video story's blurred fill: the matching still frame (the story's own video → its own frame).
+  const backdrop =
+    story.media_type === "video"
+      ? story.event && story.media_url === story.event.story_video_url
+        ? story.event.story_image_url
+        : story.event?.image_url
+      : story.media_url;
+  // A video that can't play here falls back to the picture timer, so the story never gets stuck.
+  const [videoFailed, setVideoFailed] = React.useState(false);
+  const timed = story.media_type !== "video" || videoFailed;
   const pos = siblings.findIndex((s) => s.id === story.id);
 
   // Mark as viewed.
@@ -176,7 +185,7 @@ function StorySlide({
   // Image timer / video progress → auto-advance.
   React.useEffect(() => {
     if (!active) return setProgress(0);
-    if (story.media_type === "video") return;
+    if (!timed) return;
     if (paused) return;
     const start = performance.now() - progress * IMAGE_MS;
     let raf = 0;
@@ -189,7 +198,7 @@ function StorySlide({
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, paused, story.media_type]);
+  }, [active, paused, timed]);
 
   const views = useQuery({
     queryKey: ["story-views", story.id],
@@ -238,6 +247,7 @@ function StorySlide({
           className="absolute inset-0 size-full object-contain"
           onTimeUpdate={(e) => active && setProgress(e.currentTarget.currentTime / (e.currentTarget.duration || 1))}
           onEnded={() => active && onNext()}
+          onError={() => setVideoFailed(true)}
         />
         </>
       ) : (

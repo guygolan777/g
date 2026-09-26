@@ -51,6 +51,11 @@ export type EventRow = {
   subcategory: string | null;
   image_url: string | null;
   video_url?: string | null;
+  /** Optional media just for the event's story (a story video's first frame is in story_image_url). */
+  story_image_url?: string | null;
+  story_video_url?: string | null;
+  /** Which part of the picture the 4:3 crops show, as CSS object-position ("50% 30%"). */
+  media_position?: string | null;
   starts_at: string;
   ends_at: string | null;
   is_online?: boolean;

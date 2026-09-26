@@ -303,6 +303,34 @@ begin
 end $$;
 rollback;
 
+-- Separate story media: the story uses it (video first); clearing it falls back to the event's media.
+begin;
+set local role authenticated; select pg_temp.as_user('00000000-0000-4000-a000-000000000001');
+do $$
+declare _id uuid;
+begin
+  insert into public.events (organizer_id, title, category, starts_at, is_online, location_name, seats, image_url, media_position)
+  values (auth.uid(), 'סטורי נפרד', 'ball', now() + interval '2 days', false, 'x', 10, 'https://example.com/wide.jpg', '50% 20%')
+  returning id into _id;
+  update public.events set story_image_url = 'https://example.com/tall.jpg' where id = _id;
+  if not exists (select 1 from public.stories where event_id = _id and media_type = 'image' and media_url = 'https://example.com/tall.jpg') then
+    raise exception 'FAIL: story ignores its own picture';
+  end if;
+  update public.events set story_video_url = 'https://example.com/tall.mp4' where id = _id;
+  if not exists (select 1 from public.stories where event_id = _id and media_type = 'video' and media_url = 'https://example.com/tall.mp4') then
+    raise exception 'FAIL: story ignores its own video';
+  end if;
+  update public.events set story_video_url = null, story_image_url = null where id = _id;
+  if not exists (select 1 from public.stories where event_id = _id and media_type = 'image' and media_url = 'https://example.com/wide.jpg') then
+    raise exception 'FAIL: story didn''t fall back to the event picture';
+  end if;
+  begin
+    update public.events set media_position = 'top; background:red' where id = _id;
+    raise exception 'FAIL: free-text media_position accepted';
+  exception when check_violation then null; end;
+end $$;
+rollback;
+
 -- Date invites: sender creates, a DM + notification appear, only the recipient answers.
 begin;
 set local role authenticated; select pg_temp.as_user('00000000-0000-4000-a000-000000000006');

@@ -41,7 +41,7 @@ export function EventMedia({
   className,
   children,
 }: {
-  event: Pick<EventRow, "image_url" | "subcategory" | "category"> & { video_url?: string | null };
+  event: Pick<EventRow, "image_url" | "subcategory" | "category"> & { video_url?: string | null; media_position?: string | null };
   className?: string;
   children?: React.ReactNode;
 }) {
@@ -50,7 +50,11 @@ export function EventMedia({
       <span className="text-7xl" aria-hidden>
         {hobbyEmoji(event.subcategory ?? event.category)}
       </span>
-      <SafeImg src={event.image_url ?? undefined} className="absolute inset-0 size-full object-cover" />
+      <SafeImg
+        src={event.image_url ?? undefined}
+        className="absolute inset-0 size-full object-cover"
+        style={event.media_position ? { objectPosition: event.media_position } : undefined}
+      />
       {event.video_url && (
         <span className="absolute right-2 bottom-2 grid size-8 place-items-center rounded-full bg-foreground/60 text-background" aria-label="סרטון">
           <Play className="size-4 fill-current" />
