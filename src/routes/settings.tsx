@@ -213,7 +213,7 @@ function Settings() {
       </Section>
 
       <DeleteAccount />
-      <p className="mt-6 text-center text-xs text-muted-foreground">mibale · גרסה 0.1</p>
+      <p className="mt-6 text-center text-xs text-muted-foreground">mibale? · גרסת בטא — ייתכנו שינויים ותקלות קטנות, ונשמח לשמוע מה לשפר</p>
     </Page>
   );
 }

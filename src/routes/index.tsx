@@ -6,6 +6,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { seo } from "@/lib/seo";
 import { consumeRedirect } from "@/lib/guest";
 import { GuestStatsRow } from "@/components/guest";
+import { isNative } from "@/lib/native";
+import { BetaBadge } from "@/components/beta-badge";
 
 export const Route = createFileRoute("/")({
   head: () =>
@@ -19,6 +21,10 @@ export const Route = createFileRoute("/")({
 function Landing() {
   const { ready, user, profile } = useAuth();
   const navigate = useNavigate();
+  // On the web, guests go straight to the events feed (it has its own "join" prompts); the app keeps this welcome.
+  React.useEffect(() => {
+    if (ready && !user && !isNative()) void navigate({ to: "/home", replace: true });
+  }, [ready, user, navigate]);
   React.useEffect(() => {
     if (!ready || !user) return;
     if (!profile) return;
@@ -29,7 +35,9 @@ function Landing() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col px-6 pt-safe pb-10">
       <div className="flex-1 pt-16">
-        <p className="font-display text-5xl font-bold text-gradient-brand"><span dir="ltr">mibale?</span></p>
+        <p className="font-display text-5xl font-bold text-gradient-brand"><span dir="ltr">mibale?</span>
+          <BetaBadge />
+        </p>
         <h1 className="mt-4 text-3xl leading-tight font-bold">מי בא ל..? <br />כל מה שאתם אוהבים, עם אנשים שאוהבים את זה גם.</h1>
         <div className="mt-8 grid gap-3">
           {[
@@ -61,7 +69,8 @@ function Landing() {
           <Link to="/home">להציץ כאורח/ת</Link>
         </Button>
       </div>
-      <footer className="mt-10 flex justify-center gap-4 text-xs text-muted-foreground">
+      <p className="mt-8 text-center text-xs text-muted-foreground">גרסת בטא — אנחנו בונים את mibale? יחד איתכם, וייתכנו שינויים ותקלות קטנות.</p>
+      <footer className="mt-4 flex justify-center gap-4 text-xs text-muted-foreground">
         <Link to="/terms">תנאי שימוש</Link>
         <Link to="/privacy">פרטיות</Link>
         <Link to="/delete-account">מחיקת חשבון</Link>

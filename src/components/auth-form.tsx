@@ -3,12 +3,14 @@ import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { signInWithProvider } from "@/lib/native";
 import { toast } from "sonner";
+import { BetaBadge } from "@/components/beta-badge";
 
 export function AuthLayout({ title, subtitle, children, footer }: { title: string; subtitle?: string; children: React.ReactNode; footer?: React.ReactNode }) {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-6 pt-safe pb-10">
       <Link to="/" className="mt-10 font-display text-3xl font-bold text-gradient-brand">
         <span dir="ltr">mibale?</span>
+        <BetaBadge />
       </Link>
       <h1 className="mt-8 text-2xl font-bold">{title}</h1>
       {subtitle && <p className="mt-1 text-muted-foreground">{subtitle}</p>}

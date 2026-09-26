@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useUnreadCounts } from "@/lib/queries";
 import { seo } from "@/lib/seo";
 import { LocationButton } from "@/components/location-button";
+import { BetaBadge } from "@/components/beta-badge";
 
 type HomeSearch = { tab?: "events" | "communities" | "people" };
 
@@ -31,7 +32,9 @@ function Home() {
   return (
     <Page>
       <header className="flex items-center justify-between py-3">
-        <p className="font-display text-4xl font-extrabold text-gradient-brand lg:invisible"><span dir="ltr">mibale?</span></p>
+        <p className="font-display text-4xl font-extrabold text-gradient-brand lg:invisible"><span dir="ltr">mibale?</span>
+          <BetaBadge />
+        </p>
         <div className="flex items-center gap-2">
           {!isGuest && <LocationButton />}
           {!isGuest && (

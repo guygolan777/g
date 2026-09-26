@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useUnreadCounts } from "@/lib/queries";
 import { cn } from "@/lib/utils";
+import { BetaBadge } from "@/components/beta-badge";
 
 const HIDDEN = ["/login", "/signup", "/forgot-password", "/reset-password", "/onboarding", "/story/", "/scan/"];
 
@@ -36,8 +37,9 @@ export function DesktopSidebar() {
 
   return (
     <aside className="fixed inset-y-0 right-0 z-40 hidden w-64 flex-col border-s border-border bg-surface px-4 py-6 lg:flex" dir="rtl">
-      <Link to="/home" className="px-3 font-display text-4xl font-extrabold text-gradient-brand">
+      <Link to="/home" className="flex items-start px-3 font-display text-4xl font-extrabold whitespace-nowrap text-gradient-brand">
         <span dir="ltr">mibale?</span>
+        <BetaBadge />
       </Link>
       <nav className="mt-8 flex flex-col gap-1">
         {items
