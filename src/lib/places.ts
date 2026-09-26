@@ -94,7 +94,8 @@ type PhotonFeature = {
 const photonCache = new Map<string, PlacePick>();
 
 async function photonSuggest(q: string, near: Near, signal?: AbortSignal): Promise<PlaceSuggestion[]> {
-  const params = new URLSearchParams({ q, limit: "6", bbox: "34.2,29.4,35.9,33.4" }); // Israel
+  // lang=default → the local (OSM "name") names, which in Israel are Hebrew; without it Photon answers in English.
+  const params = new URLSearchParams({ q, limit: "6", lang: "default", bbox: "34.2,29.4,35.9,33.4" }); // Israel
   if (near) params.set("lat", String(near.lat)), params.set("lon", String(near.lng));
   const res = await fetch(`https://photon.komoot.io/api/?${params}`, { signal });
   if (!res.ok) throw new Error(`photon ${res.status}`);
